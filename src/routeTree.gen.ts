@@ -10,33 +10,133 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
+import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthorAuthorRoute = AuthorAuthorRouteImport.update({
+  id: '/author/$author',
+  path: '/author/$author',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookBookIdRoute = BookBookIdRouteImport.update({
+  id: '/book/$bookId',
+  path: '/book/$bookId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/challenges': typeof AuthenticatedChallengesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/challenges': typeof AuthenticatedChallengesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/discover'
+    | '/calendar'
+    | '/challenges'
+    | '/library'
+    | '/author/$author'
+    | '/book/$bookId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/discover'
+    | '/calendar'
+    | '/challenges'
+    | '/library'
+    | '/author/$author'
+    | '/book/$bookId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/discover'
+    | '/_authenticated/calendar'
+    | '/_authenticated/challenges'
+    | '/_authenticated/library'
+    | '/author/$author'
+    | '/book/$bookId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  DiscoverRoute: typeof DiscoverRoute
+  AuthorAuthorRoute: typeof AuthorAuthorRoute
+  BookBookIdRoute: typeof BookBookIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +148,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/challenges': {
+      id: '/_authenticated/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/author/$author': {
+      id: '/author/$author'
+      path: '/author/$author'
+      fullPath: '/author/$author'
+      preLoaderRoute: typeof AuthorAuthorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/book/$bookId': {
+      id: '/book/$bookId'
+      path: '/book/$bookId'
+      fullPath: '/book/$bookId'
+      preLoaderRoute: typeof BookBookIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  DiscoverRoute: DiscoverRoute,
+  AuthorAuthorRoute: AuthorAuthorRoute,
+  BookBookIdRoute: BookBookIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
