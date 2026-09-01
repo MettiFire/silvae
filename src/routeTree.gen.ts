@@ -16,6 +16,8 @@ import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
+import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
 import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
 
@@ -53,6 +55,16 @@ const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSocialRoute = AuthenticatedSocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthorAuthorRoute = AuthorAuthorRouteImport.update({
   id: '/author/$author',
   path: '/author/$author',
@@ -71,6 +83,8 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/social': typeof AuthenticatedSocialRoute
+  '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
 }
@@ -81,6 +95,8 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/social': typeof AuthenticatedSocialRoute
+  '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
 }
@@ -93,6 +109,8 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/_authenticated/social': typeof AuthenticatedSocialRoute
+  '/_authenticated/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
 }
@@ -105,6 +123,8 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/challenges'
     | '/library'
+    | '/social'
+    | '/stats'
     | '/author/$author'
     | '/book/$bookId'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +135,8 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/challenges'
     | '/library'
+    | '/social'
+    | '/stats'
     | '/author/$author'
     | '/book/$bookId'
   id:
@@ -126,6 +148,8 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
     | '/_authenticated/library'
+    | '/_authenticated/social'
+    | '/_authenticated/stats'
     | '/author/$author'
     | '/book/$bookId'
   fileRoutesById: FileRoutesById
@@ -190,6 +214,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/social': {
+      id: '/_authenticated/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof AuthenticatedSocialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stats': {
+      id: '/_authenticated/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthenticatedStatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/author/$author': {
       id: '/author/$author'
       path: '/author/$author'
@@ -211,12 +249,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
+  AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+  AuthenticatedSocialRoute: AuthenticatedSocialRoute,
+  AuthenticatedStatsRoute: AuthenticatedStatsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
