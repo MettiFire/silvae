@@ -1,0 +1,151 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { cacheBook, type Book } from "@/lib/books";
+import { useAuth } from "@/lib/auth";
+
+export type ReadingStatus = "to_read" | "reading" | "read" | "abandoned";
+
+export const STATUS_LABEL: Record<ReadingStatus, string> = {
+  to_read: "Da leggere",
+  reading: "In lettura",
+  read: "Letto",
+  abandoned: "Abbandonato",
+};
+
+export type LibraryItem = {
+  id: string;
+  user_id: string;
+  book_id: string;
+  status: ReadingStatus;
+  current_page: number;
+  total_pages: number | null;
+  rating: number | null;
+  favorite: boolean;
+  started_at: string | null;
+  finished_at: string | null;
+  reread_count: number;
+  last_reread_at: string | null;
+  needs_review: boolean;
+  created_at: string;
+  updated_at: string;
+  books: Book | null;
+};
+
+const SELECT = "*, books(*)";
+
+export async function logActivity(
+  userId: string,
+  type: string,
+  bookId: string | null,
+  metadata: Record<string, unknown> = {},
+) {
+  await supabase.from("activities").insert({ user_id: userId, type, book_id: bookId, metadata });
+}
+
+export function useLibrary(userId?: string) {
+  return useQuery({
+    queryKey: ["library", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("library_items")
+        .select(SELECT)
+        .eq("user_id", userId!)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as LibraryItem[];
+    },
+  });
+}
+
+export function useLibraryItem(bookId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["library-item", user?.id, bookId],
+    enabled: !!user && !!bookId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("library_items")
+        .select(SELECT)
+        .eq("user_id", user!.id)
+        .eq("book_id", bookId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as unknown as LibraryItem) ?? null;
+    },
+  });
+}
+
+export function useSaveToLibrary() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      book,
+      status,
+      extra,
+    }: {
+      book: Book;
+      status: ReadingStatus;
+      extra?: Partial<LibraryItem>;
+    }) => {
+      if (!user) throw new Error("Accedi per gestire la tua libreria");
+      await cacheBook(book);
+      const now = new Date().toISOString();
+      const { error } = await supabase.from("library_items").upsert(
+        {
+          user_id: user.id,
+          book_id: book.id,
+          status,
+          total_pages: book.page_count,
+          started_at: status === "reading" ? now : (extra?.started_at ?? null),
+          finished_at: status === "read" ? now : null,
+          current_page: status === "read" ? (book.page_count ?? 0) : (extra?.current_page ?? 0),
+          ...extra,
+        },
+        { onConflict: "user_id,book_id" },
+      );
+      if (error) throw error;
+      await logActivity(user.id, status === "read" ? "finished" : status === "reading" ? "started" : "added", book.id, {
+        title: book.title,
+        status,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["library"] });
+      void qc.invalidateQueries({ queryKey: ["library-item"] });
+      void qc.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+}
+
+export function useUpdateItem() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch, activity }: { id: string; patch: Partial<LibraryItem>; activity?: { type: string; bookId: string; metadata?: Record<string, unknown> } }) => {
+      const { error } = await supabase.from("library_items").update(patch).eq("id", id);
+      if (error) throw error;
+      if (activity && user) await logActivity(user.id, activity.type, activity.bookId, activity.metadata ?? {});
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["library"] });
+      void qc.invalidateQueries({ queryKey: ["library-item"] });
+      void qc.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+}
+
+export function useRemoveItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("library_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["library"] });
+      void qc.invalidateQueries({ queryKey: ["library-item"] });
+    },
+  });
+}

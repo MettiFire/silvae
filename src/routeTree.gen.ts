@@ -10,33 +10,182 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
+import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
+import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
+import { Route as UUsernameRouteImport } from './routes/u.$username'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSocialRoute = AuthenticatedSocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthorAuthorRoute = AuthorAuthorRouteImport.update({
+  id: '/author/$author',
+  path: '/author/$author',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookBookIdRoute = BookBookIdRouteImport.update({
+  id: '/book/$bookId',
+  path: '/book/$bookId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUsernameRoute = UUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/challenges': typeof AuthenticatedChallengesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/social': typeof AuthenticatedSocialRoute
+  '/stats': typeof AuthenticatedStatsRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
+  '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/challenges': typeof AuthenticatedChallengesRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/social': typeof AuthenticatedSocialRoute
+  '/stats': typeof AuthenticatedStatsRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
+  '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/discover': typeof DiscoverRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/social': typeof AuthenticatedSocialRoute
+  '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/author/$author': typeof AuthorAuthorRoute
+  '/book/$bookId': typeof BookBookIdRoute
+  '/u/$username': typeof UUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/discover'
+    | '/calendar'
+    | '/challenges'
+    | '/library'
+    | '/profile'
+    | '/social'
+    | '/stats'
+    | '/author/$author'
+    | '/book/$bookId'
+    | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/discover'
+    | '/calendar'
+    | '/challenges'
+    | '/library'
+    | '/profile'
+    | '/social'
+    | '/stats'
+    | '/author/$author'
+    | '/book/$bookId'
+    | '/u/$username'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/discover'
+    | '/_authenticated/calendar'
+    | '/_authenticated/challenges'
+    | '/_authenticated/library'
+    | '/_authenticated/profile'
+    | '/_authenticated/social'
+    | '/_authenticated/stats'
+    | '/author/$author'
+    | '/book/$bookId'
+    | '/u/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  DiscoverRoute: typeof DiscoverRoute
+  AuthorAuthorRoute: typeof AuthorAuthorRoute
+  BookBookIdRoute: typeof BookBookIdRoute
+  UUsernameRoute: typeof UUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +197,122 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/challenges': {
+      id: '/_authenticated/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/social': {
+      id: '/_authenticated/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof AuthenticatedSocialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stats': {
+      id: '/_authenticated/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthenticatedStatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/author/$author': {
+      id: '/author/$author'
+      path: '/author/$author'
+      fullPath: '/author/$author'
+      preLoaderRoute: typeof AuthorAuthorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/book/$bookId': {
+      id: '/book/$bookId'
+      path: '/book/$bookId'
+      fullPath: '/book/$bookId'
+      preLoaderRoute: typeof BookBookIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$username': {
+      id: '/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof UUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
+  AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSocialRoute: AuthenticatedSocialRoute,
+  AuthenticatedStatsRoute: AuthenticatedStatsRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  DiscoverRoute: DiscoverRoute,
+  AuthorAuthorRoute: AuthorAuthorRoute,
+  BookBookIdRoute: BookBookIdRoute,
+  UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
