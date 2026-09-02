@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
@@ -50,6 +51,11 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
 const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   id: '/challenges',
   path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/social': typeof AuthenticatedSocialRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/social': typeof AuthenticatedSocialRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/social': typeof AuthenticatedSocialRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/import'
     | '/library'
     | '/profile'
     | '/social'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/import'
     | '/library'
     | '/profile'
     | '/social'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
+    | '/_authenticated/import'
     | '/_authenticated/library'
     | '/_authenticated/profile'
     | '/_authenticated/social'
@@ -232,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/library': {
       id: '/_authenticated/library'
       path: '/library'
@@ -287,6 +306,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
@@ -296,6 +316,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSocialRoute: AuthenticatedSocialRoute,
