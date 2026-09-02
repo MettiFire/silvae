@@ -12,6 +12,8 @@ export const STATUS_LABEL: Record<ReadingStatus, string> = {
   abandoned: "Abbandonato",
 };
 
+export type LibraryPatch = Partial<Omit<LibraryItem, "books" | "id" | "user_id" | "book_id">>;
+
 export type LibraryItem = {
   id: string;
   user_id: string;
@@ -39,7 +41,9 @@ export async function logActivity(
   bookId: string | null,
   metadata: Record<string, unknown> = {},
 ) {
-  await supabase.from("activities").insert({ user_id: userId, type, book_id: bookId, metadata });
+  await supabase
+    .from("activities")
+    .insert({ user_id: userId, type, book_id: bookId, metadata: metadata as never });
 }
 
 export function useLibrary(userId?: string) {
@@ -87,7 +91,7 @@ export function useSaveToLibrary() {
     }: {
       book: Book;
       status: ReadingStatus;
-      extra?: Partial<LibraryItem>;
+      extra?: LibraryPatch | undefined;
     }) => {
       if (!user) throw new Error("Accedi per gestire la tua libreria");
       await cacheBook(book);
@@ -123,7 +127,15 @@ export function useUpdateItem() {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, patch, activity }: { id: string; patch: Partial<LibraryItem>; activity?: { type: string; bookId: string; metadata?: Record<string, unknown> } }) => {
+    mutationFn: async ({
+      id,
+      patch,
+      activity,
+    }: {
+      id: string;
+      patch: LibraryPatch;
+      activity?: { type: string; bookId: string; metadata?: Record<string, unknown> } | undefined;
+    }) => {
       const { error } = await supabase.from("library_items").update(patch).eq("id", id);
       if (error) throw error;
       if (activity && user) await logActivity(user.id, activity.type, activity.bookId, activity.metadata ?? {});
