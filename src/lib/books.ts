@@ -78,6 +78,15 @@ export async function getBook(id: string): Promise<Book> {
   return mapVolume((await res.json()) as Volume);
 }
 
+/** Look up a book from a scanned barcode / ISBN. */
+export async function searchByIsbn(isbn: string) {
+  const clean = isbn.replace(/[^0-9Xx]/g, "");
+  if (!clean) return [];
+  const direct = await searchBooks(`isbn:${clean}`, { max: 5 });
+  if (direct.length) return direct;
+  return searchBooks(clean, { max: 5 });
+}
+
 export async function booksByAuthor(author: string) {
   return searchBooks(`inauthor:"${author}"`, { max: 24 });
 }
