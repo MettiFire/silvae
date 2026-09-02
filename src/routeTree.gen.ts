@@ -22,6 +22,7 @@ import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
 import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
+import { Route as ListListIdRouteImport } from './routes/list.$listId'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 
 const IndexRoute = IndexRouteImport.update({
@@ -88,6 +89,11 @@ const BookBookIdRoute = BookBookIdRouteImport.update({
   path: '/book/$bookId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListListIdRoute = ListListIdRouteImport.update({
+  id: '/list/$listId',
+  path: '/list/$listId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UUsernameRoute = UUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesByTo {
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesById {
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRouteTypes {
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   id:
     | '__root__'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   fileRoutesById: FileRoutesById
 }
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   AuthorAuthorRoute: typeof AuthorAuthorRoute
   BookBookIdRoute: typeof BookBookIdRoute
+  ListListIdRoute: typeof ListListIdRoute
   UUsernameRoute: typeof UUsernameRoute
 }
 
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookBookIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/list/$listId': {
+      id: '/list/$listId'
+      path: '/list/$listId'
+      fullPath: '/list/$listId'
+      preLoaderRoute: typeof ListListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/$username': {
       id: '/u/$username'
       path: '/u/$username'
@@ -333,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   AuthorAuthorRoute: AuthorAuthorRoute,
   BookBookIdRoute: BookBookIdRoute,
+  ListListIdRoute: ListListIdRoute,
   UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
