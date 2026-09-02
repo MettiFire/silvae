@@ -15,12 +15,14 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
 import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
+import { Route as ListListIdRouteImport } from './routes/list.$listId'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 
 const IndexRoute = IndexRouteImport.update({
@@ -50,6 +52,11 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
 const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   id: '/challenges',
   path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
@@ -82,6 +89,11 @@ const BookBookIdRoute = BookBookIdRouteImport.update({
   path: '/book/$bookId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListListIdRoute = ListListIdRouteImport.update({
+  id: '/list/$listId',
+  path: '/list/$listId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UUsernameRoute = UUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -94,12 +106,14 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesByTo {
@@ -108,12 +122,14 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRoutesById {
@@ -124,12 +140,14 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
+  '/list/$listId': typeof ListListIdRoute
   '/u/$username': typeof UUsernameRoute
 }
 export interface FileRouteTypes {
@@ -140,12 +158,14 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/import'
     | '/library'
     | '/profile'
     | '/social'
     | '/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,12 +174,14 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/import'
     | '/library'
     | '/profile'
     | '/social'
     | '/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   id:
     | '__root__'
@@ -169,12 +191,14 @@ export interface FileRouteTypes {
     | '/discover'
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
+    | '/_authenticated/import'
     | '/_authenticated/library'
     | '/_authenticated/profile'
     | '/_authenticated/social'
     | '/_authenticated/stats'
     | '/author/$author'
     | '/book/$bookId'
+    | '/list/$listId'
     | '/u/$username'
   fileRoutesById: FileRoutesById
 }
@@ -185,6 +209,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   AuthorAuthorRoute: typeof AuthorAuthorRoute
   BookBookIdRoute: typeof BookBookIdRoute
+  ListListIdRoute: typeof ListListIdRoute
   UUsernameRoute: typeof UUsernameRoute
 }
 
@@ -232,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/library': {
       id: '/_authenticated/library'
       path: '/library'
@@ -274,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookBookIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/list/$listId': {
+      id: '/list/$listId'
+      path: '/list/$listId'
+      fullPath: '/list/$listId'
+      preLoaderRoute: typeof ListListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/$username': {
       id: '/u/$username'
       path: '/u/$username'
@@ -287,6 +326,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
@@ -296,6 +336,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSocialRoute: AuthenticatedSocialRoute,
@@ -312,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   AuthorAuthorRoute: AuthorAuthorRoute,
   BookBookIdRoute: BookBookIdRoute,
+  ListListIdRoute: ListListIdRoute,
   UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
