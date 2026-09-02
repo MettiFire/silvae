@@ -230,7 +230,6 @@ function ImportPage() {
                   </span>
                   <Link
                     to="/discover"
-                    search={{ q: r.title } as never}
                     className="shrink-0 rounded-lg border border-border px-2 py-1 text-xs transition hover:bg-accent"
                   >
                     Cerca
