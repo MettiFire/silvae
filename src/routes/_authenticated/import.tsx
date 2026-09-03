@@ -108,9 +108,12 @@ function ImportPage() {
         const title = r["Title"] ?? r["title"] ?? "";
         const author = r["Author"] ?? r["author"] ?? "";
         const isbn = clean(r["ISBN13"] ?? r["ISBN"] ?? "");
-        const status = mapStatus(r["Exclusive Shelf"] ?? r["Bookshelves"] ?? "");
+        const shelf = (r["Exclusive Shelf"] || r["Bookshelves"] || "").trim();
+        const dateRead = (r["Date Read"] ?? "").trim();
+        // Senza scaffale esplicito: se c'è una data di lettura o un voto, è "letto".
         const rawRating = Number(r["My Rating"] ?? 0);
         const rating = rawRating > 0 ? rawRating : null;
+        const status: ReadingStatus = shelf ? mapStatus(shelf) : dateRead || rating ? "read" : "to_read";
 
         let book: Book | null = null;
         try {
