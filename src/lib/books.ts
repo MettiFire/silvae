@@ -59,15 +59,6 @@ export function mapVolume(v: Volume): Book {
   };
 }
 
-async function get(url: string) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const err = new Error(`HTTP ${res.status}`) as Error & { status?: number };
-    err.status = res.status;
-    throw err;
-  }
-  return (await res.json()) as { items?: Volume[] };
-}
 
 // ---------- Open Library fallback (no key, no daily quota) ----------
 
