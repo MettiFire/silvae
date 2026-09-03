@@ -71,10 +71,13 @@ function parseCSV(text: string): Row[] {
 }
 
 function mapStatus(shelf: string): ReadingStatus {
-  const s = shelf.toLowerCase();
-  if (s.includes("currently")) return "reading";
+  const s = shelf.toLowerCase().trim();
+  if (s.includes("currently") || s.includes("in-lettura") || s.includes("reading")) return "reading";
+  if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf") || s.includes("unfinished"))
+    return "abandoned";
+  // "to-read" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
+  if (s.includes("to-read") || s.includes("to read") || s.includes("want") || s.includes("wish")) return "to_read";
   if (s.includes("read")) return "read";
-  if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf")) return "abandoned";
   return "to_read";
 }
 
@@ -105,9 +108,12 @@ function ImportPage() {
         const title = r["Title"] ?? r["title"] ?? "";
         const author = r["Author"] ?? r["author"] ?? "";
         const isbn = clean(r["ISBN13"] ?? r["ISBN"] ?? "");
-        const status = mapStatus(r["Exclusive Shelf"] ?? r["Bookshelves"] ?? "");
+        const shelf = (r["Exclusive Shelf"] || r["Bookshelves"] || "").trim();
+        const dateRead = (r["Date Read"] ?? "").trim();
+        // Senza scaffale esplicito: se c'è una data di lettura o un voto, è "letto".
         const rawRating = Number(r["My Rating"] ?? 0);
         const rating = rawRating > 0 ? rawRating : null;
+        const status: ReadingStatus = shelf ? mapStatus(shelf) : dateRead || rating ? "read" : "to_read";
 
         let book: Book | null = null;
         try {
@@ -157,6 +163,22 @@ function ImportPage() {
 
   const imported = results.filter((r) => r.book);
   const manual = results.filter((r) => !r.book);
+  const byStatus = (["reading", "read", "to_read", "abandoned"] as ReadingStatus[]).map((s) => ({
+    status: s,
+    items: imported.filter((r) => r.status === s),
+  }));
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (busy) return;
+    const f = Array.from(e.dataTransfer.files).find((x) => x.name.toLowerCase().endsWith(".csv") || x.type === "text/csv");
+    if (!f) {
+      toast.error("Trascina un file .csv");
+      return;
+    }
+    void handleFile(f);
+  }
 
   return (
     <AppShell>
@@ -165,10 +187,24 @@ function ImportPage() {
         subtitle="Esporta la tua libreria da Goodreads (My Books → Import and export) e carica qui il file CSV."
       />
 
-      <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card p-10 text-center transition hover:border-primary/50">
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!busy) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 text-center transition ${
+          dragging ? "border-primary bg-accent" : "border-border bg-card hover:border-primary/50"
+        }`}
+      >
         {busy ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <Upload className="h-8 w-8 text-primary" />}
         <span className="font-display text-lg font-semibold">
-          {busy ? `Importazione… ${progress.done}/${progress.total}` : "Seleziona il file CSV"}
+          {busy
+            ? `Importazione… ${progress.done}/${progress.total}`
+            : dragging
+              ? "Rilascia il file qui"
+              : "Trascina qui il CSV o clicca per selezionarlo"}
         </span>
         <span className="text-sm text-muted-foreground">
           Riconosciamo i campi Title, Author, ISBN, My Rating, Exclusive Shelf e Date Read.
