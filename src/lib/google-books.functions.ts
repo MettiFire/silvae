@@ -10,8 +10,8 @@ export const gbSearch = createServerFn({ method: "GET" })
     const params = new URLSearchParams(data.params);
     if (key) params.set("key", key);
     const res = await fetch(`${API}?${params}`);
-    if (!res.ok) return { status: res.status, body: null as unknown };
-    return { status: 200, body: (await res.json()) as unknown };
+    if (!res.ok) return { status: res.status, json: "" };
+    return { status: 200, json: await res.text() };
   });
 
 /** Proxy a single-volume lookup. */
@@ -21,6 +21,6 @@ export const gbVolume = createServerFn({ method: "GET" })
     const key = process.env["GOOGLE_API_KEY"];
     const url = key ? `${API}/${encodeURIComponent(data.id)}?key=${key}` : `${API}/${encodeURIComponent(data.id)}`;
     const res = await fetch(url);
-    if (!res.ok) return { status: res.status, body: null as unknown };
-    return { status: 200, body: (await res.json()) as unknown };
+    if (!res.ok) return { status: res.status, json: "" };
+    return { status: 200, json: await res.text() };
   });

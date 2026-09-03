@@ -153,7 +153,7 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
       err.status = out.status;
       throw err;
     }
-    const data = (out.body ?? {}) as { items?: Volume[] };
+    const data = JSON.parse(out.json || "{}") as { items?: Volume[] };
     return (data.items ?? []).map(mapVolume);
   } catch (e) {
     if (!isQuotaError(e)) throw new Error("Errore nel recupero dei libri");
@@ -165,8 +165,8 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
 export async function getBook(id: string): Promise<Book> {
   if (id.startsWith("ol:")) return olGetBook(id.slice(3));
   const out = await gbVolume({ data: { id } });
-  if (out.status !== 200 || !out.body) throw new Error("Libro non trovato");
-  return mapVolume(out.body as Volume);
+  if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");
+  return mapVolume(JSON.parse(out.json) as Volume);
 }
 
 /** Look up a book from a scanned barcode / ISBN. */
