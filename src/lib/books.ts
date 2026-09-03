@@ -14,15 +14,12 @@ export type Book = {
   ratings_count?: number | null;
 };
 
-const API = "https://www.googleapis.com/books/v1/volumes";
 const OL_API = "https://openlibrary.org";
 
 /**
- * Optional Google Books API key. Anonymous requests share a small daily quota
- * (HTTP 429 when exhausted); a free key from Google Cloud Console removes the
- * limit. Paste it here when you have one.
+ * Google Books calls go through server functions so the API key (secret
+ * GOOGLE_API_KEY) never reaches the browser. Open Library stays as fallback.
  */
-export const GOOGLE_BOOKS_API_KEY = "";
 
 function upgradeCover(url?: string) {
   if (!url) return null;
