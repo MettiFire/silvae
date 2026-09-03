@@ -71,10 +71,13 @@ function parseCSV(text: string): Row[] {
 }
 
 function mapStatus(shelf: string): ReadingStatus {
-  const s = shelf.toLowerCase();
-  if (s.includes("currently")) return "reading";
+  const s = shelf.toLowerCase().trim();
+  if (s.includes("currently") || s.includes("in-lettura") || s.includes("reading")) return "reading";
+  if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf") || s.includes("unfinished"))
+    return "abandoned";
+  // "to-read" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
+  if (s.includes("to-read") || s.includes("to read") || s.includes("want") || s.includes("wish")) return "to_read";
   if (s.includes("read")) return "read";
-  if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf")) return "abandoned";
   return "to_read";
 }
 
