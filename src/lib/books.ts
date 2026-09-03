@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { gbSearch, gbVolume } from "@/lib/google-books.functions";
 
 export type Book = {
   id: string;
@@ -13,15 +14,12 @@ export type Book = {
   ratings_count?: number | null;
 };
 
-const API = "https://www.googleapis.com/books/v1/volumes";
 const OL_API = "https://openlibrary.org";
 
 /**
- * Optional Google Books API key. Anonymous requests share a small daily quota
- * (HTTP 429 when exhausted); a free key from Google Cloud Console removes the
- * limit. Paste it here when you have one.
+ * Google Books calls go through server functions so the API key (secret
+ * GOOGLE_API_KEY) never reaches the browser. Open Library stays as fallback.
  */
-export const GOOGLE_BOOKS_API_KEY = "";
 
 function upgradeCover(url?: string) {
   if (!url) return null;
@@ -61,15 +59,6 @@ export function mapVolume(v: Volume): Book {
   };
 }
 
-async function get(url: string) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const err = new Error(`HTTP ${res.status}`) as Error & { status?: number };
-    err.status = res.status;
-    throw err;
-  }
-  return (await res.json()) as { items?: Volume[] };
-}
 
 // ---------- Open Library fallback (no key, no daily quota) ----------
 
@@ -157,23 +146,27 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
     startIndex: String(opts.startIndex ?? 0),
     printType: "books",
   });
-  if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
   try {
-    const data = await get(`${API}?${params}`);
+    const out = await gbSearch({ data: { params: Object.fromEntries(params) } });
+    if (out.status !== 200) {
+      const err = new Error(`HTTP ${out.status}`) as Error & { status?: number };
+      err.status = out.status;
+      throw err;
+    }
+    const data = JSON.parse(out.json || "{}") as { items?: Volume[] };
     return (data.items ?? []).map(mapVolume);
   } catch (e) {
     if (!isQuotaError(e)) throw new Error("Errore nel recupero dei libri");
-    // Google Books anonymous quota exhausted: fall back to Open Library.
+    // Google Books quota exhausted: fall back to Open Library.
     return olSearch(query.replace(/(isbn|inauthor|subject):/g, ""), max);
   }
 }
 
 export async function getBook(id: string): Promise<Book> {
   if (id.startsWith("ol:")) return olGetBook(id.slice(3));
-  const url = GOOGLE_BOOKS_API_KEY ? `${API}/${id}?key=${GOOGLE_BOOKS_API_KEY}` : `${API}/${id}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Libro non trovato");
-  return mapVolume((await res.json()) as Volume);
+  const out = await gbVolume({ data: { id } });
+  if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");
+  return mapVolume(JSON.parse(out.json) as Volume);
 }
 
 /** Look up a book from a scanned barcode / ISBN. */
