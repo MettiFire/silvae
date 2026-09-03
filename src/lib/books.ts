@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { gbSearch, gbVolume } from "@/lib/google-books.functions";
 
 export type Book = {
   id: string;
