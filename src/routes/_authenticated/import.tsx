@@ -163,6 +163,22 @@ function ImportPage() {
 
   const imported = results.filter((r) => r.book);
   const manual = results.filter((r) => !r.book);
+  const byStatus = (["reading", "read", "to_read", "abandoned"] as ReadingStatus[]).map((s) => ({
+    status: s,
+    items: imported.filter((r) => r.status === s),
+  }));
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (busy) return;
+    const f = Array.from(e.dataTransfer.files).find((x) => x.name.toLowerCase().endsWith(".csv") || x.type === "text/csv");
+    if (!f) {
+      toast.error("Trascina un file .csv");
+      return;
+    }
+    void handleFile(f);
+  }
 
   return (
     <AppShell>
