@@ -187,10 +187,24 @@ function ImportPage() {
         subtitle="Esporta la tua libreria da Goodreads (My Books → Import and export) e carica qui il file CSV."
       />
 
-      <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card p-10 text-center transition hover:border-primary/50">
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!busy) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 text-center transition ${
+          dragging ? "border-primary bg-accent" : "border-border bg-card hover:border-primary/50"
+        }`}
+      >
         {busy ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <Upload className="h-8 w-8 text-primary" />}
         <span className="font-display text-lg font-semibold">
-          {busy ? `Importazione… ${progress.done}/${progress.total}` : "Seleziona il file CSV"}
+          {busy
+            ? `Importazione… ${progress.done}/${progress.total}`
+            : dragging
+              ? "Rilascia il file qui"
+              : "Trascina qui il CSV o clicca per selezionarlo"}
         </span>
         <span className="text-sm text-muted-foreground">
           Riconosciamo i campi Title, Author, ISBN, My Rating, Exclusive Shelf e Date Read.
