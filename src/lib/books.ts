@@ -14,6 +14,14 @@ export type Book = {
 };
 
 const API = "https://www.googleapis.com/books/v1/volumes";
+const OL_API = "https://openlibrary.org";
+
+/**
+ * Optional Google Books API key. Anonymous requests share a small daily quota
+ * (HTTP 429 when exhausted); a free key from Google Cloud Console removes the
+ * limit. Paste it here when you have one.
+ */
+export const GOOGLE_BOOKS_API_KEY = "";
 
 function upgradeCover(url?: string) {
   if (!url) return null;
@@ -55,25 +63,115 @@ export function mapVolume(v: Volume): Book {
 
 async function get(url: string) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error("Errore nel recupero dei libri");
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
+  }
   return (await res.json()) as { items?: Volume[] };
 }
 
+// ---------- Open Library fallback (no key, no daily quota) ----------
+
+type OLDoc = {
+  key: string;
+  title?: string;
+  author_name?: string[];
+  first_publish_year?: number;
+  number_of_pages_median?: number;
+  subject?: string[];
+  cover_i?: number;
+  isbn?: string[];
+};
+
+function mapOLDoc(d: OLDoc): Book {
+  return {
+    id: `ol:${d.key.replace("/works/", "")}`,
+    title: d.title ?? "Senza titolo",
+    authors: d.author_name ?? [],
+    cover_url: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null,
+    published_year: d.first_publish_year ?? null,
+    page_count: d.number_of_pages_median ?? null,
+    categories: (d.subject ?? []).slice(0, 4),
+    description: null,
+  };
+}
+
+async function olSearch(query: string, max: number): Promise<Book[]> {
+  const params = new URLSearchParams({ q: query, limit: String(max) });
+  const res = await fetch(`${OL_API}/search.json?${params}`);
+  if (!res.ok) throw new Error("Errore nel recupero dei libri");
+  const data = (await res.json()) as { docs?: OLDoc[] };
+  return (data.docs ?? []).map(mapOLDoc);
+}
+
+async function olGetBook(workId: string): Promise<Book> {
+  const res = await fetch(`${OL_API}/works/${workId}.json`);
+  if (!res.ok) throw new Error("Libro non trovato");
+  const w = (await res.json()) as {
+    title?: string;
+    description?: string | { value?: string };
+    subjects?: string[];
+    covers?: number[];
+    authors?: { author?: { key?: string } }[];
+  };
+  const authorNames: string[] = [];
+  for (const a of w.authors ?? []) {
+    const key = a.author?.key;
+    if (!key) continue;
+    try {
+      const ar = await fetch(`${OL_API}${key}.json`);
+      if (ar.ok) {
+        const ad = (await ar.json()) as { name?: string };
+        if (ad.name) authorNames.push(ad.name);
+      }
+    } catch {
+      /* ignore author lookup failures */
+    }
+  }
+  return {
+    id: `ol:${workId}`,
+    title: w.title ?? "Senza titolo",
+    authors: authorNames,
+    cover_url: w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null,
+    published_year: null,
+    page_count: null,
+    categories: (w.subjects ?? []).slice(0, 6),
+    description: typeof w.description === "string" ? w.description : (w.description?.value ?? null),
+  };
+}
+
+function isQuotaError(e: unknown) {
+  return typeof e === "object" && e !== null && "status" in e && (e as { status?: number }).status === 429;
+}
+
+// ---------- Public API ----------
+
 export async function searchBooks(query: string, opts: { max?: number; orderBy?: "relevance" | "newest"; startIndex?: number } = {}) {
   if (!query.trim()) return [];
+  const max = opts.max ?? 20;
   const params = new URLSearchParams({
     q: query,
-    maxResults: String(opts.max ?? 20),
+    maxResults: String(max),
     orderBy: opts.orderBy ?? "relevance",
     startIndex: String(opts.startIndex ?? 0),
     printType: "books",
   });
-  const data = await get(`${API}?${params}`);
-  return (data.items ?? []).map(mapVolume);
+  if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
+  try {
+    const data = await get(`${API}?${params}`);
+    return (data.items ?? []).map(mapVolume);
+  } catch (e) {
+    if (!isQuotaError(e)) throw new Error("Errore nel recupero dei libri");
+    // Google Books anonymous quota exhausted: fall back to Open Library.
+    return olSearch(query.replace(/(isbn|inauthor|subject):/g, ""), max);
+  }
 }
 
 export async function getBook(id: string): Promise<Book> {
-  const res = await fetch(`${API}/${id}`);
+  if (id.startsWith("ol:")) return olGetBook(id.slice(3));
+  const url = GOOGLE_BOOKS_API_KEY ? `${API}/${id}?key=${GOOGLE_BOOKS_API_KEY}` : `${API}/${id}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Libro non trovato");
   return mapVolume((await res.json()) as Volume);
 }
