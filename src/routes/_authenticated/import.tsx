@@ -277,7 +277,6 @@ function ImportPage() {
           Supportati export Goodreads (Title, Author, ISBN13, My Rating, Exclusive Shelf, Date Read) ed export con
           ISBN-10/ISBN-13, Reading Status, Rating, Start/End Date, Is Favorite. Separatore virgola o tab.
         </span>
-        </span>
         <input
           type="file"
           accept=".csv,text/csv"
