@@ -76,9 +76,50 @@ function parseCSV(raw: string): Row[] {
 
 function mapStatus(shelf: string): ReadingStatus {
   const s = shelf.toLowerCase().trim();
-  if (s.includes("currently") || s.includes("in-lettura") || s.includes("reading")) return "reading";
-  if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf") || s.includes("unfinished"))
+  if (
+    s.includes("currently") ||
+    s.includes("in-lettura") ||
+    s.includes("reading") ||
+    s.includes("lettura") ||
+    s.includes("sto leggendo") ||
+    s.includes("in corso")
+  )
+    return "reading";
+  if (
+    s.includes("abandon") ||
+    s.includes("did-not-finish") ||
+    s.includes("dnf") ||
+    s.includes("unfinished") ||
+    s.includes("abbandonat") ||
+    s.includes("non finit")
+  )
     return "abandoned";
+  // "finito"/"terminato"/"letto" controllati prima del blocco "da leggere"
+  // perché nessuno di questi contiene "leggere" con "da".
+  if (
+    s.includes("finit") ||
+    s.includes("terminat") ||
+    s.includes("completat") ||
+    s.includes("finished") ||
+    s.includes("completed") ||
+    s === "letto" ||
+    s === "read"
+  )
+    return "read";
+  if (
+    s.includes("to-read") ||
+    s.includes("to read") ||
+    s.includes("unread") ||
+    s.includes("not-yet") ||
+    s.includes("not started") ||
+    s.includes("want") ||
+    s.includes("wish") ||
+    s.includes("desideri") ||
+    s.includes("da leggere") ||
+    s.includes("da comprare")
+  )
+    return "to_read";
+  if (s.includes("read")) return "read";
   // "to-read" / "unread" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
   if (
     s.includes("to-read") ||
