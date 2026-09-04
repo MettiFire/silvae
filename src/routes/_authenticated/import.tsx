@@ -133,11 +133,14 @@ function ImportPage() {
       for (const r of rows) {
         const title = r["Title"] ?? r["title"] ?? "";
         const author = r["Author"] ?? r["author"] ?? "";
-        const isbn = clean(r["ISBN13"] ?? r["ISBN"] ?? "");
-        const shelf = (r["Exclusive Shelf"] || r["Bookshelves"] || "").trim();
-        const dateRead = (r["Date Read"] ?? "").trim();
+        // Supporta sia Goodreads (ISBN13/ISBN) sia export con ISBN-13/ISBN-10.
+        const isbn = clean(r["ISBN13"] ?? r["ISBN-13"] ?? r["ISBN"] ?? r["ISBN-10"] ?? "");
+        const shelf = (r["Exclusive Shelf"] || r["Reading Status"] || r["Bookshelves"] || "").trim();
+        const dateRead = parseDate(r["Date Read"] ?? r["End Date"]);
+        const dateStarted = parseDate(r["Date Started"] ?? r["Start Date"]);
+        const favorite = truthy(r["Is Favorite"]);
         // Senza scaffale esplicito: se c'è una data di lettura o un voto, è "letto".
-        const rawRating = Number(r["My Rating"] ?? 0);
+        const rawRating = Number(r["My Rating"] ?? r["Rating"] ?? 0);
         const rating = rawRating > 0 ? rawRating : null;
         const status: ReadingStatus = shelf ? mapStatus(shelf) : dateRead || rating ? "read" : "to_read";
 
