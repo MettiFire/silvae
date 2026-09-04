@@ -120,18 +120,6 @@ function mapStatus(shelf: string): ReadingStatus {
   )
     return "to_read";
   if (s.includes("read")) return "read";
-  // "to-read" / "unread" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
-  if (
-    s.includes("to-read") ||
-    s.includes("to read") ||
-    s.includes("unread") ||
-    s.includes("not-yet") ||
-    s.includes("not started") ||
-    s.includes("want") ||
-    s.includes("wish")
-  )
-    return "to_read";
-  if (s.includes("read") || s.includes("finished") || s.includes("completed")) return "read";
   return "to_read";
 }
 
