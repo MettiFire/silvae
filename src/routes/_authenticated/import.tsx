@@ -79,10 +79,31 @@ function mapStatus(shelf: string): ReadingStatus {
   if (s.includes("currently") || s.includes("in-lettura") || s.includes("reading")) return "reading";
   if (s.includes("abandon") || s.includes("did-not-finish") || s.includes("dnf") || s.includes("unfinished"))
     return "abandoned";
-  // "to-read" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
-  if (s.includes("to-read") || s.includes("to read") || s.includes("want") || s.includes("wish")) return "to_read";
-  if (s.includes("read")) return "read";
+  // "to-read" / "unread" / "want-to-read" contengono "read": vanno controllati PRIMA di "read".
+  if (
+    s.includes("to-read") ||
+    s.includes("to read") ||
+    s.includes("unread") ||
+    s.includes("not-yet") ||
+    s.includes("not started") ||
+    s.includes("want") ||
+    s.includes("wish")
+  )
+    return "to_read";
+  if (s.includes("read") || s.includes("finished") || s.includes("completed")) return "read";
   return "to_read";
+}
+
+/** Converte valori tipo "yes"/"true"/"1"/"x" in booleano. */
+function truthy(v: string | undefined): boolean {
+  return /^(y|yes|true|1|x|sì|si)$/i.test((v ?? "").trim());
+}
+
+function parseDate(v: string | undefined): string | null {
+  const s = (v ?? "").trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 function clean(isbn: string) {
