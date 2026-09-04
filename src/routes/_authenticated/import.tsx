@@ -325,7 +325,7 @@ function ImportPage() {
                   <Link to="/book/$bookId" params={{ bookId: r.book!.id }} className="truncate hover:text-primary">
                     {r.book!.title}
                   </Link>
-                  <span className="shrink-0 text-xs text-muted-foreground">{r.status}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{STATUS_LABEL[r.status]}</span>
                 </li>
               ))}
               {imported.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">Nessun libro importato.</li>}
