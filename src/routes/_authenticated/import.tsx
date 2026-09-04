@@ -34,7 +34,7 @@ type Result = {
 /** Minimal RFC-4180 CSV parser (handles quoted fields and embedded commas/newlines).
  *  Detects comma vs tab delimiters and strips the UTF-8 BOM. */
 function parseCSV(raw: string): Row[] {
-  const text = raw.replace(/^﻿/, "");
+  const text = raw.replace(/^[\uFEFF]/, "");
   const firstLine = text.slice(0, text.indexOf("\n") === -1 ? text.length : text.indexOf("\n"));
   const delim = (firstLine.match(/\t/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? "\t" : ",";
   const rows: string[][] = [];
