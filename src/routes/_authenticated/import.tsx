@@ -240,8 +240,18 @@ function ImportPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Importa da Goodreads"
-        subtitle="Esporta la tua libreria da Goodreads (My Books → Import and export) e carica qui il file CSV."
+        title="Importa libreria da CSV"
+        subtitle="Carica l'export CSV della tua libreria (Goodreads o formato con ISBN-13/Reading Status): i libri vengono abbinati e assegnati allo stato corretto."
+        action={
+          <button
+            type="button"
+            onClick={() => void resetLibrary()}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-xl border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" /> Svuota libreria
+          </button>
+        }
       />
 
       <label
