@@ -194,10 +194,36 @@ function ImportPage() {
 
   const imported = results.filter((r) => r.book);
   const manual = results.filter((r) => !r.book);
+  const STATUS_LABEL: Record<ReadingStatus, string> = {
+    reading: "In lettura",
+    read: "Letti",
+    to_read: "Da leggere",
+    abandoned: "Abbandonati",
+  };
   const byStatus = (["reading", "read", "to_read", "abandoned"] as ReadingStatus[]).map((s) => ({
     status: s,
     items: imported.filter((r) => r.status === s),
   }));
+
+  async function resetLibrary() {
+    if (!user) return;
+    const ok = window.confirm(
+      "Vuoi davvero svuotare TUTTA la libreria? Questa azione elimina stati, progressi, voti e preferiti e non si può annullare.",
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("library_items").delete().eq("user_id", user.id);
+      if (error) throw error;
+      setResults([]);
+      void qc.invalidateQueries({ queryKey: ["library"] });
+      toast.success("Libreria svuotata");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore durante il reset");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
