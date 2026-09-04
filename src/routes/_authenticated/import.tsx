@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Upload, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Upload, CheckCircle2, AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +31,12 @@ type Result = {
   book: Book | null;
 };
 
-/** Minimal RFC-4180 CSV parser (handles quoted fields and embedded commas/newlines). */
-function parseCSV(text: string): Row[] {
+/** Minimal RFC-4180 CSV parser (handles quoted fields and embedded commas/newlines).
+ *  Detects comma vs tab delimiters and strips the UTF-8 BOM. */
+function parseCSV(raw: string): Row[] {
+  const text = raw.replace(/^﻿/, "");
+  const firstLine = text.slice(0, text.indexOf("\n") === -1 ? text.length : text.indexOf("\n"));
+  const delim = (firstLine.match(/\t/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? "\t" : ",";
   const rows: string[][] = [];
   let field = "";
   let row: string[] = [];
@@ -49,7 +53,7 @@ function parseCSV(text: string): Row[] {
       continue;
     }
     if (c === '"') quoted = true;
-    else if (c === ",") {
+    else if (c === delim) {
       row.push(field);
       field = "";
     } else if (c === "\n") {
