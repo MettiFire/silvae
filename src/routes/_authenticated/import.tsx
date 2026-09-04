@@ -274,7 +274,9 @@ function ImportPage() {
               : "Trascina qui il CSV o clicca per selezionarlo"}
         </span>
         <span className="text-sm text-muted-foreground">
-          Riconosciamo i campi Title, Author, ISBN, My Rating, Exclusive Shelf e Date Read.
+          Supportati export Goodreads (Title, Author, ISBN13, My Rating, Exclusive Shelf, Date Read) ed export con
+          ISBN-10/ISBN-13, Reading Status, Rating, Start/End Date, Is Favorite. Separatore virgola o tab.
+        </span>
         </span>
         <input
           type="file"
@@ -305,6 +307,18 @@ function ImportPage() {
             <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold">
               <CheckCircle2 className="h-5 w-5 text-primary" /> Importati ({imported.length})
             </h2>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {byStatus
+                .filter((g) => g.items.length > 0)
+                .map((g) => (
+                  <span
+                    key={g.status}
+                    className="rounded-full border border-border bg-accent px-3 py-1 text-xs font-medium"
+                  >
+                    {STATUS_LABEL[g.status]}: {g.items.length}
+                  </span>
+                ))}
+            </div>
             <ul className="divide-y divide-border rounded-xl border border-border bg-card">
               {imported.slice(0, 100).map((r, i) => (
                 <li key={`${r.title}-${i}`} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
