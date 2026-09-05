@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { cacheBook, searchBooks, type Book } from "@/lib/books";
+import { cacheBook, searchBooks, withCover, type Book } from "@/lib/books";
 import type { ReadingStatus } from "@/lib/library";
 
 export const Route = createFileRoute("/_authenticated/import")({
@@ -178,7 +178,7 @@ function ImportPage() {
           const hits = isbn
             ? await searchBooks(`isbn:${isbn}`, { max: 1 })
             : await searchBooks(`intitle:"${title}" inauthor:"${author}"`, { max: 1 });
-          book = hits[0] ?? null;
+          book = hits[0] ? await withCover(hits[0], isbn) : null;
         } catch {
           book = null;
         }
