@@ -258,3 +258,36 @@ export async function withCover(book: Book, isbn?: string): Promise<Book> {
   }
   return book;
 }
+
+/** Proposte di copertina alternative (Google Libri + Open Library). */
+export async function coverCandidates(book: Book): Promise<string[]> {
+  const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
+  const urls: string[] = [];
+  if (book.cover_url) urls.push(book.cover_url);
+  const [g, o] = await Promise.allSettled([
+    searchBooks(`intitle:"${book.title}"${book.authors[0] ? ` inauthor:"${book.authors[0]}"` : ""}`, { max: 12 }),
+    olSearch(q, 12),
+  ]);
+  for (const r of [g, o]) {
+    if (r.status !== "fulfilled") continue;
+    for (const b of r.value) if (b.cover_url) urls.push(b.cover_url);
+  }
+  return Array.from(new Set(urls));
+}
+
+/** Salva una nuova copertina nel catalogo condiviso. */
+export async function setBookCover(bookId: string, url: string) {
+  const { error } = await supabase.from("books").update({ cover_url: url }).eq("id", bookId);
+  if (error) throw error;
+}
+
+/** Carica un'immagine dell'utente e restituisce l'indirizzo pubblico firmato. */
+export async function uploadCover(userId: string, bookId: string, file: File) {
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${userId}/${bookId.replace(/[^A-Za-z0-9_-]/g, "")}-${Date.now()}.${ext || "jpg"}`;
+  const { error } = await supabase.storage.from("covers").upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { data, error: signErr } = await supabase.storage.from("covers").createSignedUrl(path, 60 * 60 * 24 * 3650);
+  if (signErr || !data?.signedUrl) throw signErr ?? new Error("Impossibile creare il link dell'immagine");
+  return data.signedUrl;
+}
