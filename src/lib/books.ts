@@ -23,7 +23,9 @@ const OL_API = "https://openlibrary.org";
 
 function upgradeCover(url?: string) {
   if (!url) return null;
-  return url.replace("http://", "https://").replace("&edge=curl", "").replace("zoom=1", "zoom=3");
+  // Keep Google's own zoom level: forcing a higher zoom often returns the
+  // grey "image not available" placeholder instead of the real cover.
+  return url.replace("http://", "https://").replace("&edge=curl", "");
 }
 
 type Volume = {
