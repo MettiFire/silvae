@@ -29,6 +29,8 @@ function Discover() {
     user,
     library,
     preferences,
+    language,
+    languageReady,
     dismissed,
     recommended,
     recsLoading,
@@ -52,8 +54,9 @@ function Discover() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["discover", genre, year, order],
-    queryFn: () => discoverBooks({ genre, year, order }),
+    queryKey: ["discover", genre, year, order, language ?? "any"],
+    enabled: languageReady,
+    queryFn: () => discoverBooks({ genre, year, order, language }),
   });
 
   const dismiss = async (bookId: string) => {

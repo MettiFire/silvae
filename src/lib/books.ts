@@ -1,3 +1,4 @@
+import { applyBookLanguage } from "@/lib/book-language";
 import { sameBook, coverUrls, descriptionText } from "@/lib/book-metadata";
 import { supabase } from "@/integrations/supabase/client";
 import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
@@ -15,6 +16,7 @@ export type Book = {
   isbns?: string[];
   average_rating?: number | null;
   ratings_count?: number | null;
+  reading_count?: number | null;
 };
 
 const OL_API = "https://openlibrary.org";
@@ -81,6 +83,7 @@ type OLDoc = {
   isbn?: string[];
   ratings_average?: number;
   ratings_count?: number;
+  editions?: {docs?: {title?:string;cover_i?:number;isbn?:string[]}[]};
 };
 
 function mapOLDoc(d: OLDoc): Book {
@@ -99,9 +102,10 @@ function mapOLDoc(d: OLDoc): Book {
   };
 }
 
-async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance"): Promise<Book[]> {
+async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance", language?:string): Promise<Book[]> {
   const params = new URLSearchParams({ limit: String(max), offset: String(startIndex),
     fields: "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,ratings_average,ratings_count" });
+  if (language) params.set("fields",params.get("fields")+",editions,editions.title,editions.cover_i,editions.isbn");
   if (order === "newest") params.set("sort", "new");
   // Preserve ISBN/author/subject semantics rather than turning everything into keywords.
   const isbn = query.match(/^isbn:(.+)$/);
@@ -111,10 +115,19 @@ async function olSearch(query: string, max: number, startIndex = 0, order: "rele
   else if (author) params.set("author", author[1]!.trim());
   else if (subject) params.set("subject", subject[1]!.trim());
   else params.set("q", query.replace(/intitle:/g, "title:").replace(/inauthor:/g, "author:"));
+  applyBookLanguage(params,"openlibrary",language);
   const res = await fetch(`${OL_API}/search.json?${params}`, { signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error("Errore nel recupero dei libri");
   const data = (await res.json()) as { docs?: OLDoc[] };
-  const docs = data.docs ?? [];
+  const docs = (data.docs ?? []).map(d=>{
+    const edition=language?d.editions?.docs?.[0]:undefined;
+    if(!edition)return d;
+    const localized:OLDoc={...d};
+    if(edition.title)localized.title=edition.title;
+    if(edition.cover_i)localized.cover_i=edition.cover_i;
+    localized.isbn=edition.isbn??[];
+    return localized;
+  });
   let covers: Record<string, string> = {};
   try {
     covers = await gbCovers({ data: { isbns: docs.flatMap(d => (d.isbn ?? []).slice(0, 3)) } });
@@ -187,7 +200,7 @@ async function olGetBook(workId: string): Promise<Book> {
 
 // ---------- Public API ----------
 
-export async function searchBooks(query: string, opts: { max?: number; orderBy?: "relevance" | "newest"; startIndex?: number } = {}) {
+export async function searchBooks(query: string, opts: { max?: number; orderBy?: "relevance" | "newest"; startIndex?: number; language?: string | undefined } = {}) {
   if (!query.trim()) return [];
   const max = Math.max(1, Math.min(40, opts.max ?? 20));
   const params = new URLSearchParams({
@@ -197,6 +210,7 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
     startIndex: String(opts.startIndex ?? 0),
     printType: "books",
   });
+  applyBookLanguage(params,"google",opts.language);
   try {
     const out = await gbSearch({ data: { params: Object.fromEntries(params) } });
     if (out.status !== 200) {
@@ -210,7 +224,7 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
   } catch {
     // Missing keys, upstream outages and exhausted quotas all use the public fallback.
   }
-  return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance");
+  return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance", opts.language);
 }
 
 /** Enrich incomplete stored records while keeping their original ID and chosen cover. */
@@ -283,12 +297,13 @@ export async function discoverBooks(opts: {
   year?: string;
   order?: "relevance" | "newest";
   query?: string;
+  language?: string | undefined;
 }) {
   const parts: string[] = [];
   if (opts.query?.trim()) parts.push(opts.query.trim());
   if (opts.genre && opts.genre !== "all") parts.push(`subject:"${opts.genre}"`);
   if (!parts.length) parts.push("subject:fiction");
-  const books = await searchBooks(parts.join(" "), { max: 30, orderBy: opts.order ?? "relevance" });
+  const books = await searchBooks(parts.join(" "), { max: 30, orderBy: opts.order ?? "relevance", language: opts.language });
   if (opts.year && opts.year !== "all") {
     const from = Number(opts.year);
     return books.filter((b) => (b.published_year ?? 0) >= from);

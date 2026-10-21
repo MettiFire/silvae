@@ -224,3 +224,24 @@ alcuni libri. Le fonti includono sia generi sia autori dei libri letti, in lettu
 e da leggere; i non letti esprimono interesse con peso inferiore a preferiti e
 voti alti, mentre i voti bassi restano segnali negativi. Le opere già presenti
 in libreria continuano a essere escluse dai suggerimenti.
+
+### Lingua, bibliografie e cronologia
+
+I gusti includono la lingua dei libri: `auto` usa la lingua principale del
+browser, una lingua esplicita la sostituisce, `any` rimuove il filtro. Le preferenze
+precedenti restano valide e usano automaticamente il browser. Le lingue non
+supportate ripiegano sull'inglese. Il filtro si applica ai consigli Home/Discovery
+e al catalogo Discovery tramite `langRestrict` Google e filtro ISO639-2 Open
+Library; per quest'ultimo si usano titolo e copertina dell'edizione corrispondente
+quando presenti. La lingua dell'interfaccia e i libri già salvati non cambiano.
+
+La pagina autore mostra un badge Letto per corrispondenze di ID, ISBN o
+titolo+autore verificabili e ordina globalmente la bibliografia per uscita,
+titolo o popolarità (aggiunte alle librerie Open Library, non media dei voti).
+Le traduzioni con titoli diversi e prive di identificativi condivisi possono
+non essere riconosciute automaticamente come già lette.
+
+La libreria apre sulla sezione Letti con Ultimi letti: data di completamento o
+ultima rilettura decrescente, date mancanti in fondo, senza usare la data di
+modifica del voto. Sono disponibili anche primi letti, ultimi aggiunti e titolo;
+le sezioni dei libri non conclusi partono dagli ultimi aggiunti.

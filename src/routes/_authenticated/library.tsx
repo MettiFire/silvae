@@ -7,6 +7,7 @@ import { BookmarkRating } from "@/components/BookmarkRating";
 import { ProgressBar } from "@/components/ProgressBar";
 import { useAuth } from "@/lib/auth";
 import { STATUS_LABEL, useLibrary, useUpdateItem, type ReadingStatus } from "@/lib/library";
+import { sortLibrary, type LibraryOrder } from "@/lib/library-order";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/library")({
@@ -30,7 +31,8 @@ function LibraryPage() {
   const { user } = useAuth();
   const { data: items = [], isLoading } = useLibrary(user?.id);
   const update = useUpdateItem();
-  const [tab, setTab] = useState<ReadingStatus>("reading");
+  const [tab, setTab] = useState<ReadingStatus>("read");
+  const [order, setOrder] = useState<LibraryOrder>("last-read");
   const [q, setQ] = useState("");
   const [view, setView] = useState<View>("grid");
   const [onlyReview, setOnlyReview] = useState(false);
@@ -51,20 +53,23 @@ function LibraryPage() {
     [items],
   );
 
-  const filtered = items.filter((i) => {
-    if (i.status !== tab) return false;
-    if (onlyReview && !i.needs_review) return false;
-    if (onlyFav && !i.favorite) return false;
-    if (minRating && Number(i.rating ?? 0) < minRating) return false;
-    if (genre !== "all" && !(i.books?.categories ?? []).includes(genre)) return false;
-    if (year !== "all" && String(i.books?.published_year ?? "") !== year) return false;
-    const term = q.trim().toLowerCase();
-    if (!term) return true;
-    return (
-      (i.books?.title ?? "").toLowerCase().includes(term) ||
-      (i.books?.authors ?? []).join(" ").toLowerCase().includes(term)
-    );
-  });
+  const filtered = sortLibrary(
+    items.filter((i) => {
+      if (i.status !== tab) return false;
+      if (onlyReview && !i.needs_review) return false;
+      if (onlyFav && !i.favorite) return false;
+      if (minRating && Number(i.rating ?? 0) < minRating) return false;
+      if (genre !== "all" && !(i.books?.categories ?? []).includes(genre)) return false;
+      if (year !== "all" && String(i.books?.published_year ?? "") !== year) return false;
+      const term = q.trim().toLowerCase();
+      if (!term) return true;
+      return (
+        (i.books?.title ?? "").toLowerCase().includes(term) ||
+        (i.books?.authors ?? []).join(" ").toLowerCase().includes(term)
+      );
+    }),
+    order,
+  );
 
   return (
     <AppShell>
@@ -75,7 +80,10 @@ function LibraryPage() {
           <button
             key={s}
             type="button"
-            onClick={() => setTab(s)}
+            onClick={() => {
+              setTab(s);
+              setOrder(s === "read" ? "last-read" : "added");
+            }}
             className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
               tab === s
                 ? "border-primary bg-primary text-primary-foreground"
@@ -144,6 +152,24 @@ function LibraryPage() {
             </option>
           ))}
         </select>
+        <label className="flex items-center gap-2 text-sm">
+          Ordina
+          <select
+            aria-label="Ordina la libreria"
+            value={order}
+            onChange={(e) => setOrder(e.target.value as LibraryOrder)}
+            className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
+          >
+            {tab === "read" && (
+              <>
+                <option value="last-read">Ultimi letti</option>
+                <option value="first-read">Primi letti</option>
+              </>
+            )}
+            <option value="added">Ultimi aggiunti</option>
+            <option value="title">Titolo A–Z</option>
+          </select>
+        </label>
         <div className="ml-auto flex gap-1">
           {(
             [
@@ -165,6 +191,11 @@ function LibraryPage() {
         </div>
       </div>
 
+      {tab === "read" && (order === "last-read" || order === "first-read") && (
+        <p className="mb-4 text-xs text-muted-foreground">
+          Ordine per data di fine lettura o ultima rilettura. I libri senza data sono in fondo.
+        </p>
+      )}
       {isLoading && <p className="text-sm text-muted-foreground">Caricamento…</p>}
       {!isLoading && filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">

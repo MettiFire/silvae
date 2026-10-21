@@ -10,7 +10,7 @@ import { AUTHORS_FIELD, parseFollowedAuthors, changeFollowedAuthor } from "@/lib
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
-import { sameBook } from "@/lib/book-metadata";
+import { hasReadBook } from "@/lib/library-order";
 
 export const Route = createFileRoute("/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
@@ -36,7 +36,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const { data: library = [] } = useLibrary(user?.id);
   const [chosen, setChosen] = useState<string | null>(selectedId ?? null);
   const [page, setPage] = useState(0);
-  const [sort, setSort] = useState<"new" | "title">("new");
+  const [sort, setSort] = useState<"new" | "title" | "popular">("new");
   const [busy, setBusy] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const candidates = useQuery({
@@ -204,10 +204,16 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
                 className="ml-2 rounded-lg border border-border bg-background p-2"
               >
                 <option value="new">Uscite più recenti</option>
+                <option value="popular">Più popolari</option>
                 <option value="title">Titolo A–Z</option>
               </select>
             </label>
           </div>
+          {sort === "popular" && (
+            <p className="mb-2 text-xs text-muted-foreground">
+              Popolarità basata sulle aggiunte alle librerie su Open Library.
+            </p>
+          )}
           <p className="mb-5 text-xs text-muted-foreground">
             Il catalogo può essere incompleto; date di traduzioni e ristampe possono differire. I
             libri futuri compaiono solo se già catalogati.
@@ -219,12 +225,21 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           )}
           <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {books.map((b) => (
-              <div key={b.id}>
+              <div key={b.id} className="relative">
                 <BookCard book={b} />
+                {hasReadBook(b, library) && (
+                  <span
+                    aria-label="Già letto"
+                    className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-semibold text-white shadow-sm"
+                  >
+                    <Check aria-hidden="true" className="h-3 w-3" />
+                    Letto
+                  </span>
+                )}
                 <p className="mt-2 text-xs text-muted-foreground">
                   {b.published_year ?? "Anno non disponibile"}
-                  {library.some((i) => i.status === "read" && i.books && sameBook(i.books, b))
-                    ? " · Già letto"
+                  {sort === "popular" && b.reading_count != null
+                    ? ` · ${b.reading_count.toLocaleString("it-IT")} aggiunte`
                     : ""}
                 </p>
               </div>

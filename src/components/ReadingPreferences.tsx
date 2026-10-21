@@ -9,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BOOK_LANGUAGES, browserBookLanguage } from "@/lib/book-language";
+import { useBookLanguage } from "@/lib/use-book-language";
 import { useAuth } from "@/lib/auth";
 import { saveReadingPreferences } from "@/lib/reading-preferences-account";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +34,7 @@ export function ReadingPreferencesForm({
   busy?: boolean;
 }) {
   const [form, setForm] = useState(initial ?? emptyPreferences());
+  const { locale } = useBookLanguage(form.language);
   const toggle = (field: "liked" | "avoided", id: string) => {
     const other = field === "liked" ? "avoided" : "liked";
     setForm((f) => ({
@@ -109,6 +112,33 @@ export function ReadingPreferencesForm({
         </select>
         <span className="text-xs font-normal text-muted-foreground">
           Una preferenza, non un limite: potrai scoprire anche libri di altre lunghezze.
+        </span>
+      </label>
+      <label className="flex flex-col gap-2 text-sm font-medium">
+        Lingua dei libri
+        <select
+          aria-label="Lingua dei libri"
+          disabled={busy}
+          value={form.language}
+          onChange={(e) => setForm({ ...form, language: e.target.value })}
+          className="rounded-lg border border-border bg-background p-2 font-normal"
+        >
+          <option value="auto">
+            Automatica — dal browser
+            {locale
+              ? ` (${BOOK_LANGUAGES.find((l) => l.code === browserBookLanguage(locale))?.label})`
+              : ""}
+          </option>
+          <option value="any">Tutte le lingue</option>
+          {BOOK_LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs font-normal text-muted-foreground">
+          Si applica ai consigli e alla Discovery. I libri già in libreria restano visibili in
+          qualsiasi lingua.
         </span>
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -208,6 +238,14 @@ export function ReadingPreferences({ onboarding = false }: { onboarding?: boolea
                       .map((id) => READING_GENRES.find((g) => g.id === id)?.label)
                       .join(" · ")
                   : "Scegli cosa ami leggere: non servono voti o letture precedenti."}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Lingua dei libri:{" "}
+                {prefs?.language === "any"
+                  ? "tutte le lingue"
+                  : !prefs?.language || prefs.language === "auto"
+                    ? "automatica, dal browser"
+                    : BOOK_LANGUAGES.find((l) => l.code === prefs.language)?.label}
               </p>
             </div>
             <button

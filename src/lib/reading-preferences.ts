@@ -1,3 +1,4 @@
+import { parseBookLanguage } from "./book-language.ts";
 import type { Book } from "./books";
 import type { LibraryItem } from "./library";
 import { sameBook } from "./book-metadata.ts";
@@ -104,6 +105,7 @@ export const READING_GENRES = [
 ] as const;
 export type ReadingPreferences = {
   version: 1;
+  language: string;
   status: "completed" | "skipped";
   liked: string[];
   avoided: string[];
@@ -111,6 +113,7 @@ export type ReadingPreferences = {
 };
 export const emptyPreferences = (): ReadingPreferences => ({
   version: 1,
+  language: "auto",
   status: "skipped",
   liked: [],
   avoided: [],
@@ -129,6 +132,7 @@ export function parsePreferences(raw: unknown): ReadingPreferences | null {
   if (r["status"] === "completed" && !liked.length) return null;
   return {
     version: 1,
+    language: parseBookLanguage(r["language"]),
     status: r["status"] as ReadingPreferences["status"],
     liked,
     avoided: list(r["avoided"]).filter((id) => !liked.includes(id)),

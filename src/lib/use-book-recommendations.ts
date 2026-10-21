@@ -10,6 +10,7 @@ import {
   recommendationSources,
   rankRecommendations,
 } from "@/lib/reading-preferences";
+import { useBookLanguage } from "@/lib/use-book-language";
 import { nextRecommendationRotation } from "@/lib/recommendation-rotation";
 export function useBookRecommendations() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +37,7 @@ export function useBookRecommendations() {
   });
 
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
+  const { language, ready: languageReady } = useBookLanguage(preferences?.language);
   const plan = recommendationSources(preferences, library);
   const planKey = plan.map((g) => g.id).join("|");
   const {
@@ -44,16 +46,16 @@ export function useBookRecommendations() {
     isError: recsError,
     refetch: retryRecs,
   } = useQuery({
-    queryKey: ["recs-v3", planKey, seed, user?.id],
-    enabled: seed !== null && !authLoading && (!user || !libraryLoading),
+    queryKey: ["recs-v3", planKey, seed, user?.id, language ?? "any"],
+    enabled: seed !== null && languageReady && !authLoading && (!user || !libraryLoading),
     queryFn: async () => {
       const lists = await Promise.allSettled(
         plan.map(async (g, index) => {
           const offset = (((seed ?? 0) + index) % 5) * 12;
-          let books = await searchBooks(g.query, { max: 12, startIndex: offset });
+          let books = await searchBooks(g.query, { max: 12, startIndex: offset, language });
           // An author with a small bibliography may not have a later page.
           if (!books.length && offset > 0)
-            books = await searchBooks(g.query, { max: 12, startIndex: 0 });
+            books = await searchBooks(g.query, { max: 12, startIndex: 0, language });
           return books
             .filter(
               (book) =>
@@ -79,6 +81,8 @@ export function useBookRecommendations() {
     user,
     library,
     preferences,
+    language,
+    languageReady,
     dismissed,
     recommended,
     recsLoading: seed === null || authLoading || (!!user && libraryLoading) || recsLoading,

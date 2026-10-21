@@ -62,15 +62,16 @@ export async function getAuthor(id: string): Promise<AuthorDetails> {
 export async function getAuthorBooks(
   id: string,
   page: number,
-  sort: "new" | "title",
+  sort: "new" | "title" | "popular",
 ): Promise<{ books: Book[]; total: number }> {
   if (!/^OL\d+A$/.test(id)) throw new Error("Autore non valido.");
   const params = new URLSearchParams({
     q: `author_key:${id}`,
     limit: "24",
     offset: String(Math.max(0, page) * 24),
-    sort: sort === "new" ? "new" : "title",
-    fields: "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i",
+    sort: sort === "popular" ? "readinglog" : sort,
+    fields:
+      "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,readinglog_count",
   });
   const data = await get(`/search.json?${params}`);
   return {
@@ -84,6 +85,8 @@ export async function getAuthorBooks(
       page_count: d.number_of_pages_median ?? null,
       categories: (d.subject ?? []).slice(0, 6),
       description: null,
+      isbns: d.isbn ?? [],
+      reading_count: d.readinglog_count ?? null,
     })),
   };
 }
