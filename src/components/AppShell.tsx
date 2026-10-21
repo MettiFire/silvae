@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
@@ -40,6 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <ReadingPreferences onboarding />
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 md:flex">
         <Link to="/" className="mb-6 flex items-center gap-2 px-2">
           <Logo className="h-7 w-7 text-primary" />
@@ -96,14 +98,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </header>
-        <nav aria-label="Altre sezioni" className="flex gap-4 overflow-x-auto border-b border-border px-4 py-2 text-xs md:hidden">
-          {NAV.slice(5).map(({ to, label }) => <Link key={to} to={to} className="shrink-0 py-1">{label}</Link>)}
-          {!user && <Link to="/auth" className="shrink-0 py-1 text-primary">Accedi</Link>}
+        <nav
+          aria-label="Altre sezioni"
+          className="flex gap-4 overflow-x-auto border-b border-border px-4 py-2 text-xs md:hidden"
+        >
+          {NAV.slice(5).map(({ to, label }) => (
+            <Link key={to} to={to} className="shrink-0 py-1">
+              {label}
+            </Link>
+          ))}
+          {!user && (
+            <Link to="/auth" className="shrink-0 py-1 text-primary">
+              Accedi
+            </Link>
+          )}
         </nav>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
         <nav className="sticky bottom-0 flex justify-around border-t border-border bg-background/95 py-2 backdrop-blur md:hidden">
           {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
-            <Link key={to} to={to} className="flex flex-col items-center gap-0.5 px-2 text-[10px] text-muted-foreground" activeProps={{ className: "text-primary" }}>
+            <Link
+              key={to}
+              to={to}
+              className="flex flex-col items-center gap-0.5 px-2 text-[10px] text-muted-foreground"
+              activeProps={{ className: "text-primary" }}
+            >
               <Icon className="h-5 w-5" />
               {label.split(" ")[0]}
             </Link>
@@ -114,7 +132,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className={cn("mb-6 flex flex-wrap items-end justify-between gap-3")}>
       <div>

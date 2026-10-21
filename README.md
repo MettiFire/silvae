@@ -185,3 +185,29 @@ Progress is derived from current library records, never stored as a separate cou
 Subscribed year ranges and backlog book IDs are frozen at joining. Birth-year paths group joint winners into one yearly slot; the full prize paths give every joint-winning work its own slot. Leaving a challenge removes that subscription and its associations without changing library records or the annual goal. To change a path's scope, leave it and join again. To refresh award facts, verify the official archive, update the verification date and preserve existing stable winner IDs; never add nominees as winners. Award thumbnails are optional, and catalogue lookup remains available if a cover is unavailable.
 
 Validation covers enrolment persistence/identity/error handling, automatic and manually linked progress, translations, Nobel author rules, joint winners, duplicate editions/countries, historical/date rules, frozen goals, malformed preferences and mobile/desktop UI flows. The browser preview uses synthetic local data rather than production user accounts.
+
+### Gusti di lettura e consigli senza storico
+
+Al primo accesso viene proposto un percorso facoltativo: 1–5 generi apprezzati,
+fino a 5 generi da evitare e lunghezza preferita. Si modifica dal profilo e si
+salva nel campo Auth `reading_preferences_v1`, indipendente da sfide e autori.
+Chi salta riceve una selezione iniziale di generi diversi. Non serve uno storico
+di altri utenti. Discover combina questi gusti con preferiti e voti personali,
+penalizza i voti bassi, varia generi/autori e spiega i suggerimenti. La lunghezza
+è un segnale morbido; le esclusioni di genere usano i metadati disponibili nel
+catalogo e non equivalgono a una verifica dei contenuti. I doppioni della propria
+libreria vengono esclusi anche per titolo/autore quando riconoscibili; traduzioni
+con titoli diversi richiedono ancora un'identità di opera condivisa. Le scelte
+"Non mi interessa" restano per identificativo del catalogo.
+
+### Autori seguiti
+
+Le pagine autore includono ricerca con disambiguazione degli omonimi, biografia,
+foto, fonte Open Library e bibliografia paginata per identificativo stabile,
+ordinabile per prima pubblicazione nota o titolo. Dal profilo si ritrovano gli
+autori seguiti. La selezione è conservata nell'account in `followed_authors_v1`
+(fino a 80 autori), senza modificare i libri o gli altri metadati.
+La bibliografia si aggiorna consultando la pagina (cache di cinque minuti),
+può includere traduzioni, ristampe, raccolte e voci duplicate del catalogo;
+non è una garanzia di copertura completa o di anteprime editoriali. Questo
+rilascio non invia notifiche automatiche o email sulle uscite.
