@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { gbSearch, gbVolume } from "@/lib/google-books.functions";
+import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
 
 export type Book = {
   id: string;
@@ -73,6 +73,8 @@ type OLDoc = {
   subject?: string[];
   cover_i?: number;
   isbn?: string[];
+  ratings_average?: number;
+  ratings_count?: number;
 };
 
 function mapOLDoc(d: OLDoc): Book {
@@ -85,19 +87,40 @@ function mapOLDoc(d: OLDoc): Book {
     page_count: d.number_of_pages_median ?? null,
     categories: (d.subject ?? []).slice(0, 4),
     description: null,
+    average_rating: d.ratings_average ?? null,
+    ratings_count: d.ratings_count ?? null,
   };
 }
 
-async function olSearch(query: string, max: number): Promise<Book[]> {
-  const params = new URLSearchParams({ q: query, limit: String(max) });
-  const res = await fetch(`${OL_API}/search.json?${params}`);
+async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance"): Promise<Book[]> {
+  const params = new URLSearchParams({ limit: String(max), offset: String(startIndex),
+    fields: "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,ratings_average,ratings_count" });
+  if (order === "newest") params.set("sort", "new");
+  // Preserve ISBN/author/subject semantics rather than turning everything into keywords.
+  const isbn = query.match(/^isbn:(.+)$/);
+  const author = query.match(/^inauthor:"?([^"\n]+)"?$/);
+  const subject = query.match(/^subject:"?([^"\n]+)"?$/);
+  if (isbn) params.set("isbn", isbn[1]!.trim());
+  else if (author) params.set("author", author[1]!.trim());
+  else if (subject) params.set("subject", subject[1]!.trim());
+  else params.set("q", query.replace(/intitle:/g, "title:").replace(/inauthor:/g, "author:"));
+  const res = await fetch(`${OL_API}/search.json?${params}`, { signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error("Errore nel recupero dei libri");
   const data = (await res.json()) as { docs?: OLDoc[] };
-  return (data.docs ?? []).map(mapOLDoc);
+  const docs = data.docs ?? [];
+  let covers: Record<string, string> = {};
+  try {
+    covers = await gbCovers({ data: { isbns: docs.flatMap(d => (d.isbn ?? []).slice(0, 3)) } });
+  } catch { /* The original Open Library cover remains available as fallback. */ }
+  return docs.map(d => {
+    const book = mapOLDoc(d);
+    const cover = (d.isbn ?? []).map(i => covers[i]).find(Boolean);
+    return cover ? { ...book, cover_url: cover } : book;
+  });
 }
 
 async function olGetBook(workId: string): Promise<Book> {
-  const res = await fetch(`${OL_API}/works/${workId}.json`);
+  const res = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}.json`, { signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error("Libro non trovato");
   const w = (await res.json()) as {
     title?: string;
@@ -106,12 +129,14 @@ async function olGetBook(workId: string): Promise<Book> {
     covers?: number[];
     authors?: { author?: { key?: string } }[];
   };
-  const authorNames: string[] = [];
-  for (const a of w.authors ?? []) {
+  let catalogue: Book | undefined;
+  try { catalogue = (await olSearch(`key:/works/${workId}`, 1))[0]; } catch { /* Work details still render. */ }
+  const authorNames: string[] = [...(catalogue?.authors ?? [])];
+  for (const a of authorNames.length ? [] : (w.authors ?? [])) {
     const key = a.author?.key;
     if (!key) continue;
     try {
-      const ar = await fetch(`${OL_API}${key}.json`);
+      const ar = await fetch(`${OL_API}${key}.json`, { signal: AbortSignal.timeout(8000) });
       if (ar.ok) {
         const ad = (await ar.json()) as { name?: string };
         if (ad.name) authorNames.push(ad.name);
@@ -124,23 +149,19 @@ async function olGetBook(workId: string): Promise<Book> {
     id: `ol:${workId}`,
     title: w.title ?? "Senza titolo",
     authors: authorNames,
-    cover_url: w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null,
-    published_year: null,
-    page_count: null,
+    cover_url: catalogue?.cover_url ?? (w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null),
+    published_year: catalogue?.published_year ?? null,
+    page_count: catalogue?.page_count ?? null,
     categories: (w.subjects ?? []).slice(0, 6),
     description: typeof w.description === "string" ? w.description : (w.description?.value ?? null),
   };
-}
-
-function isQuotaError(e: unknown) {
-  return typeof e === "object" && e !== null && "status" in e && (e as { status?: number }).status === 429;
 }
 
 // ---------- Public API ----------
 
 export async function searchBooks(query: string, opts: { max?: number; orderBy?: "relevance" | "newest"; startIndex?: number } = {}) {
   if (!query.trim()) return [];
-  const max = opts.max ?? 20;
+  const max = Math.max(1, Math.min(40, opts.max ?? 20));
   const params = new URLSearchParams({
     q: query,
     maxResults: String(max),
@@ -156,15 +177,18 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
       throw err;
     }
     const data = JSON.parse(out.json || "{}") as { items?: Volume[] };
-    return (data.items ?? []).map(mapVolume);
-  } catch (e) {
-    if (!isQuotaError(e)) throw new Error("Errore nel recupero dei libri");
-    // Google Books quota exhausted: fall back to Open Library.
-    return olSearch(query.replace(/(isbn|inauthor|subject):/g, ""), max);
+    const books = (data.items ?? []).map(mapVolume);
+    if (books.length) return books;
+  } catch {
+    // Missing keys, upstream outages and exhausted quotas all use the public fallback.
   }
+  return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance");
 }
 
 export async function getBook(id: string): Promise<Book> {
+  // Imported books and manually chosen covers must survive API outages and reloads.
+  const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
+  if (cached) return cached as Book;
   if (id.startsWith("ol:")) return olGetBook(id.slice(3));
   const out = await gbVolume({ data: { id } });
   if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");

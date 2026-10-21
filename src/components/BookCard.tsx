@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import type { Book } from "@/lib/books";
@@ -5,7 +6,8 @@ import { BookmarkRating } from "@/components/BookmarkRating";
 import { cn } from "@/lib/utils";
 
 export function BookCover({ book, className }: { book: Pick<Book, "title" | "cover_url">; className?: string }) {
-  if (!book.cover_url) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!book.cover_url || failedUrl === book.cover_url) {
     return (
       <div className={cn("cover-frame flex items-center justify-center p-3 text-center", className)}>
         <span className="font-display text-xs text-muted-foreground">{book.title}</span>
@@ -13,7 +15,7 @@ export function BookCover({ book, className }: { book: Pick<Book, "title" | "cov
     );
   }
   return (
-    <img src={book.cover_url} alt={`Copertina di ${book.title}`} loading="lazy" className={cn("cover-frame", className)} />
+    <img onError={() => setFailedUrl(book.cover_url)} src={book.cover_url} alt={`Copertina di ${book.title}`} loading="lazy" className={cn("cover-frame", className)} />
   );
 }
 

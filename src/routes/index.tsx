@@ -29,9 +29,9 @@ function Home() {
   const reading = library.filter((i) => i.status === "reading");
   const finished = library.filter((i) => i.status === "read");
 
-  const { data: trending = [] } = useQuery({
+  const { data: trending = [], isPending, isError, refetch } = useQuery({
     queryKey: ["trending"],
-    queryFn: () => searchBooks("subject:fiction", { max: 12, orderBy: "newest" }),
+    queryFn: () => searchBooks("subject:fiction", { max: 12 }),
   });
 
   return (
@@ -105,8 +105,11 @@ function Home() {
       )}
 
       <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
-        <BookOpen className="h-5 w-5 text-primary" /> Novità in libreria
+        <BookOpen className="h-5 w-5 text-primary" /> Libri da scoprire
       </h2>
+      {isPending && <p role="status" className="mb-4 text-sm text-muted-foreground">Caricamento libri e copertine…</p>}
+      {isError && <p role="alert" className="mb-4 text-sm">Il catalogo non è disponibile al momento. <button className="text-primary" onClick={() => void refetch()}>Riprova</button></p>}
+      {!isPending && !isError && !trending.length && <p className="mb-4 text-sm text-muted-foreground">Nessuna novità disponibile. Prova la ricerca per titolo o autore.</p>}
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
         {trending.map((b) => (
           <BookCard key={b.id} book={b} />

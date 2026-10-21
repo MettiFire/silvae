@@ -30,6 +30,7 @@ function LibraryPage() {
   const [tab, setTab] = useState<ReadingStatus>("reading");
   const [q, setQ] = useState("");
   const [view, setView] = useState<View>("large");
+  const [onlyReview, setOnlyReview] = useState(false);
   const [onlyFav, setOnlyFav] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [genre, setGenre] = useState("all");
@@ -46,6 +47,7 @@ function LibraryPage() {
 
   const filtered = items.filter((i) => {
     if (i.status !== tab) return false;
+    if (onlyReview && !i.needs_review) return false;
     if (onlyFav && !i.favorite) return false;
     if (minRating && Number(i.rating ?? 0) < minRating) return false;
     if (genre !== "all" && !(i.books?.categories ?? []).includes(genre)) return false;
@@ -87,6 +89,9 @@ function LibraryPage() {
         />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> Preferiti
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={onlyReview} onChange={e => setOnlyReview(e.target.checked)} /> Da verificare
         </label>
         <select
           value={minRating}
@@ -150,6 +155,7 @@ function LibraryPage() {
                   {i.books?.title}
                 </Link>
                 <p className="text-xs text-muted-foreground">{i.books?.authors.join(", ")}</p>
+                {i.needs_review && <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>}
                 {i.status === "reading" && (
                   <ProgressBar className="mt-2 max-w-sm" current={i.current_page} total={i.total_pages ?? 0} />
                 )}
@@ -180,9 +186,10 @@ function LibraryPage() {
                 favorite={i.favorite}
                 onToggleFavorite={() => update.mutate({ id: i.id, patch: { favorite: !i.favorite } })}
                 footer={
-                  i.status === "reading" ? (
-                    <ProgressBar className="mt-1" current={i.current_page} total={i.total_pages ?? 0} showLabel={false} />
-                  ) : null
+                  <>
+                    {i.needs_review && <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>}
+                    {i.status === "reading" && <ProgressBar className="mt-1" current={i.current_page} total={i.total_pages ?? 0} showLabel={false} />}
+                  </>
                 }
               />
             ) : null,

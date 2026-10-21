@@ -141,3 +141,21 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Catalogue, authentication and CSV import
+
+- Search uses Google Books with an 8-second timeout, then Open Library on errors or empty results. Open Library records are enriched with Google Books Dynamic Links thumbnails by ISBN, without requiring a Books v1 API key.
+- Email/password registration, login, confirmation email, password recovery and Google sign-in use the existing Lovable Cloud project. In Cloud authentication settings, keep the published origin and `/auth?recovery=true` recovery URL allowed. Email delivery and OAuth must be verified with a real account on the published site.
+- Import accepts comma, semicolon and tab-separated files, UTF-8/BOM and Windows-1252, quoted fields and multiline values. It previews columns before writing, supports manual mapping, validates dates/numbers and skips existing books by default. The explicit update option replaces imported fields on existing library entries.
+- Uncertain matches are stored from CSV metadata with `needs_review=true`; missing reading dates stay unknown. Errors are reported per row. Cancelling keeps already saved books. There is no destructive library reset in the importer.
+- Example file: `public/import-template.csv`. File limit: 10 MB and 5,000 rows.
+
+Validation (Node 24):
+
+```sh
+node --test tests/*.test.mjs
+npx tsc --noEmit
+npm run build
+```
+
+Pushes to the connected `main` branch synchronize source into Lovable. The public app is updated separately with **Publish → Publish changes** in the Lovable editor.

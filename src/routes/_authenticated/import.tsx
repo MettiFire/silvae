@@ -1,393 +1,173 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Upload, CheckCircle2, AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { cacheBook, searchBooks, withCover, type Book } from "@/lib/books";
-import type { ReadingStatus } from "@/lib/library";
+import { cacheBook, searchBooks, type Book } from "@/lib/books";
+import { parseCSV, detectMapping, importRow, normalize, FIELD_LABELS, type ColumnMapping, type ImportField } from "@/lib/csv-import";
 
 export const Route = createFileRoute("/_authenticated/import")({
-  head: () => ({
-    meta: [
-      { title: "Importa da Goodreads — Paginae" },
-      { name: "description", content: "Carica il tuo export CSV di Goodreads e trasferisci la libreria su Paginae." },
-      { property: "og:title", content: "Importa da Goodreads — Paginae" },
-      { property: "og:description", content: "Carica il CSV di Goodreads e trasferisci la tua libreria." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Importa libri da CSV — Paginae" }] }),
   component: ImportPage,
 });
-
-type Row = Record<string, string>;
-
-type Result = {
-  title: string;
-  author: string;
-  status: ReadingStatus;
-  rating: number | null;
-  book: Book | null;
-};
-
-/** Minimal RFC-4180 CSV parser (handles quoted fields and embedded commas/newlines).
- *  Detects comma vs tab delimiters and strips the UTF-8 BOM. */
-function parseCSV(raw: string): Row[] {
-  const text = raw.replace(/^[\uFEFF]/, "");
-  const firstLine = text.slice(0, text.indexOf("\n") === -1 ? text.length : text.indexOf("\n"));
-  const delim = (firstLine.match(/\t/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? "\t" : ",";
-  const rows: string[][] = [];
-  let field = "";
-  let row: string[] = [];
-  let quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quoted) {
-      if (c === '"') {
-        if (text[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else quoted = false;
-      } else field += c;
-      continue;
-    }
-    if (c === '"') quoted = true;
-    else if (c === delim) {
-      row.push(field);
-      field = "";
-    } else if (c === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-    } else if (c !== "\r") field += c;
-  }
-  if (field || row.length) {
-    row.push(field);
-    rows.push(row);
-  }
-  const [header, ...body] = rows;
-  if (!header) return [];
-  return body
-    .filter((r) => r.some((v) => v.trim()))
-    .map((r) => Object.fromEntries(header.map((h, idx) => [h.trim(), (r[idx] ?? "").trim()])));
-}
-
-function mapStatus(shelf: string): ReadingStatus {
-  const s = shelf.toLowerCase().trim();
-  if (
-    s.includes("currently") ||
-    s.includes("in-lettura") ||
-    s.includes("reading") ||
-    s.includes("lettura") ||
-    s.includes("sto leggendo") ||
-    s.includes("in corso")
-  )
-    return "reading";
-  if (
-    s.includes("abandon") ||
-    s.includes("did-not-finish") ||
-    s.includes("dnf") ||
-    s.includes("unfinished") ||
-    s.includes("abbandonat") ||
-    s.includes("non finit")
-  )
-    return "abandoned";
-  // "finito"/"terminato"/"letto" controllati prima del blocco "da leggere"
-  // perché nessuno di questi contiene "leggere" con "da".
-  if (
-    s.includes("finit") ||
-    s.includes("terminat") ||
-    s.includes("completat") ||
-    s.includes("finished") ||
-    s.includes("completed") ||
-    s === "letto" ||
-    s === "read"
-  )
-    return "read";
-  if (
-    s.includes("to-read") ||
-    s.includes("to read") ||
-    s.includes("unread") ||
-    s.includes("not-yet") ||
-    s.includes("not started") ||
-    s.includes("want") ||
-    s.includes("wish") ||
-    s.includes("desideri") ||
-    s.includes("da leggere") ||
-    s.includes("da comprare")
-  )
-    return "to_read";
-  if (s.includes("read")) return "read";
-  return "to_read";
-}
-
-/** Converte valori tipo "yes"/"true"/"1"/"x" in booleano. */
-function truthy(v: string | undefined): boolean {
-  return /^(y|yes|true|1|x|sì|si)$/i.test((v ?? "").trim());
-}
-
-function parseDate(v: string | undefined): string | null {
-  const s = (v ?? "").trim();
-  if (!s) return null;
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
-function clean(isbn: string) {
-  return isbn.replace(/[^0-9Xx]/g, "");
-}
+type Result = { title: string; message: string; bookId?: string; kind: 'imported' | 'skipped' | 'error' };
+const inputClass = 'rounded-lg border border-border bg-background px-3 py-2 text-sm';
 
 function ImportPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [busy, setBusy] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [fileName, setFileName] = useState('');
+  const [csv, setCSV] = useState<ReturnType<typeof parseCSV> | null>(null);
+  const [mapping, setMapping] = useState<ColumnMapping>(() => detectMapping([]));
   const [results, setResults] = useState<Result[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [overwrite, setOverwrite] = useState(false);
+  const [fileError, setFileError] = useState('');
+  const cancel = useRef(false);
+  const fields = Object.keys(FIELD_LABELS) as ImportField[];
+  const preview = csv?.rows.slice(0, 5).map(row => {
+    try { return { value: importRow(row, mapping), error: '' }; }
+    catch (error) { return { value: null, error: error instanceof Error ? error.message : 'Riga non valida' }; }
+  }) ?? [];
 
-  async function handleFile(file: File) {
-    if (!user) return;
-    setBusy(true);
-    setResults([]);
+  async function loadFile(file: File) {
+    setFileError(''); setCSV(null); setResults([]); setProgress(0);
     try {
-      const rows = parseCSV(await file.text());
-      if (!rows.length) {
-        toast.error("CSV vuoto o non valido");
-        return;
-      }
-      setProgress({ done: 0, total: rows.length });
-      const out: Result[] = [];
-      for (const r of rows) {
-        const title = r["Title"] ?? r["title"] ?? "";
-        const author = r["Author"] ?? r["author"] ?? "";
-        // Supporta sia Goodreads (ISBN13/ISBN) sia export con ISBN-13/ISBN-10.
-        const isbn = clean(r["ISBN13"] ?? r["ISBN-13"] ?? r["ISBN"] ?? r["ISBN-10"] ?? "");
-        const shelf = (r["Exclusive Shelf"] || r["Reading Status"] || r["Bookshelves"] || "").trim();
-        const dateRead = parseDate(r["Date Read"] ?? r["End Date"]);
-        const dateStarted = parseDate(r["Date Started"] ?? r["Start Date"]);
-        const favorite = truthy(r["Is Favorite"]);
-        // Senza scaffale esplicito: se c'è una data di lettura o un voto, è "letto".
-        const rawRating = Number(r["My Rating"] ?? r["Rating"] ?? 0);
-        const rating = rawRating > 0 ? rawRating : null;
-        const status: ReadingStatus = shelf ? mapStatus(shelf) : dateRead || rating ? "read" : "to_read";
+      if (file.size > 10 * 1024 * 1024) throw new Error('Il file supera 10 MB. Dividilo in file più piccoli.');
+      const bytes = await file.arrayBuffer();
+      let text: string;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+      catch { text = new TextDecoder('windows-1252').decode(bytes); }
+      const parsed = parseCSV(text);
+      setCSV(parsed); setMapping(detectMapping(parsed.headers)); setFileName(file.name);
+    } catch (error) { setFileError(error instanceof Error ? error.message : 'Impossibile leggere il file'); }
+  }
 
-        let book: Book | null = null;
+  async function runImport() {
+    if (!csv || !user || busy) return;
+    cancel.current = false; setBusy(true); setResults([]); setProgress(0);
+    const out: Result[] = [];
+    try {
+      const { data: existing, error } = await supabase.from('library_items').select('book_id, books(title,authors)').eq('user_id', user.id);
+      if (error) throw error;
+      const knownIds = new Set((existing ?? []).map(i => i.book_id));
+      const signature = (title: string, author: string) => `${normalize(title)}|${normalize(author)}`;
+      const knownTitles = new Set((existing ?? []).map(i => signature(i.books?.title ?? '', i.books?.authors?.join(', ') ?? '')));
+      for (const [index, row] of csv.rows.entries()) {
+        if (cancel.current) break;
+        let title = row[mapping.title] || `Riga ${index + 2}`;
         try {
-          const hits = isbn
-            ? await searchBooks(`isbn:${isbn}`, { max: 1 })
-            : await searchBooks(`intitle:"${title}" inauthor:"${author}"`, { max: 1 });
-          book = hits[0] ? await withCover(hits[0], isbn) : null;
-        } catch {
-          book = null;
-        }
-
-        if (book) {
-          try {
-            await cacheBook(book);
-            const now = new Date().toISOString();
-            await supabase.from("library_items").upsert(
-              {
-                user_id: user.id,
-                book_id: book.id,
-                status,
-                rating,
-                favorite,
-                total_pages: book.page_count,
-                current_page: status === "read" ? (book.page_count ?? 0) : 0,
-                started_at: status === "reading" ? (dateStarted ?? null) : dateStarted,
-                finished_at: status === "read" ? (dateRead ?? now) : null,
-                needs_review: false,
-              },
-              { onConflict: "user_id,book_id" },
-            );
-          } catch {
-            book = null;
+          const item = importRow(row, mapping);
+          title = item.title || item.isbn;
+          const sig = signature(item.title, item.author);
+          if (!overwrite && item.title && knownTitles.has(sig)) {
+            out.push({ title, message: 'Già in libreria: dati conservati', kind: 'skipped' });
+            setProgress(index + 1); continue;
           }
+          let found: Book | undefined;
+          // ISBN is an exact lookup. A title-only match needs matching title AND author.
+          try {
+            const hits = await searchBooks(item.isbn ? `isbn:${item.isbn}` : `intitle:"${item.title}"${item.author ? ` inauthor:"${item.author}"` : ''}`, { max: 5 });
+            found = item.isbn ? hits[0] : hits.find(b => normalize(b.title) === normalize(item.title) &&
+              !!item.author && b.authors.some(a => normalize(a) === normalize(item.author)));
+          } catch { /* Preserve CSV metadata even when both catalogues are unavailable. */ }
+          if (cancel.current) break;
+          if (!found && !item.title) throw new Error('ISBN non trovato: aggiungi anche il titolo al CSV e riprova.');
+          const book: Book = found ? {
+            ...found, cover_url: item.cover || found.cover_url, page_count: item.pages ?? found.page_count,
+          } : {
+            id: item.isbn ? `csv:isbn:${item.isbn}` : `csv:${crypto.randomUUID()}`,
+            title: item.title, authors: item.author ? [item.author] : [],
+            cover_url: item.cover || (item.isbn ? `https://covers.openlibrary.org/b/isbn/${item.isbn}-L.jpg?default=false` : null),
+            page_count: item.pages, published_year: null, categories: [], description: null,
+          };
+          if (!overwrite && knownIds.has(book.id)) {
+            out.push({ title: book.title, bookId: book.id, message: 'Già in libreria: dati conservati', kind: 'skipped' });
+          } else {
+            await cacheBook(book);
+            const total = item.pages ?? book.page_count;
+            const done = item.status === 'read' || (item.status === 'reading' && total != null && total > 0 && (item.currentPage ?? 0) >= total);
+            const { error: saveError } = await supabase.from('library_items').upsert({
+              user_id: user.id, book_id: book.id, status: done ? 'read' : item.status,
+              rating: item.rating, favorite: item.favorite, total_pages: total,
+              current_page: done ? (total ?? item.currentPage ?? 0) : (item.currentPage ?? 0),
+              started_at: item.started, finished_at: done ? item.finished : null,
+              needs_review: !found,
+            }, { onConflict: 'user_id,book_id', ignoreDuplicates: !overwrite });
+            if (saveError) throw saveError;
+            knownIds.add(book.id); knownTitles.add(sig);
+            out.push({ title: book.title, bookId: book.id, message: found ? 'Importato' : 'Importato dai dati CSV · abbinamento da verificare', kind: 'imported' });
+          }
+        } catch (error) {
+          out.push({ title, message: error instanceof Error ? error.message : (error as { message?: string })?.message ?? 'Salvataggio non riuscito', kind: 'error' });
         }
-
-        out.push({ title, author, status, rating, book });
-        setProgress((p) => ({ ...p, done: p.done + 1 }));
+        setProgress(index + 1);
       }
       setResults(out);
-      void qc.invalidateQueries({ queryKey: ["library"] });
-      const ok = out.filter((o) => o.book).length;
-      toast.success(`${ok} libri importati su ${out.length}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Errore durante l'import");
+      toast.success(cancel.current ? 'Importazione interrotta. I libri già salvati restano in libreria.' : 'Importazione terminata. Controlla il riepilogo.');
+    } catch (error) {
+      toast.error((error as { message?: string })?.message ?? 'Importazione non riuscita');
     } finally {
       setBusy(false);
+      void qc.invalidateQueries({ queryKey: ['library'] });
+      void qc.invalidateQueries({ queryKey: ['library-item'] });
     }
   }
 
-  const imported = results.filter((r) => r.book);
-  const manual = results.filter((r) => !r.book);
-  const STATUS_LABEL: Record<ReadingStatus, string> = {
-    reading: "In lettura",
-    read: "Letti",
-    to_read: "Da leggere",
-    abandoned: "Abbandonati",
-  };
-  const byStatus = (["reading", "read", "to_read", "abandoned"] as ReadingStatus[]).map((s) => ({
-    status: s,
-    items: imported.filter((r) => r.status === s),
-  }));
-
-  async function resetLibrary() {
-    if (!user) return;
-    const ok = window.confirm(
-      "Vuoi davvero svuotare TUTTA la libreria? Questa azione elimina stati, progressi, voti e preferiti e non si può annullare.",
-    );
-    if (!ok) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.from("library_items").delete().eq("user_id", user.id);
-      if (error) throw error;
-      setResults([]);
-      void qc.invalidateQueries({ queryKey: ["library"] });
-      toast.success("Libreria svuotata");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Errore durante il reset");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragging(false);
-    if (busy) return;
-    const f = Array.from(e.dataTransfer.files).find((x) => x.name.toLowerCase().endsWith(".csv") || x.type === "text/csv");
-    if (!f) {
-      toast.error("Trascina un file .csv");
-      return;
-    }
-    void handleFile(f);
-  }
-
-  return (
-    <AppShell>
-      <PageHeader
-        title="Importa libreria da CSV"
-        subtitle="Carica l'export CSV della tua libreria (Goodreads o formato con ISBN-13/Reading Status): i libri vengono abbinati e assegnati allo stato corretto."
-        action={
-          <button
-            type="button"
-            onClick={() => void resetLibrary()}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-xl border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
-          >
-            <Trash2 className="h-4 w-4" /> Svuota libreria
-          </button>
-        }
-      />
-
-      <label
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!busy) setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 text-center transition ${
-          dragging ? "border-primary bg-accent" : "border-border bg-card hover:border-primary/50"
-        }`}
-      >
-        {busy ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <Upload className="h-8 w-8 text-primary" />}
-        <span className="font-display text-lg font-semibold">
-          {busy
-            ? `Importazione… ${progress.done}/${progress.total}`
-            : dragging
-              ? "Rilascia il file qui"
-              : "Trascina qui il CSV o clicca per selezionarlo"}
-        </span>
-        <span className="text-sm text-muted-foreground">
-          Supportati export Goodreads (Title, Author, ISBN13, My Rating, Exclusive Shelf, Date Read) ed export con
-          ISBN-10/ISBN-13, Reading Status, Rating, Start/End Date, Is Favorite. Separatore virgola o tab.
-        </span>
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          className="sr-only"
-          disabled={busy}
-          aria-label="File CSV Goodreads"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void handleFile(f);
-            e.target.value = "";
-          }}
-        />
+  return <AppShell>
+    <PageHeader title="Importa libri da CSV" subtitle="Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa." />
+    <label className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card p-8 text-center ${busy ? 'opacity-60' : 'cursor-pointer hover:border-primary'}`}
+      onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!busy && e.dataTransfer.files[0]) void loadFile(e.dataTransfer.files[0]); }}>
+      <Upload className="h-8 w-8 text-primary" />
+      <span className="font-semibold">Trascina un CSV o scegli un file</span>
+      <span className="text-sm text-muted-foreground">Virgola, punto e virgola o tab · UTF-8 e Windows · massimo 10 MB / 5.000 righe</span>
+      <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" disabled={busy} aria-label="Scegli file CSV" className="max-w-full text-sm"
+        onChange={e => { const file = e.target.files?.[0]; if (file) void loadFile(file); e.target.value = ''; }} />
+    </label>
+    <a href="/import-template.csv" download className="mt-3 inline-block text-sm text-primary">Scarica un CSV di esempio</a>
+    {fileError && <p role="alert" className="mt-4 text-destructive">{fileError}</p>}
+    {csv && <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
+      <h2 className="font-display text-lg font-semibold">1. Associa le colonne</h2>
+      <p className="text-sm text-muted-foreground">{fileName} · {csv.rows.length} libri. Serve almeno il titolo o l’ISBN. Le date accettano AAAA-MM-GG o GG/MM/AAAA; i voti vanno da 0 a 5.</p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {fields.map(field => <label key={field} className="flex min-w-0 flex-col gap-1 text-sm">{FIELD_LABELS[field]}
+          <select className={inputClass} value={mapping[field]} disabled={busy} onChange={e => setMapping(m => ({ ...m, [field]: e.target.value }))}>
+            <option value="">Non importare</option>{csv.headers.map(h => <option key={h} value={h}>{h}</option>)}
+          </select>
+        </label>)}
+      </div>
+      <h2 className="font-display text-lg font-semibold">2. Controlla l’anteprima</h2>
+      <div className="overflow-x-auto"><table className="w-full text-left text-sm">
+        <thead><tr>{['Titolo / ISBN', 'Autore', 'Stato', 'Voto'].map(h => <th key={h} className="border-b p-2">{h}</th>)}</tr></thead>
+        <tbody>{preview.map((r, i) => <tr key={i}>{r.error ? <td colSpan={4} className="p-2 text-destructive">Riga {i + 2}: {r.error}</td> : <>
+          <td className="p-2">{r.value?.title || r.value?.isbn}</td><td className="p-2">{r.value?.author}</td>
+          <td className="p-2">{({ to_read: 'Da leggere', read: 'Letto', reading: 'In lettura', abandoned: 'Abbandonato' })[r.value!.status]}</td><td className="p-2">{r.value?.rating ?? '—'}</td>
+        </>}</tr>)}</tbody>
+      </table></div>
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={overwrite} disabled={busy} onChange={e => setOverwrite(e.target.checked)} />
+        Aggiorna anche i libri già presenti (sostituisce stato, voto, date, preferiti e progresso con i dati del CSV).
       </label>
-
-      {busy && progress.total > 0 && (
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-all"
-            style={{ width: `${(progress.done / progress.total) * 100}%` }}
-          />
-        </div>
-      )}
-
-      {results.length > 0 && (
-        <div className="mt-10 space-y-10">
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold">
-              <CheckCircle2 className="h-5 w-5 text-primary" /> Importati ({imported.length})
-            </h2>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {byStatus
-                .filter((g) => g.items.length > 0)
-                .map((g) => (
-                  <span
-                    key={g.status}
-                    className="rounded-full border border-border bg-accent px-3 py-1 text-xs font-medium"
-                  >
-                    {STATUS_LABEL[g.status]}: {g.items.length}
-                  </span>
-                ))}
-            </div>
-            <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-              {imported.slice(0, 100).map((r, i) => (
-                <li key={`${r.title}-${i}`} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-                  <Link to="/book/$bookId" params={{ bookId: r.book!.id }} className="truncate hover:text-primary">
-                    {r.book!.title}
-                  </Link>
-                  <span className="shrink-0 text-xs text-muted-foreground">{STATUS_LABEL[r.status]}</span>
-                </li>
-              ))}
-              {imported.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">Nessun libro importato.</li>}
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold">
-              <AlertTriangle className="h-5 w-5 text-primary" /> Da verificare manualmente ({manual.length})
-            </h2>
-            <p className="mb-3 text-sm text-muted-foreground">
-              Non siamo riusciti ad abbinare questi titoli. Cercali a mano e aggiungili alla libreria.
-            </p>
-            <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-              {manual.map((r, i) => (
-                <li key={`${r.title}-manual-${i}`} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-                  <span className="truncate">
-                    {r.title} <span className="text-muted-foreground">— {r.author}</span>
-                  </span>
-                  <Link
-                    to="/discover"
-                    className="shrink-0 rounded-lg border border-border px-2 py-1 text-xs transition hover:bg-accent"
-                  >
-                    Cerca
-                  </Link>
-                </li>
-              ))}
-              {manual.length === 0 && (
-                <li className="px-4 py-3 text-sm text-muted-foreground">Tutti i titoli sono stati abbinati.</li>
-              )}
-            </ul>
-          </section>
-        </div>
-      )}
-    </AppShell>
-  );
+      <p className="text-sm text-muted-foreground">Di norma i duplicati vengono saltati. I libri senza corrispondenza certa vengono conservati con il titolo e l’autore del CSV e segnalati per la verifica. Non vengono inventate date di lettura.</p>
+      <div className="flex flex-wrap gap-3">
+        <button disabled={busy || (!mapping.title && !mapping.isbn)} onClick={() => void runImport()} className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
+          {busy ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> {progress}/{csv.rows.length}</span> : `3. Importa ${csv.rows.length} libri`}
+        </button>
+        {busy && <button onClick={() => { cancel.current = true; }} className={inputClass}>Interrompi dopo il libro corrente</button>}
+      </div>
+      {busy && <progress aria-label="Avanzamento importazione" className="w-full" value={progress} max={csv.rows.length} />}
+    </section>}
+    {results.length > 0 && <section className="mt-8">
+      <h2 className="mb-4 font-display text-xl font-semibold">{results.filter(r => r.kind === 'imported').length} importati · {results.filter(r => r.kind === 'skipped').length} già presenti · {results.filter(r => r.kind === 'error').length} errori</h2>
+      <p className="mb-3 text-sm text-muted-foreground">Correggi nel CSV le righe con errori e caricalo di nuovo: i libri già importati verranno saltati.</p>
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">{results.map((r, i) => <li key={i} className="flex flex-wrap justify-between gap-2 p-3 text-sm">
+        {r.bookId ? <Link to="/book/$bookId" params={{ bookId: r.bookId }} className="font-medium hover:text-primary">{r.title}</Link> : <span>{r.title}</span>}
+        <span className={r.kind === 'error' ? 'text-destructive' : 'text-muted-foreground'}>{r.message}</span>
+      </li>)}</ul>
+      <Link to="/library" className="mt-4 inline-block text-primary">Apri la mia libreria →</Link>
+    </section>}
+  </AppShell>;
 }

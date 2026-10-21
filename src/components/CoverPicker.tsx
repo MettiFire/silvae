@@ -37,7 +37,8 @@ export function CoverPicker({ book }: { book: Book }) {
 
   async function onFile(file: File) {
     if (!user) return;
-    if (!file.type.startsWith("image/")) {
+    if (file.size > 5 * 1024 * 1024) { toast.error("Scegli un’immagine più piccola di 5 MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
       toast.error("Scegli un file immagine");
       return;
     }
@@ -90,7 +91,7 @@ export function CoverPicker({ book }: { book: Book }) {
               {busy ? "Attendi…" : "Carica un'immagine dal tuo dispositivo"}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="sr-only"
                 disabled={busy}
                 aria-label="Immagine di copertina"

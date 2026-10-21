@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { CoverPicker } from "@/components/CoverPicker";
 import { BookCover } from "@/components/BookCard";
 import { BookmarkRating } from "@/components/BookmarkRating";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -39,7 +40,7 @@ function BookPage() {
   const [pageInput, setPageInput] = useState("");
   const [reviewText, setReviewText] = useState("");
 
-  const { data: book, isLoading } = useQuery({ queryKey: ["book", bookId], queryFn: () => getBook(bookId) });
+  const { data: book, isLoading, isError, refetch } = useQuery({ queryKey: ["book", bookId], queryFn: () => getBook(bookId) });
   const { data: item } = useLibraryItem(bookId);
   const save = useSaveToLibrary();
   const update = useUpdateItem();
@@ -72,6 +73,7 @@ function BookPage() {
     if (item) setPageInput(String(item.current_page));
   }, [item?.id]);
 
+  if (isError) return <AppShell><p role="alert">Impossibile caricare il libro. <button onClick={() => void refetch()} className="text-primary">Riprova</button></p></AppShell>;
   if (isLoading || !book) {
     return (
       <AppShell>
@@ -85,7 +87,7 @@ function BookPage() {
   const setStatus = (status: ReadingStatus) => {
     save.mutate(
       { book, status },
-      { onSuccess: () => toast.success(`Spostato in "${STATUS_LABEL[status]}"`) },
+      { onSuccess: () => toast.success(`Spostato in "${STATUS_LABEL[status]}"`), onError: () => toast.error("Impossibile salvare il libro. Riprova.") },
     );
   };
 
@@ -101,8 +103,10 @@ function BookPage() {
         finished_at: done ? new Date().toISOString() : null,
       },
       activity: done ? { type: "finished", bookId: book.id, metadata: { title: book.title } } : undefined,
+    }, {
+      onSuccess: () => toast.success(done ? "Complimenti, libro completato!" : "Progresso aggiornato"),
+      onError: () => toast.error("Progresso non salvato. Riprova."),
     });
-    toast.success(done ? "Complimenti, libro completato!" : "Progresso aggiornato");
   };
 
   const submitReview = async () => {
@@ -131,9 +135,14 @@ function BookPage() {
 
   return (
     <AppShell>
+      {item?.needs_review && <div className="mb-5 rounded-xl border border-border bg-accent p-4 text-sm">
+        Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto.
+        <button disabled={update.isPending} className="ml-2 font-medium text-primary" onClick={() => update.mutate({ id: item.id, patch: { needs_review: false } }, { onError: () => toast.error("Verifica non salvata") })}>Conferma dati corretti</button>
+      </div>}
       <div className="grid gap-8 md:grid-cols-[260px_1fr]">
         <div>
           <BookCover book={book} />
+          {item && <CoverPicker book={book} />}
           {user && (
             <div className="mt-4 space-y-3">
               <div className="flex flex-wrap gap-2">

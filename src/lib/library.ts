@@ -95,16 +95,20 @@ export function useSaveToLibrary() {
     }) => {
       if (!user) throw new Error("Accedi per gestire la tua libreria");
       await cacheBook(book);
+      const { data: previous, error: readError } = await supabase.from("library_items")
+        .select("*").eq("user_id", user.id).eq("book_id", book.id).maybeSingle();
+      if (readError) throw readError;
       const now = new Date().toISOString();
+      const total = previous?.total_pages ?? book.page_count;
       const { error } = await supabase.from("library_items").upsert(
         {
           user_id: user.id,
           book_id: book.id,
           status,
-          total_pages: book.page_count,
-          started_at: status === "reading" ? now : (extra?.started_at ?? null),
-          finished_at: status === "read" ? now : null,
-          current_page: status === "read" ? (book.page_count ?? 0) : (extra?.current_page ?? 0),
+          total_pages: total,
+          started_at: previous?.started_at ?? (status === "reading" ? now : null),
+          finished_at: status === "read" ? (previous?.finished_at ?? now) : null,
+          current_page: status === "read" ? (total ?? previous?.current_page ?? 0) : (previous?.current_page ?? 0),
           ...extra,
         },
         { onConflict: "user_id,book_id" },

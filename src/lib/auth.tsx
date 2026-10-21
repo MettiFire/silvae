@@ -55,6 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setLoading(false);
       if (data.session?.user) void loadProfile(data.session.user.id);
+    }).catch(() => {
+      setSession(null);
+      setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);

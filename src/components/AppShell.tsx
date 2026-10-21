@@ -30,7 +30,7 @@ const NAV = [
   { to: "/social", label: "Social", icon: Users },
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
   { to: "/profile", label: "Profilo", icon: User },
-  { to: "/import", label: "Import Goodreads", icon: Upload },
+  { to: "/import", label: "Importa CSV", icon: Upload },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -96,6 +96,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </header>
+        <nav aria-label="Altre sezioni" className="flex gap-4 overflow-x-auto border-b border-border px-4 py-2 text-xs md:hidden">
+          {NAV.slice(5).map(({ to, label }) => <Link key={to} to={to} className="shrink-0 py-1">{label}</Link>)}
+          {!user && <Link to="/auth" className="shrink-0 py-1 text-primary">Accedi</Link>}
+        </nav>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
         <nav className="sticky bottom-0 flex justify-around border-t border-border bg-background/95 py-2 backdrop-blur md:hidden">
           {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (

@@ -43,7 +43,7 @@ function Discover() {
   const owned = useMemo(() => new Set(library.map((i) => i.book_id)), [library]);
   const exclude = (list: Book[]) => list.filter((b) => !owned.has(b.id) && !dismissed.includes(b.id));
 
-  const { data: results = [], isFetching } = useQuery({
+  const { data: results = [], isFetching, isError, refetch } = useQuery({
     queryKey: ["discover", genre, year, order],
     queryFn: () => discoverBooks({ genre, year, order }),
   });
@@ -134,6 +134,8 @@ function Discover() {
         />
       </div>
 
+      {isError && <p role="alert" className="mb-4 text-sm">Impossibile caricare il catalogo. <button className="text-primary" onClick={() => void refetch()}>Riprova</button></p>}
+      {!isFetching && !isError && !filtered.length && <p className="text-sm text-muted-foreground">Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo.</p>}
       {isFetching ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : (

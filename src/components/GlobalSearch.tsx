@@ -28,7 +28,7 @@ export function GlobalSearch() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const { data: results = [], isFetching } = useQuery({
+  const { data: results = [], isFetching, isError } = useQuery({
     queryKey: ["global-search", debounced],
     enabled: debounced.trim().length > 2,
     queryFn: () => searchBooks(debounced, { max: 6 }),
@@ -77,8 +77,9 @@ export function GlobalSearch() {
       {scanning && <BarcodeScanner onDetected={(c) => void handleScan(c)} onClose={() => setScanning(false)} />}
       {open && debounced.trim().length > 2 && (
         <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-border bg-popover shadow-paper">
+          {isError && <p role="alert" className="px-3 py-3 text-sm text-destructive">Ricerca non disponibile. Riprova tra poco.</p>}
           {isFetching && <p className="px-3 py-3 text-sm text-muted-foreground">Ricerca in corso…</p>}
-          {!isFetching && results.length === 0 && (
+          {!isFetching && !isError && results.length === 0 && (
             <p className="px-3 py-3 text-sm text-muted-foreground">Nessun risultato</p>
           )}
           {results.map((b) => (
