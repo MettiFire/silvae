@@ -151,7 +151,8 @@ test("science exclusion does not exclude science fiction and fallback always has
 test("broad science search results do not label science fiction as science and nature", () => {
   const result = rankRecommendations(
     [
-      { book: book("novel", ["Science Fiction"]), genreId: "science" },
+      { book: book("novel", ["Science Fiction", "Science"]), genreId: "science" },
+      { book: book("generic-fiction", ["Fiction", "Science"]), genreId: "science" },
       { book: book("biology", ["Science", "Biology"]), genreId: "science" },
     ],
     null,
