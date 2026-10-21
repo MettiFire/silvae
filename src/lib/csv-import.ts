@@ -9,6 +9,7 @@ export const IMPORT_FIELDS = {
   started: ['date started', 'start date', 'data inizio', 'started at'],
   finished: ['date read', 'end date', 'data fine', 'finished at', 'last date read'],
   favorite: ['is favorite', 'favorite', 'preferito', 'favourite'],
+  description: ['description', 'descrizione', 'sinossi', 'summary', 'synopsis'],
   cover: ['cover', 'cover url', 'copertina', 'image url'],
 } as const;
 export type ImportField = keyof typeof IMPORT_FIELDS;
@@ -17,7 +18,7 @@ export type ReadingStatus = 'to_read' | 'reading' | 'read' | 'abandoned';
 export const FIELD_LABELS: Record<ImportField, string> = {
   title: 'Titolo', author: 'Autore', isbn: 'ISBN', status: 'Stato di lettura', rating: 'Voto (0–5)',
   pages: 'Pagine totali', currentPage: 'Pagina attuale', started: 'Data inizio', finished: 'Data fine',
-  favorite: 'Preferito', cover: 'URL copertina',
+  favorite: 'Preferito', description: 'Descrizione / sinossi', cover: 'URL copertina',
 };
 export function normalize(value: string) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -116,5 +117,5 @@ export function importRow(row: Record<string, string>, mapping: ColumnMapping) {
   const cover = get('cover');
   if (cover && !/^https:\/\//i.test(cover)) throw new Error('La copertina deve avere un indirizzo HTTPS.');
   return { title, author: get('author'), isbn, status, rating, pages, currentPage, started, finished,
-    favorite: /^(y|yes|true|1|x|sì|si)$/i.test(get('favorite')), cover };
+    favorite: /^(y|yes|true|1|x|sì|si)$/i.test(get('favorite')), description: get('description'), cover };
 }

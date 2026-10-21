@@ -9,6 +9,7 @@ import { BookCover } from "@/components/BookCard";
 import { BookmarkRating } from "@/components/BookmarkRating";
 import { ProgressBar } from "@/components/ProgressBar";
 import { AddToListMenu } from "@/components/AddToListMenu";
+import { descriptionText } from "@/lib/book-metadata";
 import { getBook } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -269,11 +270,13 @@ function BookPage() {
             </div>
           )}
 
+          <h2 className="mt-6 font-display text-lg font-semibold">Descrizione del libro</h2>
+          {!book.description && <p className="mt-2 text-sm text-muted-foreground">Nessuna descrizione disponibile nei cataloghi consultati per questo libro.</p>}
           {book.description && (
             <div className="mt-6">
               <div
-                className={`prose-sm text-sm leading-relaxed text-foreground/90 ${expanded ? "" : "line-clamp-5"}`}
-                dangerouslySetInnerHTML={{ __html: book.description }}
+                className={`whitespace-pre-line prose-sm text-sm leading-relaxed text-foreground/90 ${expanded ? "" : "line-clamp-5"}`}
+                children={descriptionText(book.description)}
               />
               <button
                 type="button"

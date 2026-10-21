@@ -1,3 +1,4 @@
+import { sameBook, coverUrls, descriptionText } from "@/lib/book-metadata";
 import { supabase } from "@/integrations/supabase/client";
 import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
 
@@ -10,6 +11,8 @@ export type Book = {
   page_count: number | null;
   categories: string[];
   description: string | null;
+  cover_candidates?: string[];
+  isbns?: string[];
   average_rating?: number | null;
   ratings_count?: number | null;
 };
@@ -40,6 +43,7 @@ type Volume = {
     description?: string;
     averageRating?: number;
     ratingsCount?: number;
+    industryIdentifiers?: { type: string; identifier: string }[];
     imageLinks?: { thumbnail?: string; smallThumbnail?: string; large?: string; extraLarge?: string };
   };
 };
@@ -55,7 +59,9 @@ export function mapVolume(v: Volume): Book {
     published_year: Number.isFinite(year) ? year : null,
     page_count: i.pageCount ?? null,
     categories: i.categories ?? [],
-    description: i.description ?? null,
+    description: descriptionText(i.description) || null,
+    isbns: (i.industryIdentifiers ?? []).filter(x => /ISBN/.test(x.type)).map(x => x.identifier),
+    cover_candidates: [i.imageLinks?.thumbnail, i.imageLinks?.smallThumbnail].map(upgradeCover).filter((v): v is string => !!v),
     average_rating: i.averageRating ?? null,
     ratings_count: i.ratingsCount ?? null,
   };
@@ -87,6 +93,7 @@ function mapOLDoc(d: OLDoc): Book {
     page_count: d.number_of_pages_median ?? null,
     categories: (d.subject ?? []).slice(0, 4),
     description: null,
+    isbns: d.isbn ?? [],
     average_rating: d.ratings_average ?? null,
     ratings_count: d.ratings_count ?? null,
   };
@@ -112,10 +119,17 @@ async function olSearch(query: string, max: number, startIndex = 0, order: "rele
   try {
     covers = await gbCovers({ data: { isbns: docs.flatMap(d => (d.isbn ?? []).slice(0, 3)) } });
   } catch { /* The original Open Library cover remains available as fallback. */ }
+  // Retry additional ISBNs only for books missing in the first batch.
+  const missing = docs.filter(d => !(d.isbn ?? []).slice(0, 3).some(i => covers[i]));
+  const more = missing.flatMap(d => (d.isbn ?? []).slice(3, 10));
+  for (let offset = 0; offset < more.length; offset += 120) {
+    try { Object.assign(covers, await gbCovers({ data: { isbns: more.slice(offset, offset + 120) } })); } catch { /* Keep other providers. */ }
+  }
   return docs.map(d => {
     const book = mapOLDoc(d);
-    const cover = (d.isbn ?? []).map(i => covers[i]).find(Boolean);
-    return cover ? { ...book, cover_url: cover } : book;
+    const candidates = [...new Set((d.isbn ?? []).map(i => covers[i]).filter((v): v is string => !!v))];
+    if (book.cover_url) candidates.push(book.cover_url);
+    return { ...book, cover_url: candidates[0] ?? null, cover_candidates: candidates };
   });
 }
 
@@ -145,6 +159,18 @@ async function olGetBook(workId: string): Promise<Book> {
       /* ignore author lookup failures */
     }
   }
+  let description = descriptionText(typeof w.description === "string" ? w.description : w.description?.value);
+  if (!description) {
+    // Work-level records can be empty while a particular edition has a synopsis.
+    try {
+      const response = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}/editions.json?limit=10`, { signal: AbortSignal.timeout(8000) });
+      if (response.ok) {
+        const data = await response.json() as { entries?: { description?: string | { value?: string }; languages?: { key: string }[] }[] };
+        const entries = [...(data.entries ?? [])].sort((a, b) => Number(b.languages?.some(l => l.key === '/languages/ita')) - Number(a.languages?.some(l => l.key === '/languages/ita')));
+        description = entries.map(e => descriptionText(typeof e.description === 'string' ? e.description : e.description?.value)).find(Boolean) ?? '';
+      }
+    } catch { /* Explicit empty state if no source supplies a description. */ }
+  }
   return {
     id: `ol:${workId}`,
     title: w.title ?? "Senza titolo",
@@ -152,8 +178,10 @@ async function olGetBook(workId: string): Promise<Book> {
     cover_url: catalogue?.cover_url ?? (w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null),
     published_year: catalogue?.published_year ?? null,
     page_count: catalogue?.page_count ?? null,
+    cover_candidates: catalogue?.cover_candidates ?? [],
+    isbns: catalogue?.isbns ?? [],
     categories: (w.subjects ?? []).slice(0, 6),
-    description: typeof w.description === "string" ? w.description : (w.description?.value ?? null),
+    description: description || null,
   };
 }
 
@@ -185,14 +213,56 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
   return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance");
 }
 
+/** Enrich incomplete stored records while keeping their original ID and chosen cover. */
+export async function enrichBook(book: Book): Promise<Book> {
+  let source: Book | undefined;
+  try {
+    if (book.id.startsWith("ol:")) source = await olGetBook(book.id.slice(3));
+    else {
+      const isbn = book.id.startsWith("csv:isbn:") ? book.id.slice(9) : book.isbns?.[0];
+      const hits = await olSearch(isbn ? `isbn:${isbn}` : `intitle:"${book.title}" inauthor:"${book.authors[0] ?? ''}"`, 5);
+      source = isbn ? hits[0] : hits.find(hit => sameBook(book, hit));
+      if (source?.id.startsWith("ol:")) source = await olGetBook(source.id.slice(3));
+      else if (source && !source.description) {
+        const detail = await gbVolume({ data: { id: source.id } });
+        if (detail.status === 200 && detail.json) source = mapVolume(JSON.parse(detail.json) as Volume);
+      }
+    }
+  } catch { /* Cached metadata remains usable when providers fail. */ }
+  if (!source) return book;
+  const candidates = [...new Set([...coverUrls(book), ...coverUrls(source)])];
+  return { ...book, cover_url: book.cover_url || source.cover_url,
+    cover_candidates: candidates, isbns: source.isbns ?? book.isbns ?? [],
+    description: descriptionText(book.description) || source.description,
+    page_count: book.page_count ?? source.page_count,
+    published_year: book.published_year ?? source.published_year,
+    categories: book.categories.length ? book.categories : source.categories,
+  };
+}
+
 export async function getBook(id: string): Promise<Book> {
-  // Imported books and manually chosen covers must survive API outages and reloads.
   const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
-  if (cached) return cached as Book;
+  if (cached) {
+    const book = cached as Book;
+    // Search results often have no synopsis. Do not let that incomplete cache
+    // permanently suppress the full work/edition description.
+    const enriched = !book.description || !book.cover_url ? await enrichBook(book) : book;
+    if (enriched !== book) {
+      const { data: session } = await supabase.auth.getSession();
+      if (session.session) {
+        // Only fill absent fields. Conditional writes protect choices made while
+        // the remote lookup was running (for example a newly uploaded cover).
+        if (!book.description && enriched.description) await supabase.from("books").update({ description: enriched.description }).eq("id", id).is("description", null);
+        if (!book.cover_url && enriched.cover_url) await supabase.from("books").update({ cover_url: enriched.cover_url }).eq("id", id).is("cover_url", null);
+      }
+    }
+    return enriched;
+  }
   if (id.startsWith("ol:")) return olGetBook(id.slice(3));
   const out = await gbVolume({ data: { id } });
   if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");
-  return mapVolume(JSON.parse(out.json) as Volume);
+  const book = mapVolume(JSON.parse(out.json) as Volume);
+  return !book.description || !book.cover_url ? enrichBook(book) : book;
 }
 
 /** Look up a book from a scanned barcode / ISBN. */
@@ -228,16 +298,17 @@ export async function discoverBooks(opts: {
 
 /** Store the book in the shared catalogue so library rows can reference it. */
 export async function cacheBook(book: Book) {
+  const { data: existing } = await supabase.from("books").select("cover_url,description").eq("id", book.id).maybeSingle();
   const { error } = await supabase.from("books").upsert(
     {
       id: book.id,
       title: book.title,
       authors: book.authors,
-      cover_url: book.cover_url,
+      cover_url: existing?.cover_url || book.cover_url,
       published_year: book.published_year,
       page_count: book.page_count,
       categories: book.categories,
-      description: book.description,
+      description: descriptionText(existing?.description || book.description) || null,
     },
     { onConflict: "id" },
   );
@@ -287,14 +358,14 @@ export async function withCover(book: Book, isbn?: string): Promise<Book> {
 export async function coverCandidates(book: Book): Promise<string[]> {
   const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
   const urls: string[] = [];
-  if (book.cover_url) urls.push(book.cover_url);
+  urls.push(...coverUrls(book));
   const [g, o] = await Promise.allSettled([
     searchBooks(`intitle:"${book.title}"${book.authors[0] ? ` inauthor:"${book.authors[0]}"` : ""}`, { max: 12 }),
     olSearch(q, 12),
   ]);
   for (const r of [g, o]) {
     if (r.status !== "fulfilled") continue;
-    for (const b of r.value) if (b.cover_url) urls.push(b.cover_url);
+    for (const b of r.value) if (b.id === book.id || sameBook(book, b)) urls.push(...coverUrls(b));
   }
   return Array.from(new Set(urls));
 }

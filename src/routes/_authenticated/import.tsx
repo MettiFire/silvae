@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cacheBook, searchBooks, type Book } from "@/lib/books";
+import { descriptionText } from "@/lib/book-metadata";
+import { resetUserLibrary } from "@/lib/reset-library";
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { parseCSV, detectMapping, importRow, normalize, FIELD_LABELS, type ColumnMapping, type ImportField } from "@/lib/csv-import";
 
 export const Route = createFileRoute("/_authenticated/import")({
@@ -27,12 +30,29 @@ function ImportPage() {
   const [progress, setProgress] = useState(0);
   const [overwrite, setOverwrite] = useState(false);
   const [fileError, setFileError] = useState('');
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState('');
   const cancel = useRef(false);
   const fields = Object.keys(FIELD_LABELS) as ImportField[];
   const preview = csv?.rows.slice(0, 5).map(row => {
     try { return { value: importRow(row, mapping), error: '' }; }
     catch (error) { return { value: null, error: error instanceof Error ? error.message : 'Riga non valida' }; }
   }) ?? [];
+
+  async function resetLibrary() {
+    if (!user || busy || resetBusy || resetConfirmation !== 'SVUOTA') return;
+    setResetBusy(true); setResetError('');
+    try {
+      const count = await resetUserLibrary(supabase, user.id);
+      setResults([]); setProgress(0); setResetOpen(false); setResetConfirmation('');
+      await qc.invalidateQueries();
+      toast.success(`Libreria svuotata: ${count} libri rimossi. Ora puoi importare un nuovo CSV.`);
+    } catch (error) {
+      setResetError((error as { message?: string })?.message ?? 'Non è stato possibile svuotare la libreria. Riprova.');
+    } finally { setResetBusy(false); }
+  }
 
   async function loadFile(file: File) {
     setFileError(''); setCSV(null); setResults([]); setProgress(0);
@@ -48,7 +68,7 @@ function ImportPage() {
   }
 
   async function runImport() {
-    if (!csv || !user || busy) return;
+    if (!csv || !user || busy || resetBusy) return;
     cancel.current = false; setBusy(true); setResults([]); setProgress(0);
     const out: Result[] = [];
     try {
@@ -78,12 +98,12 @@ function ImportPage() {
           if (cancel.current) break;
           if (!found && !item.title) throw new Error('ISBN non trovato: aggiungi anche il titolo al CSV e riprova.');
           const book: Book = found ? {
-            ...found, cover_url: item.cover || found.cover_url, page_count: item.pages ?? found.page_count,
+            ...found, description: descriptionText(item.description) || found.description, cover_url: item.cover || found.cover_url, page_count: item.pages ?? found.page_count,
           } : {
             id: item.isbn ? `csv:isbn:${item.isbn}` : `csv:${crypto.randomUUID()}`,
             title: item.title, authors: item.author ? [item.author] : [],
             cover_url: item.cover || (item.isbn ? `https://covers.openlibrary.org/b/isbn/${item.isbn}-L.jpg?default=false` : null),
-            page_count: item.pages, published_year: null, categories: [], description: null,
+            page_count: item.pages, published_year: null, categories: [], description: descriptionText(item.description) || null,
           };
           if (!overwrite && knownIds.has(book.id)) {
             out.push({ title: book.title, bookId: book.id, message: 'Già in libreria: dati conservati', kind: 'skipped' });
@@ -119,13 +139,34 @@ function ImportPage() {
   }
 
   return <AppShell>
-    <PageHeader title="Importa libri da CSV" subtitle="Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa." />
+    <PageHeader title="Importa libri da CSV" subtitle="Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa." action={
+      <button type="button" disabled={busy || resetBusy} onClick={() => { setResetOpen(true); setResetConfirmation(''); setResetError(''); }}
+        className="inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-4 py-2 text-sm text-destructive disabled:opacity-50">
+        <Trash2 className="h-4 w-4" /> Svuota libreria
+      </button>
+    } />
+    <AlertDialog open={resetOpen} onOpenChange={open => { if (!resetBusy) setResetOpen(open); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Svuotare la tua libreria?</AlertDialogTitle>
+          <AlertDialogDescription>Verranno rimossi tutti i libri dalla tua libreria personale, con stati, progressi, voti e preferiti. Questa operazione non può essere annullata. Recensioni, liste e profilo vengono conservati.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <label className="space-y-2 text-sm">Per confermare, scrivi SVUOTA
+          <input autoComplete="off" value={resetConfirmation} disabled={resetBusy} onChange={e => setResetConfirmation(e.target.value)} className={`${inputClass} mt-2 w-full`} />
+        </label>
+        {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={resetBusy}>Annulla</AlertDialogCancel>
+          <button type="button" disabled={resetConfirmation !== 'SVUOTA' || resetBusy} onClick={() => void resetLibrary()} className="rounded-lg bg-destructive px-4 py-2 text-sm text-destructive-foreground disabled:opacity-50">{resetBusy ? 'Svuotamento…' : 'Elimina tutti i libri dalla mia libreria'}</button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <label className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card p-8 text-center ${busy ? 'opacity-60' : 'cursor-pointer hover:border-primary'}`}
-      onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!busy && e.dataTransfer.files[0]) void loadFile(e.dataTransfer.files[0]); }}>
+      onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!busy && !resetBusy && !resetOpen && e.dataTransfer.files[0]) void loadFile(e.dataTransfer.files[0]); }}>
       <Upload className="h-8 w-8 text-primary" />
       <span className="font-semibold">Trascina un CSV o scegli un file</span>
       <span className="text-sm text-muted-foreground">Virgola, punto e virgola o tab · UTF-8 e Windows · massimo 10 MB / 5.000 righe</span>
-      <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" disabled={busy} aria-label="Scegli file CSV" className="max-w-full text-sm"
+      <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" disabled={busy || resetBusy || resetOpen} aria-label="Scegli file CSV" className="max-w-full text-sm"
         onChange={e => { const file = e.target.files?.[0]; if (file) void loadFile(file); e.target.value = ''; }} />
     </label>
     <a href="/import-template.csv" download className="mt-3 inline-block text-sm text-primary">Scarica un CSV di esempio</a>
@@ -135,7 +176,7 @@ function ImportPage() {
       <p className="text-sm text-muted-foreground">{fileName} · {csv.rows.length} libri. Serve almeno il titolo o l’ISBN. Le date accettano AAAA-MM-GG o GG/MM/AAAA; i voti vanno da 0 a 5.</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map(field => <label key={field} className="flex min-w-0 flex-col gap-1 text-sm">{FIELD_LABELS[field]}
-          <select className={inputClass} value={mapping[field]} disabled={busy} onChange={e => setMapping(m => ({ ...m, [field]: e.target.value }))}>
+          <select className={inputClass} value={mapping[field]} disabled={busy || resetBusy || resetOpen} onChange={e => setMapping(m => ({ ...m, [field]: e.target.value }))}>
             <option value="">Non importare</option>{csv.headers.map(h => <option key={h} value={h}>{h}</option>)}
           </select>
         </label>)}
@@ -148,12 +189,12 @@ function ImportPage() {
           <td className="p-2">{({ to_read: 'Da leggere', read: 'Letto', reading: 'In lettura', abandoned: 'Abbandonato' })[r.value!.status]}</td><td className="p-2">{r.value?.rating ?? '—'}</td>
         </>}</tr>)}</tbody>
       </table></div>
-      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={overwrite} disabled={busy} onChange={e => setOverwrite(e.target.checked)} />
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={overwrite} disabled={busy || resetBusy || resetOpen} onChange={e => setOverwrite(e.target.checked)} />
         Aggiorna anche i libri già presenti (sostituisce stato, voto, date, preferiti e progresso con i dati del CSV).
       </label>
       <p className="text-sm text-muted-foreground">Di norma i duplicati vengono saltati. I libri senza corrispondenza certa vengono conservati con il titolo e l’autore del CSV e segnalati per la verifica. Non vengono inventate date di lettura.</p>
       <div className="flex flex-wrap gap-3">
-        <button disabled={busy || (!mapping.title && !mapping.isbn)} onClick={() => void runImport()} className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
+        <button disabled={busy || resetBusy || resetOpen || (!mapping.title && !mapping.isbn)} onClick={() => void runImport()} className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
           {busy ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> {progress}/{csv.rows.length}</span> : `3. Importa ${csv.rows.length} libri`}
         </button>
         {busy && <button onClick={() => { cancel.current = true; }} className={inputClass}>Interrompi dopo il libro corrente</button>}

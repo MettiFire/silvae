@@ -1,22 +1,52 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
-import type { Book } from "@/lib/books";
+import { useQuery } from "@tanstack/react-query";
+import { coverCandidates, type Book } from "@/lib/books";
+import { coverUrls } from "@/lib/book-metadata";
 import { BookmarkRating } from "@/components/BookmarkRating";
 import { cn } from "@/lib/utils";
 
-export function BookCover({ book, className }: { book: Pick<Book, "title" | "cover_url">; className?: string }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  if (!book.cover_url || failedUrl === book.cover_url) {
-    return (
-      <div className={cn("cover-frame flex items-center justify-center p-3 text-center", className)}>
+export function BookCover({ book, className }: { book: Book; className?: string }) {
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const [visible, setVisible] = useState(false);
+  const [loadedUrl, setLoadedUrl] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const initial = coverUrls(book);
+  const exhausted = !initial.some(url => !failed.has(url));
+  const { data: alternatives = [] } = useQuery({
+    queryKey: ['cover-fallbacks', book.id, book.cover_url],
+    queryFn: () => coverCandidates(book),
+    enabled: visible && exhausted,
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+  });
+  const source = [...new Set([...initial, ...alternatives])].find(url => !failed.has(url));
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) { setVisible(true); observer.disconnect(); }
+    }, { rootMargin: '200px' });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [book.id]);
+  useEffect(() => {
+    if (!source || !visible || loadedUrl === source) return;
+    // Some cover hosts hang instead of returning 404: move to the next edition.
+    const timer = setTimeout(() => setFailed(previous => new Set(previous).add(source)), 8000);
+    return () => clearTimeout(timer);
+  }, [source, visible, loadedUrl]);
+  return <div ref={ref} className={cn('cover-frame relative overflow-hidden', className)}>
+    {source ? <img key={source} src={source} alt={`Copertina di ${book.title}`} loading="lazy" className="h-full w-full object-cover"
+      onLoad={e => {
+        if (e.currentTarget.naturalWidth <= 2) setFailed(previous => new Set(previous).add(source));
+        else setLoadedUrl(source);
+      }} onError={() => setFailed(previous => new Set(previous).add(source))} /> :
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
         <span className="font-display text-xs text-muted-foreground">{book.title}</span>
-      </div>
-    );
-  }
-  return (
-    <img onError={() => setFailedUrl(book.cover_url)} src={book.cover_url} alt={`Copertina di ${book.title}`} loading="lazy" className={cn("cover-frame", className)} />
-  );
+        <span className="text-[10px] text-muted-foreground">Copertina non disponibile</span>
+      </div>}
+  </div>;
 }
 
 export function BookCard({

@@ -42,3 +42,9 @@ test('Custom mapping supports arbitrary headers and validates ranges', () => {
   mapping.rating = '';
   assert.throws(() => importRow(data.rows[0], mapping), /supera/);
 });
+
+test('CSV can supply a missing synopsis with quoted multiline text', () => {
+  const data = parseCSV('Titolo;Autore;Sinossi\nLibro;Autore;"Prima riga\nSeconda riga"');
+  const row = importRow(data.rows[0], detectMapping(data.headers));
+  assert.equal(row.description, 'Prima riga\nSeconda riga');
+});
