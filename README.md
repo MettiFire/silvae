@@ -165,3 +165,9 @@ Pushes to the connected `main` branch synchronize source into Lovable. The publi
 Incomplete cached records now fetch their missing synopsis from Open Library work/edition endpoints. Search-result cache writes preserve previously saved descriptions and covers. Descriptions are rendered as plain text with paragraph breaks, never provider HTML. CSV files can also supply Description/Descrizione/Sinossi columns.
 
 Cover lookup tries additional ISBNs (up to ten per work), and the UI rotates through distinct available editions on load errors/timeouts. A visible card without a usable cover searches for alternative editions with the same title AND author. Recovery does not guarantee coverage for every edition or invent descriptions. Goodreads no longer issues public API developer keys, so this integration uses Google Books and Open Library instead of scraping Goodreads.
+
+### Bookshelf exports
+
+The importer accepts Bookshelf-Books CSV files directly or the original Bookshelf ZIP. It recognizes Italian abbreviated/full month names, ratings such as 4/5, localized reading statuses, original Google Books IDs, publication year and categories. With a ZIP, Reading_History is joined by Book ID for progress and read counts. Fractions slightly above 1 are capped at 100% because some Bookshelf exports change page counts. Original Google IDs preserve the exported edition and its cover link instead of searching for a different work.
+
+The preview explicitly identifies Cards (quotes/notes) and Collections as not imported. Standalone auxiliary files are rejected with instructions to choose Bookshelf-Books or the ZIP. ZIP parsing runs locally in the browser, capped at 10 MB compressed / 20 MB of extracted CSV data. No reading records are uploaded until the user confirms the preview.

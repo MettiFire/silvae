@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cacheBook, searchBooks, type Book } from "@/lib/books";
 import { descriptionText } from "@/lib/book-metadata";
+import { prepareImportFile } from "@/lib/import-file";
 import { resetUserLibrary } from "@/lib/reset-library";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { parseCSV, detectMapping, importRow, normalize, FIELD_LABELS, type ColumnMapping, type ImportField } from "@/lib/csv-import";
@@ -30,6 +31,7 @@ function ImportPage() {
   const [progress, setProgress] = useState(0);
   const [overwrite, setOverwrite] = useState(false);
   const [fileError, setFileError] = useState('');
+  const [fileNotices, setFileNotices] = useState<string[]>([]);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState('');
   const [resetBusy, setResetBusy] = useState(false);
@@ -55,15 +57,13 @@ function ImportPage() {
   }
 
   async function loadFile(file: File) {
-    setFileError(''); setCSV(null); setResults([]); setProgress(0);
+    setFileError(''); setFileNotices([]); setCSV(null); setResults([]); setProgress(0);
     try {
       if (file.size > 10 * 1024 * 1024) throw new Error('Il file supera 10 MB. Dividilo in file più piccoli.');
-      const bytes = await file.arrayBuffer();
-      let text: string;
-      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-      catch { text = new TextDecoder('windows-1252').decode(bytes); }
-      const parsed = parseCSV(text);
-      setCSV(parsed); setMapping(detectMapping(parsed.headers)); setFileName(file.name);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const prepared = prepareImportFile(file.name, bytes);
+      setCSV(prepared.parsed); setMapping(prepared.mapping); setFileNotices(prepared.notices);
+      setFileName(file.name);
     } catch (error) { setFileError(error instanceof Error ? error.message : 'Impossibile leggere il file'); }
   }
 
@@ -89,21 +89,34 @@ function ImportPage() {
             setProgress(index + 1); continue;
           }
           let found: Book | undefined;
+          const googleId = /^googlebooks$/i.test(item.source) && /^[A-Za-z0-9_-]{6,64}$/.test(item.sourceId) && !/^\d{10,13}$/.test(item.sourceId) ? item.sourceId : null;
+          if (googleId && item.title) {
+            // Bookshelf already exports the exact Google volume ID: preserve it
+            // and its title instead of re-matching to a different language/edition.
+            found = { id: googleId, title: item.title, authors: item.author ? [item.author] : [],
+              cover_url: `https://books.google.com/books/content?id=${encodeURIComponent(googleId)}&printsec=frontcover&img=1&zoom=1`,
+              published_year: item.year, page_count: item.pages, categories: item.categories,
+              description: descriptionText(item.description) || null };
+          }
           // ISBN is an exact lookup. A title-only match needs matching title AND author.
           try {
-            const hits = await searchBooks(item.isbn ? `isbn:${item.isbn}` : `intitle:"${item.title}"${item.author ? ` inauthor:"${item.author}"` : ''}`, { max: 5 });
-            found = item.isbn ? hits[0] : hits.find(b => normalize(b.title) === normalize(item.title) &&
-              !!item.author && b.authors.some(a => normalize(a) === normalize(item.author)));
+            if (!found) {
+              const hits = await searchBooks(item.isbn ? `isbn:${item.isbn}` : `intitle:"${item.title}"${item.author ? ` inauthor:"${item.author}"` : ''}`, { max: 5 });
+              found = item.isbn ? hits[0] : hits.find(b => normalize(b.title) === normalize(item.title) &&
+                !!item.author && b.authors.some(a => normalize(a) === normalize(item.author)));
+            }
           } catch { /* Preserve CSV metadata even when both catalogues are unavailable. */ }
           if (cancel.current) break;
           if (!found && !item.title) throw new Error('ISBN non trovato: aggiungi anche il titolo al CSV e riprova.');
           const book: Book = found ? {
-            ...found, description: descriptionText(item.description) || found.description, cover_url: item.cover || found.cover_url, page_count: item.pages ?? found.page_count,
+            ...found, title: item.title || found.title, authors: item.author ? [item.author] : found.authors,
+            published_year: item.year ?? found.published_year, categories: item.categories.length ? item.categories : found.categories,
+            description: descriptionText(item.description) || found.description, cover_url: item.cover || found.cover_url, page_count: item.pages ?? found.page_count,
           } : {
             id: item.isbn ? `csv:isbn:${item.isbn}` : `csv:${crypto.randomUUID()}`,
             title: item.title, authors: item.author ? [item.author] : [],
             cover_url: item.cover || (item.isbn ? `https://covers.openlibrary.org/b/isbn/${item.isbn}-L.jpg?default=false` : null),
-            page_count: item.pages, published_year: null, categories: [], description: descriptionText(item.description) || null,
+            page_count: item.pages, published_year: item.year, categories: item.categories, description: descriptionText(item.description) || null,
           };
           if (!overwrite && knownIds.has(book.id)) {
             out.push({ title: book.title, bookId: book.id, message: 'Già in libreria: dati conservati', kind: 'skipped' });
@@ -117,6 +130,7 @@ function ImportPage() {
               current_page: done ? (total ?? item.currentPage ?? 0) : (item.currentPage ?? 0),
               started_at: item.started, finished_at: done ? item.finished : null,
               needs_review: !found,
+              ...(item.readCount != null ? { reread_count: Math.max(0, item.readCount - 1), last_reread_at: item.readCount > 1 ? item.finished : null } : {}),
             }, { onConflict: 'user_id,book_id', ignoreDuplicates: !overwrite });
             if (saveError) throw saveError;
             knownIds.add(book.id); knownTitles.add(sig);
@@ -139,7 +153,7 @@ function ImportPage() {
   }
 
   return <AppShell>
-    <PageHeader title="Importa libri da CSV" subtitle="Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa." action={
+    <PageHeader title="Importa libri da CSV" subtitle="Bookshelf (CSV o ZIP), Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa." action={
       <button type="button" disabled={busy || resetBusy} onClick={() => { setResetOpen(true); setResetConfirmation(''); setResetError(''); }}
         className="inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-4 py-2 text-sm text-destructive disabled:opacity-50">
         <Trash2 className="h-4 w-4" /> Svuota libreria
@@ -164,16 +178,17 @@ function ImportPage() {
     <label className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card p-8 text-center ${busy ? 'opacity-60' : 'cursor-pointer hover:border-primary'}`}
       onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!busy && !resetBusy && !resetOpen && e.dataTransfer.files[0]) void loadFile(e.dataTransfer.files[0]); }}>
       <Upload className="h-8 w-8 text-primary" />
-      <span className="font-semibold">Trascina un CSV o scegli un file</span>
-      <span className="text-sm text-muted-foreground">Virgola, punto e virgola o tab · UTF-8 e Windows · massimo 10 MB / 5.000 righe</span>
-      <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" disabled={busy || resetBusy || resetOpen} aria-label="Scegli file CSV" className="max-w-full text-sm"
+      <span className="font-semibold">Trascina un CSV o ZIP Bookshelf, oppure scegli un file</span>
+      <span className="text-sm text-muted-foreground">CSV con virgola, punto e virgola o tab · ZIP Bookshelf · massimo 10 MB / 5.000 libri</span>
+      <input type="file" accept=".csv,.tsv,.zip,text/csv,text/tab-separated-values,application/zip,application/x-zip-compressed" disabled={busy || resetBusy || resetOpen} aria-label="Scegli CSV o ZIP Bookshelf" className="max-w-full text-sm"
         onChange={e => { const file = e.target.files?.[0]; if (file) void loadFile(file); e.target.value = ''; }} />
     </label>
     <a href="/import-template.csv" download className="mt-3 inline-block text-sm text-primary">Scarica un CSV di esempio</a>
+    {fileNotices.length > 0 && <div role="status" className="mt-4 space-y-2 rounded-xl border border-border bg-accent p-4 text-sm">{fileNotices.map(notice => <p key={notice}>{notice}</p>)}</div>}
     {fileError && <p role="alert" className="mt-4 text-destructive">{fileError}</p>}
     {csv && <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
       <h2 className="font-display text-lg font-semibold">1. Associa le colonne</h2>
-      <p className="text-sm text-muted-foreground">{fileName} · {csv.rows.length} libri. Serve almeno il titolo o l’ISBN. Le date accettano AAAA-MM-GG o GG/MM/AAAA; i voti vanno da 0 a 5.</p>
+      <p className="text-sm text-muted-foreground">{fileName} · {csv.rows.length} libri. Serve almeno il titolo o l’ISBN. Le date accettano anche “15 ago 2023”; i voti accettano anche “4/5”.</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map(field => <label key={field} className="flex min-w-0 flex-col gap-1 text-sm">{FIELD_LABELS[field]}
           <select className={inputClass} value={mapping[field]} disabled={busy || resetBusy || resetOpen} onChange={e => setMapping(m => ({ ...m, [field]: e.target.value }))}>
