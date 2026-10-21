@@ -126,18 +126,25 @@ function matches(book: Book, id: string) {
     )
   );
 }
+/** Unread shelves express interest, not an endorsement equivalent to a high rating. */
+export function libraryInterest(item: LibraryItem): number {
+  if (item.rating != null && Number(item.rating) <= 2) return -2;
+  const status =
+    item.status === "read"
+      ? 1
+      : item.status === "reading"
+        ? 0.8
+        : item.status === "to_read"
+          ? 0.4
+          : 0;
+  return status + (item.favorite ? 3 : 0) + (Number(item.rating ?? 0) >= 4 ? 2 : 0);
+}
 export function recommendationPlan(preferences: ReadingPreferences | null, library: LibraryItem[]) {
   const weights = new Map<string, number>();
   for (const id of preferences?.liked ?? []) weights.set(id, 5);
   for (const item of library) {
     if (!item.books) continue;
-    const rating = item.rating == null ? null : Number(item.rating);
-    const weight =
-      rating != null && rating <= 2
-        ? -2
-        : (item.favorite ? 3 : 0) +
-          (rating != null && rating >= 4 ? 2 : 0) +
-          (item.status === "read" ? 0.5 : 0);
+    const weight = libraryInterest(item);
     if (!weight) continue;
     for (const g of READING_GENRES)
       if (matches(item.books, g.id)) weights.set(g.id, (weights.get(g.id) ?? 0) + weight);
@@ -166,12 +173,54 @@ export function recommendationPlan(preferences: ReadingPreferences | null, libra
   return ids.map((id) => READING_GENRES.find((g) => g.id === id)!);
 }
 export type RecommendationCandidate = { book: Book; genreId: string };
+export function recommendationSources(
+  preferences: ReadingPreferences | null,
+  library: LibraryItem[],
+) {
+  const authors = new Map<string, { name: string; weight: number }>();
+  for (const item of library) {
+    const weight = libraryInterest(item);
+    for (const name of item.books?.authors ?? []) {
+      if (!name.trim()) continue;
+      const key = norm(name);
+      const existing = authors.get(key);
+      authors.set(key, { name, weight: (existing?.weight ?? 0) + weight });
+    }
+  }
+  const selected = [...authors.values()]
+    .filter((a) => a.weight > 0)
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 2);
+  return [
+    ...recommendationPlan(preferences, library)
+      .slice(0, 5 - selected.length)
+      .map((g) => ({
+        id: g.id,
+        genreId: g.id,
+        query: `subject:"${g.subject}"`,
+        author: null as string | null,
+      })),
+    ...selected.map((a) => ({
+      id: `author:${norm(a.name)}`,
+      genreId: `author:${norm(a.name)}`,
+      query: `inauthor:"${a.name.replace(/["\n\r]/g, " ")}"`,
+      author: a.name,
+    })),
+  ];
+}
+function rotationVariation(id: string, rotation: number) {
+  if (!rotation) return 0;
+  let hash = rotation >>> 0;
+  for (const c of id) hash = (Math.imul(hash, 31) + c.charCodeAt(0)) >>> 0;
+  return ((hash % 1000) / 1000) * 0.75;
+}
 export function rankRecommendations(
   candidates: RecommendationCandidate[],
   preferences: ReadingPreferences | null,
   library: LibraryItem[],
   dismissed: string[],
   limit = 12,
+  rotation = 0,
 ) {
   const owned = new Set(library.map((i) => i.book_id));
   const hidden = new Set(dismissed);
@@ -195,7 +244,7 @@ export function rankRecommendations(
     if (items.some((i) => i.book.id === book.id || sameBook(i.book, book))) continue;
     const genre = READING_GENRES.find((g) => g.id === genreId);
     const liked = preferences?.liked.includes(genreId);
-    let score = liked ? 5 : 1;
+    let score = (liked ? 5 : 1) + rotationVariation(book.id, rotation);
     let reason = liked
       ? `Ti piace: ${genre?.label}`
       : `Esplora: ${genre?.label ?? "nuove letture"}`;
@@ -207,11 +256,29 @@ export function rankRecommendations(
       const sameGenre = matches(item.books, genreId);
       const low = item.rating != null && Number(item.rating) <= 2;
       if (low && (sameGenre || sameAuthor)) score -= sameAuthor ? 3 : 0.5;
-      else if ((item.favorite || Number(item.rating ?? 0) >= 4) && (sameAuthor || sameGenre)) {
-        score += sameAuthor ? 4 : 0.75;
-        if (sameAuthor)
-          reason = `Un autore che hai apprezzato: ${book.authors.find((a) => item.books!.authors.some((b) => norm(a) === norm(b)))}`;
-        else if (!liked) reason = `Dalle tue letture: ${genre?.label}`;
+      else if (libraryInterest(item) > 0 && (sameAuthor || sameGenre)) {
+        const strong = item.favorite || Number(item.rating ?? 0) >= 4;
+        score += sameAuthor
+          ? strong
+            ? 4
+            : libraryInterest(item)
+          : strong
+            ? 0.75
+            : libraryInterest(item) * 0.35;
+        if (sameAuthor) {
+          const author = book.authors.find((a) =>
+            item.books!.authors.some((b) => norm(a) === norm(b)),
+          );
+          reason = strong
+            ? `Un autore che hai apprezzato: ${author}`
+            : item.status === "to_read"
+              ? `Dagli autori che vuoi leggere: ${author}`
+              : `Un autore nella tua libreria: ${author}`;
+        } else if (!liked)
+          reason =
+            item.status === "to_read"
+              ? `Dai libri che vuoi leggere: ${genre?.label ?? "generi affini"}`
+              : `Dalla tua libreria: ${genre?.label ?? "generi affini"}`;
       }
     }
     const length = preferences?.length;

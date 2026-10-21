@@ -269,7 +269,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Grid({ items }: { items: ReturnType<typeof useLibrary>["data"] }) {
   if (!items?.length) return <p className="text-sm text-muted-foreground">Ancora nulla qui.</p>;
   return (
-    <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+    <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
       {items.map((i) =>
         i.books ? (
           <BookCard key={i.id} book={i.books} rating={i.rating != null ? Number(i.rating) : null} />

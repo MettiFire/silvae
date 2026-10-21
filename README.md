@@ -211,3 +211,16 @@ La bibliografia si aggiorna consultando la pagina (cache di cinque minuti),
 può includere traduzioni, ristampe, raccolte e voci duplicate del catalogo;
 non è una garanzia di copertura completa o di anteprime editoriali. Questo
 rilascio non invia notifiche automatiche o email sulle uscite.
+
+### Dimensione copertine e rinnovo Discovery
+
+Il selettore Copertine (grandi, medie, piccole) controlla le griglie di libreria,
+Discovery, home, profili, liste e pagine autore. La scelta si conserva nel
+browser; la libreria mantiene anche la vista elenco.
+Home e Discovery condividono i consigli e rinnovano la selezione a ogni apertura/ricaricamento e con Rinnova:
+una rotazione conservata nella sessione cambia le pagine del catalogo e varia
+lievemente i punteggi a parità di affinità. Cataloghi piccoli possono riproporre
+alcuni libri. Le fonti includono sia generi sia autori dei libri letti, in lettura
+e da leggere; i non letti esprimono interesse con peso inferiore a preferiti e
+voti alti, mentre i voti bassi restano segnali negativi. Le opere già presenti
+in libreria continuano a essere escluse dai suggerimenti.

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
 import { coverUrls } from "@/lib/book-metadata";
 import { BookmarkRating } from "@/components/BookmarkRating";
+import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
 
 export function BookCover({ book, className }: { book: Book; className?: string }) {
@@ -54,7 +55,7 @@ export function BookCard({
   rating,
   favorite,
   onToggleFavorite,
-  compact = false,
+  compact,
   footer,
 }: {
   book: Book;
@@ -64,6 +65,8 @@ export function BookCard({
   compact?: boolean;
   footer?: React.ReactNode;
 }) {
+  const density = useBookDensity();
+  const small = compact ?? density === "compact";
   return (
     <div className="group relative">
       <Link to="/book/$bookId" params={{ bookId: book.id }} className="block">
@@ -73,7 +76,7 @@ export function BookCard({
         <h3
           className={cn(
             "mt-2 line-clamp-2 font-display font-semibold leading-snug",
-            compact ? "text-xs" : "text-sm",
+            small ? "text-xs" : "text-sm",
           )}
         >
           {book.title}

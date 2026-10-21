@@ -101,12 +101,12 @@ function PublicProfile() {
       </div>
 
       <h2 className="mb-3 font-display text-lg font-bold">Letti di recente</h2>
-      <div className="mb-8 grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+      <div className="mb-8 book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
         {read.map((i) => (i.books ? <BookCard key={i.id} book={i.books} rating={i.rating != null ? Number(i.rating) : null} /> : null))}
       </div>
 
       <h2 className="mb-3 font-display text-lg font-bold">Preferiti</h2>
-      <div className="mb-8 grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+      <div className="mb-8 book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
         {favs.map((i) => (i.books ? <BookCard key={i.id} book={i.books} /> : null))}
       </div>
 

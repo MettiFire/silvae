@@ -1,11 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Sparkles } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
-import { useAuth } from "@/lib/auth";
-import { useLibrary } from "@/lib/library";
-import { searchBooks } from "@/lib/books";
+import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { ProgressBar } from "@/components/ProgressBar";
 
 export const Route = createFileRoute("/")({
@@ -14,7 +11,8 @@ export const Route = createFileRoute("/")({
       { title: "Paginae — Traccia le tue letture" },
       {
         name: "description",
-        content: "Home di Paginae: continua le letture in corso, segui gli amici e scopri nuovi libri.",
+        content:
+          "Home di Paginae: continua le letture in corso, segui gli amici e scopri nuovi libri.",
       },
       { property: "og:title", content: "Paginae — Traccia le tue letture" },
       { property: "og:description", content: "Continua le letture in corso e scopri nuovi libri." },
@@ -24,35 +22,44 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { user } = useAuth();
-  const { data: library = [] } = useLibrary(user?.id);
+  const {
+    user,
+    library,
+    recommended,
+    recsLoading: isPending,
+    recsError: isError,
+    retryRecs: refetch,
+    refresh,
+  } = useBookRecommendations();
   const reading = library.filter((i) => i.status === "reading");
   const finished = library.filter((i) => i.status === "read");
-
-  const { data: trending = [], isPending, isError, refetch } = useQuery({
-    queryKey: ["trending"],
-    queryFn: () => searchBooks("subject:fiction", { max: 12 }),
-  });
 
   return (
     <AppShell>
       {!user && (
         <section className="mb-10 overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-paper md:p-12">
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" /> Un Goodreads moderno, sobrio e letterario
+            <Sparkles className="h-3.5 w-3.5 text-primary" /> Un Goodreads moderno, sobrio e
+            letterario
           </p>
           <h1 className="max-w-2xl font-display text-3xl font-extrabold leading-tight md:text-5xl">
             Ogni libro che leggi, al suo posto.
           </h1>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            Traccia il progresso pagina per pagina, dai il tuo voto, crea liste, sfide annuali e segui cosa
-            leggono gli amici.
+            Traccia il progresso pagina per pagina, dai il tuo voto, crea liste, sfide annuali e
+            segui cosa leggono gli amici.
           </p>
           <div className="mt-6 flex gap-3">
-            <Link to="/auth" className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+            <Link
+              to="/auth"
+              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
               Inizia ora
             </Link>
-            <Link to="/discover" className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold">
+            <Link
+              to="/discover"
+              className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold"
+            >
               Esplora libri
             </Link>
           </div>
@@ -64,7 +71,11 @@ function Home() {
           <PageHeader title="Bentornato" subtitle="Riprendi da dove avevi lasciato" />
           {reading.length === 0 ? (
             <p className="mb-10 rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-              Nessuna lettura in corso. <Link to="/discover" className="text-primary">Scopri qualcosa di nuovo</Link>.
+              Nessuna lettura in corso.{" "}
+              <Link to="/discover" className="text-primary">
+                Scopri qualcosa di nuovo
+              </Link>
+              .
             </p>
           ) : (
             <div className="mb-10 grid gap-4 md:grid-cols-2">
@@ -76,11 +87,15 @@ function Home() {
                   className="flex gap-4 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
                 >
                   <div className="w-16 shrink-0">
-                    {item.books && <img src={item.books.cover_url ?? ""} alt="" className="cover-frame" />}
+                    {item.books && (
+                      <img src={item.books.cover_url ?? ""} alt="" className="cover-frame" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 font-display font-semibold">{item.books?.title}</h3>
-                    <p className="line-clamp-1 text-xs text-muted-foreground">{item.books?.authors.join(", ")}</p>
+                    <p className="line-clamp-1 text-xs text-muted-foreground">
+                      {item.books?.authors.join(", ")}
+                    </p>
                     <ProgressBar
                       className="mt-3"
                       current={item.current_page}
@@ -98,21 +113,47 @@ function Home() {
             <Stat label="Da leggere" value={library.filter((i) => i.status === "to_read").length} />
             <Stat
               label="Pagine lette"
-              value={finished.reduce((s, i) => s + (i.total_pages ?? 0), 0) + reading.reduce((s, i) => s + i.current_page, 0)}
+              value={
+                finished.reduce((s, i) => s + (i.total_pages ?? 0), 0) +
+                reading.reduce((s, i) => s + i.current_page, 0)
+              }
             />
           </div>
         </>
       )}
 
-      <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
-        <BookOpen className="h-5 w-5 text-primary" /> Libri da scoprire
-      </h2>
-      {isPending && <p role="status" className="mb-4 text-sm text-muted-foreground">Caricamento libri e copertine…</p>}
-      {isError && <p role="alert" className="mb-4 text-sm">Il catalogo non è disponibile al momento. <button className="text-primary" onClick={() => void refetch()}>Riprova</button></p>}
-      {!isPending && !isError && !trending.length && <p className="mb-4 text-sm text-muted-foreground">Nessuna novità disponibile. Prova la ricerca per titolo o autore.</p>}
-      <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        {trending.map((b) => (
-          <BookCard key={b.id} book={b} />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+          <BookOpen className="h-5 w-5 text-primary" /> Libri da scoprire
+        </h2>
+        <button onClick={refresh} className="rounded-lg border border-border px-3 py-2 text-sm">
+          Rinnova
+        </button>
+      </div>
+      {isPending && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          Caricamento libri e copertine…
+        </p>
+      )}
+      {isError && (
+        <p role="alert" className="mb-4 text-sm">
+          Il catalogo non è disponibile al momento.{" "}
+          <button className="text-primary" onClick={() => void refetch()}>
+            Riprova
+          </button>
+        </p>
+      )}
+      {!isPending && !isError && !recommended.length && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Nessun suggerimento disponibile. Premi Rinnova oppure modifica i tuoi gusti nel profilo.
+        </p>
+      )}
+      <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+        {recommended.map(({ book: b, reason }) => (
+          <div key={b.id}>
+            <BookCard book={b} />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{reason}</p>
+          </div>
         ))}
       </div>
     </AppShell>

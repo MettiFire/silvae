@@ -163,7 +163,7 @@ function ListPage() {
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nessun libro in questa lista.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="book-grid grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
           {items.map((it) =>
             it.books ? (
               <BookCard

@@ -4,16 +4,9 @@ import { useMemo, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
-import { discoverBooks, searchBooks, GENRES, type Book } from "@/lib/books";
-import { useAuth } from "@/lib/auth";
-import { useLibrary } from "@/lib/library";
+import { discoverBooks, GENRES, type Book } from "@/lib/books";
 import { toast } from "sonner";
-import {
-  parsePreferences,
-  PREFERENCES_FIELD,
-  recommendationPlan,
-  rankRecommendations,
-} from "@/lib/reading-preferences";
+import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/discover")({
@@ -32,26 +25,22 @@ export const Route = createFileRoute("/discover")({
 });
 
 function Discover() {
-  const { user } = useAuth();
+  const {
+    user,
+    library,
+    preferences,
+    dismissed,
+    recommended,
+    recsLoading,
+    recsError,
+    retryRecs,
+    refresh,
+  } = useBookRecommendations();
   const qc = useQueryClient();
-  const { data: library = [] } = useLibrary(user?.id);
   const [genre, setGenre] = useState("all");
   const [year, setYear] = useState("all");
   const [minRating, setMinRating] = useState(0);
   const [order, setOrder] = useState<"relevance" | "newest">("relevance");
-  const [seed, setSeed] = useState(0);
-
-  const { data: dismissed = [] } = useQuery({
-    queryKey: ["dismissed", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("dismissed_books")
-        .select("book_id")
-        .eq("user_id", user!.id);
-      return (data ?? []).map((r) => r.book_id as string);
-    },
-  });
 
   const owned = useMemo(() => new Set(library.map((i) => i.book_id)), [library]);
   const exclude = (list: Book[]) =>
@@ -67,32 +56,6 @@ function Discover() {
     queryFn: () => discoverBooks({ genre, year, order }),
   });
 
-  const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
-  const plan = recommendationPlan(preferences, library);
-  const planKey = plan.map((g) => g.id).join("|");
-  const {
-    data: recs = [],
-    isFetching: recsLoading,
-    isError: recsError,
-    refetch: retryRecs,
-  } = useQuery({
-    queryKey: ["recs-v2", planKey, seed, user?.id],
-    queryFn: async () => {
-      const lists = await Promise.allSettled(
-        plan.map(async (g) => {
-          const books = await searchBooks(`subject:"${g.subject}"`, {
-            max: 12,
-            startIndex: (seed % 5) * 12,
-          });
-          return books.map((book) => ({ book, genreId: g.id }));
-        }),
-      );
-      if (lists.every((r) => r.status === "rejected")) throw new Error("Catalogo non disponibile");
-      return lists.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
   const dismiss = async (bookId: string) => {
     if (!user) return;
     const { error } = await supabase
@@ -106,7 +69,6 @@ function Discover() {
   };
 
   const filtered = exclude(results).filter((b) => (b.average_rating ?? 0) >= minRating);
-  const recommended = rankRecommendations(recs, preferences, library, dismissed);
 
   return (
     <AppShell>
@@ -114,19 +76,20 @@ function Discover() {
 
       {(recsLoading || recsError || recommended.length > 0 || user) && (
         <section className="mb-10">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-display text-xl font-bold">
                 {user &&
-                (preferences?.liked.length ||
-                  library.some((i) => i.favorite || Number(i.rating ?? 0) >= 4))
+                (preferences?.liked.length || library.some((i) => i.status !== "abandoned"))
                   ? "Consigliati per te"
                   : "Da dove iniziare"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {preferences?.status === "completed"
-                  ? "Dai tuoi gusti e dalle letture che hai apprezzato."
-                  : "Una selezione varia per iniziare a esplorare."}
+                  ? "Dai tuoi gusti e dai libri letti, in lettura e da leggere."
+                  : library.some((i) => i.status !== "abandoned")
+                    ? "Dai generi e dagli autori della tua libreria, anche dei libri da leggere."
+                    : "Una selezione varia per iniziare a esplorare."}
               </p>
               {user && (
                 <Link to="/profile" className="mt-1 inline-block text-xs text-primary">
@@ -139,7 +102,7 @@ function Discover() {
             </div>
             <button
               type="button"
-              onClick={() => setSeed((s) => s + 1)}
+              onClick={refresh}
               className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
             >
               <RefreshCw className="h-4 w-4" /> Rinnova
@@ -164,7 +127,7 @@ function Discover() {
               gusti.
             </p>
           )}
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {recommended.map(({ book: b, reason }) => (
               <div key={b.id} className="relative">
                 <BookCard book={b} />
@@ -241,7 +204,7 @@ function Discover() {
       {isFetching ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : (
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+        <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
           {filtered.map((b) => (
             <BookCard key={b.id} book={b} />
           ))}

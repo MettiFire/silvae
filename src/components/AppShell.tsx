@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
+import { BookGridSizeControl } from "@/components/BookGridSizeControl";
+import { useBookDensity } from "@/lib/book-density";
 import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
@@ -35,12 +37,13 @@ const NAV = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const density = useBookDensity();
   const { resolved, toggle } = useTheme();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div data-book-density={density} className="flex min-h-screen bg-background">
       <ReadingPreferences onboarding />
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 md:flex">
         <Link to="/" className="mb-6 flex items-center gap-2 px-2">
@@ -113,7 +116,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           )}
         </nav>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
+          <div className="mb-4 flex justify-end">
+            <BookGridSizeControl />
+          </div>
+          {children}
+        </main>
         <nav className="sticky bottom-0 flex justify-around border-t border-border bg-background/95 py-2 backdrop-blur md:hidden">
           {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
             <Link

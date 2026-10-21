@@ -217,7 +217,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               Caricamento dei libri…
             </p>
           )}
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {books.map((b) => (
               <div key={b.id}>
                 <BookCard book={b} />

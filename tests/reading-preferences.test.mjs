@@ -164,3 +164,44 @@ test("broad science search results do not label science fiction as science and n
     ["biology"],
   );
 });
+
+test("read, reading and unread books all inform genre and author candidate sources", async () => {
+  const { recommendationSources, libraryInterest } =
+    await import("../src/lib/reading-preferences.ts");
+  for (const status of ["read", "reading", "to_read"]) {
+    const entry = row(book("interest", ["Poetry"], { authors: ["Poet Example"] }), null, {
+      status,
+    });
+    assert.ok(libraryInterest(entry) > 0);
+    assert.ok(recommendationPlan(null, [entry]).some((g) => g.id === "poetry"));
+    assert.ok(
+      recommendationSources(null, [entry]).some((s) => s.query === 'inauthor:"Poet Example"'),
+    );
+  }
+  const unknown = row(book("uncategorized", [], { authors: ["Writer Example"] }), null, {
+    status: "to_read",
+  });
+  assert.ok(recommendationSources(null, [unknown]).some((s) => s.author === "Writer Example"));
+  assert.equal(libraryInterest({ ...unknown, status: "abandoned" }), 0);
+});
+test("unread authors influence ranking without being described as already enjoyed", () => {
+  const interest = row(book("owned", ["Poetry"], { authors: ["Writer"] }), null, {
+    status: "to_read",
+  });
+  const list = [
+    { book: book("unrelated", ["Poetry"]), genreId: "poetry" },
+    { book: book("new", ["Poetry"], { authors: ["Writer"] }), genreId: "poetry" },
+  ];
+  const result = rankRecommendations(list, null, [interest], []);
+  assert.equal(result[0].book.id, "new");
+  assert.match(result[0].reason, /vuoi leggere/);
+  assert.ok(!result.some((x) => x.book.id === "owned"));
+});
+test("high ratings are stronger than unread interest and low ratings stay negative", async () => {
+  const { libraryInterest, recommendationSources } =
+    await import("../src/lib/reading-preferences.ts");
+  const unread = row(book("wanted"), null, { status: "to_read" });
+  assert.ok(libraryInterest(row(book("loved"), 5)) > libraryInterest(unread));
+  assert.ok(libraryInterest({ ...unread, rating: 1 }) < 0);
+  assert.ok(!recommendationSources(null, [{ ...unread, rating: 1 }]).some((s) => s.author));
+});
