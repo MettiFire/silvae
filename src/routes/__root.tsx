@@ -76,9 +76,6 @@ function ErrorView({ error, reset }: ErrorComponentProps) {
   );
 }
 
-// The router's error slot expects an async-capable component: expose the
-// optional preload hook so the synchronous view still satisfies its type.
-const ErrorComponent = Object.assign(ErrorView, { preload: () => Promise.resolve() });
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
