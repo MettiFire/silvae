@@ -4,6 +4,37 @@ import { sameBook } from "./book-metadata.ts";
 
 export const PREFERENCES_FIELD = "reading_preferences_v1";
 export const READING_GENRES = [
+  {
+    id: "fiction",
+    label: "Romanzi e narrativa",
+    subject: "Fiction",
+    aliases: ["fiction", "novels", "romanzo", "romanzi", "narrativa"],
+  },
+  {
+    id: "nonfiction",
+    label: "Saggistica e saggi",
+    subject: "Nonfiction",
+    aliases: ["nonfiction", "non fiction", "saggistica", "essays", "saggi"],
+  },
+  {
+    id: "society",
+    label: "Attualità e società",
+    subject: "Social Science",
+    aliases: [
+      "social science",
+      "sociology",
+      "political science",
+      "sociologia",
+      "societa",
+      "attualita",
+    ],
+  },
+  {
+    id: "arts",
+    label: "Arte e cultura",
+    subject: "Art",
+    aliases: ["art", "arts", "arte", "cultura"],
+  },
   { id: "fantasy", label: "Fantasy", subject: "Fantasy", aliases: ["fantasy"] },
   { id: "romance", label: "Romance", subject: "Romance", aliases: ["romance", "romanzi rosa"] },
   {
@@ -119,7 +150,7 @@ function matches(book: Book, id: string) {
     !!genre &&
     book.categories.some((c) =>
       genre.aliases.some((a) =>
-        ` ${norm(id === "science" ? c.replace(/science fiction/gi, "") : c)} `.includes(
+        ` ${norm(id === "science" ? c.replace(/science fiction/gi, "") : id === "fiction" ? c.replace(/non[ -]?fiction/gi, "") : c)} `.includes(
           ` ${norm(a)} `,
         ),
       ),

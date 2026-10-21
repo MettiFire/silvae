@@ -205,3 +205,18 @@ test("high ratings are stronger than unread interest and low ratings stay negati
   assert.ok(libraryInterest({ ...unread, rating: 1 }) < 0);
   assert.ok(!recommendationSources(null, [{ ...unread, rating: 1 }]).some((s) => s.author));
 });
+
+test("general novels and nonfiction are selectable and generate distinct catalogue queries", async () => {
+  const { recommendationSources } = await import("../src/lib/reading-preferences.ts");
+  const preferences = parsePreferences(
+    prefs({ liked: ["fiction", "nonfiction", "society", "arts"] }),
+  );
+  assert.deepEqual(preferences.liked, ["fiction", "nonfiction", "society", "arts"]);
+  assert.deepEqual(
+    recommendationSources(preferences, []).map((s) => s.query),
+    ['subject:"Fiction"', 'subject:"Nonfiction"', 'subject:"Social Science"', 'subject:"Art"'],
+  );
+  const plan = recommendationPlan(null, [row(book("essay", ["Non-Fiction"]), 5)]);
+  assert.ok(plan.some((g) => g.id === "nonfiction"));
+  assert.ok(!plan.some((g) => g.id === "fiction"));
+});
