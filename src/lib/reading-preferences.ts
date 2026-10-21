@@ -178,6 +178,8 @@ export function rankRecommendations(
   const avoided = preferences?.avoided ?? [];
   const items: { book: Book; reason: string; score: number; genreId: string }[] = [];
   for (const { book, genreId } of candidates) {
+    // Broad provider subjects can return science fiction for a science query.
+    if (genreId === "science" && matches(book, "scifi") && !matches(book, "science")) continue;
     if (
       owned.has(book.id) ||
       hidden.has(book.id) ||

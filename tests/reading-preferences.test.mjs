@@ -147,3 +147,19 @@ test("science exclusion does not exclude science fiction and fallback always has
     ).length > 0,
   );
 });
+
+test("broad science search results do not label science fiction as science and nature", () => {
+  const result = rankRecommendations(
+    [
+      { book: book("novel", ["Science Fiction"]), genreId: "science" },
+      { book: book("biology", ["Science", "Biology"]), genreId: "science" },
+    ],
+    null,
+    [],
+    [],
+  );
+  assert.deepEqual(
+    result.map((x) => x.book.id),
+    ["biology"],
+  );
+});
