@@ -377,6 +377,163 @@ export type Database = {
         }
         Relationships: []
       }
+      reader_annotations: {
+        Row: {
+          document_id: string
+          external_id: string
+          id: string
+          kind: string
+          note: string
+          position: string
+          quote: string
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          external_id: string
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote: string
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          external_id?: string
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_annotations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "reader_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reader_connections: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          last_received_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          last_received_at?: string | null
+          mode: string
+          name: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          last_received_at?: string | null
+          mode?: string
+          name?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reader_credentials: {
+        Row: {
+          connection_id: string
+          credential_hash: string
+        }
+        Insert: {
+          connection_id: string
+          credential_hash: string
+        }
+        Update: {
+          connection_id?: string
+          credential_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_credentials_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: true
+            referencedRelation: "reader_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reader_documents: {
+        Row: {
+          authors: string[]
+          book_id: string | null
+          confirmed_manual_at: string | null
+          connection_id: string
+          external_id: string
+          id: string
+          last_received_at: string
+          progress_payload: Json | null
+          result: string
+          session_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          authors?: string[]
+          book_id?: string | null
+          confirmed_manual_at?: string | null
+          connection_id: string
+          external_id: string
+          id?: string
+          last_received_at?: string
+          progress_payload?: Json | null
+          result?: string
+          session_id?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          authors?: string[]
+          book_id?: string | null
+          confirmed_manual_at?: string | null
+          connection_id?: string
+          external_id?: string
+          id?: string
+          last_received_at?: string
+          progress_payload?: Json | null
+          result?: string
+          session_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_documents_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reader_documents_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "reader_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reading_progress_events: {
         Row: {
           book_id: string
@@ -490,6 +647,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_reader_document: { Args: { p_document: string }; Returns: string }
+      bind_reader_document: {
+        Args: { p_book: string; p_document: string }
+        Returns: string
+      }
+      check_reader_credential: {
+        Args: { p_connection: string; p_credential: string }
+        Returns: {
+          created_at: string
+          id: string
+          kind: string
+          last_received_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reader_connections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_reader_connection: {
+        Args: { p_kind: string; p_name: string; p_secret: string }
+        Returns: string
+      }
       fragment_books: {
         Args: never
         Returns: {
@@ -497,6 +682,18 @@ export type Database = {
           id: string
           title: string
         }[]
+      }
+      ingest_reader_batch: {
+        Args: { p_connection: string; p_credential: string; p_documents: Json }
+        Returns: Json
+      }
+      reader_kosync: {
+        Args: {
+          p_connection: string
+          p_credential: string
+          p_document?: string
+        }
+        Returns: Json
       }
       record_reading_progress: {
         Args: {
@@ -510,6 +707,10 @@ export type Database = {
           p_source: string
         }
         Returns: string
+      }
+      revoke_reader_connection: {
+        Args: { p_connection: string }
+        Returns: undefined
       }
       start_reading_session: { Args: { p_book_id: string }; Returns: string }
     }

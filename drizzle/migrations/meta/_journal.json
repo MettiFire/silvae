@@ -15,6 +15,13 @@
       "when": 1792675732157,
       "tag": "0001_fragments_and_reading_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792675785061,
+      "tag": "0002_reader_connections",
+      "breakpoints": true
     }
   ]
 }
