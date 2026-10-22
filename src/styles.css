@@ -108,7 +108,7 @@
   --card-foreground: #eeebe7;
   --popover: #2c2a2a;
   --popover-foreground: #eeebe7;
-  --primary: #e4b5b2;
+  --primary: #df8297;
   --primary-foreground: #2f2024;
   --secondary: #302e2e;
   --secondary-foreground: #e7e2dd;
@@ -120,20 +120,20 @@
   --destructive-foreground: #2d1818;
   --border: #454040;
   --input: #554e4e;
-  --ring: #e4b5b2;
-  --chart-1: #e4b5b2;
+  --ring: #df8297;
+  --chart-1: #df8297;
   --chart-2: #a7b38e;
   --chart-3: #c2b08e;
   --chart-4: #94b2b6;
   --chart-5: #c8968f;
   --sidebar: #252424;
   --sidebar-foreground: #eeebe7;
-  --sidebar-primary: #e4b5b2;
+  --sidebar-primary: #df8297;
   --sidebar-primary-foreground: #2f2024;
   --sidebar-accent: #373333;
   --sidebar-accent-foreground: #eeebe7;
   --sidebar-border: #454040;
-  --sidebar-ring: #e4b5b2;
+  --sidebar-ring: #df8297;
   --hero-bg: #302c2c;
   --hero-ink: #e6dfd9;
 }
@@ -232,6 +232,16 @@
   letter-spacing: -0.07em;
   font-weight: 500;
   line-height: 1;
+}
+/* Match Lora's visible capitals/ascenders and baseline, at every size. */
+.brand-lockup {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2em;
+}
+.brand-tree {
+  height: 0.77em;
+  width: calc(0.77em * 482 / 424);
 }
 .wordmark span {
   color: var(--primary);

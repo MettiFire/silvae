@@ -8,12 +8,12 @@ export function Logo({ className = "h-6 w-6" }: { className?: string }) {
         backgroundColor: "currentColor",
         maskImage: 'url("/images/silvae-tree.png")',
         WebkitMaskImage: 'url("/images/silvae-tree.png")',
-        maskSize: "contain",
-        WebkitMaskSize: "contain",
+        maskSize: "106.224% 120.755%",
+        WebkitMaskSize: "106.224% 120.755%",
         maskRepeat: "no-repeat",
         WebkitMaskRepeat: "no-repeat",
-        maskPosition: "center",
-        WebkitMaskPosition: "center",
+        maskPosition: "53.333% 59.091%",
+        WebkitMaskPosition: "53.333% 59.091%",
       }}
     />
   );

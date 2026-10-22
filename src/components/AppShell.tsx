@@ -62,12 +62,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ReadingPreferences onboarding />
       <header className="site-header">
         <div className="masthead site-width">
-          <Link
-            to="/"
-            className="wordmark inline-flex items-center gap-2"
-            aria-label="Silvae, pagina iniziale"
-          >
-            <Logo className="h-12 w-12 text-primary" />
+          <Link to="/" className="wordmark brand-lockup" aria-label="Silvae, pagina iniziale">
+            <Logo className="brand-tree text-primary" />
             <span className="!text-foreground">
               Silvae<span>.</span>
             </span>
@@ -146,10 +142,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <footer className="site-footer site-width">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 font-display text-2xl"
+          className="brand-lockup font-display text-2xl"
           aria-label="Silvae, pagina iniziale"
         >
-          <Logo className="h-10 w-10 text-primary" />
+          <Logo className="brand-tree text-primary" />
           Silvae.
         </Link>
         <p>Le storie passano. Qualcosa resta.</p>
