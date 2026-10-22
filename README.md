@@ -356,3 +356,30 @@ Fonti di protocollo consultate il 22 ottobre 2026:
 
 Test aggiuntivi: `python3 tests/reader-bridge.test.py`. La suite Node include
 ora test PostgreSQL delle connessioni e test del protocollo HTTP KOReader.
+
+### Esperimento locale: progresso cloud Kindle
+
+`scripts/kindle-cloud-probe.py` prova a leggere posizione e data di sincronizzazione
+tramite API private di Kindle per Web e a calcolare una **stima** percentuale dal
+metodo documentato nel sorgente di [kindle-api](https://github.com/Xetera/kindle-api).
+Richiede Python 3.10+ e una sessione locale configurata interattivamente con
+`python3 scripts/kindle-cloud-probe.py --setup`. Cookie e parametri web-reader
+rimangono in `~/.paginae/kindle-session.json` (permessi 0600); non vengono inviati
+alla nostra app, a proxy o a host diversi da `read.amazon.com`.
+
+```sh
+python3 scripts/kindle-cloud-probe.py --limit 5 --output kindle-progress.local.json
+python3 tests/kindle-cloud-probe.test.py
+```
+
+È una prova isolata: non abilita progresso per i collegamenti Kindle USB e non
+aggiorna la libreria. Rifiuta date assenti, valori fuori scala e metadati di libri
+diversi; conserva la posizione grezza per il confronto con il lettore. La sessione
+non viene letta automaticamente dal browser e la password Amazon non viene chiesta.
+Gli output non sovrascrivono file esistenti. Non caricare sessioni/cookie/HAR.
+
+Validazione: sei test sintetici; endpoint reale senza credenziali risponde con
+redirect al login. La lettura autenticata, la precisione della stima e la copertura
+di acquisti/Send to Kindle **restano da provare con l'account e il Kindle reali**.
+Non presentare questo prototipo come sincronizzazione funzionante o supporto
+universale dei documenti personali.

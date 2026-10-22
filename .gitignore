@@ -16,6 +16,8 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+kindle-session*.json
+kindle-progress*.json
 
 # Wrangler / Cloudflare
 .wrangler/
