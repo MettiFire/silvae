@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
-import { pageSeo, SITE_URL, SOCIAL_IMAGE } from "../src/lib/site-seo.ts";
+import { pageSeo, SITE_URL, SOCIAL_IMAGE, hasNotFoundMatch } from "../src/lib/site-seo.ts";
 import { assertPublicClientKey } from "../src/lib/public-client-key.ts";
 import { inspectClientText, inspectPublicEnv } from "../scripts/audit-client-secrets.mjs";
 const jwt = (role) =>
@@ -19,6 +19,7 @@ test("Only browser-safe Supabase keys are accepted, without echoing rejected val
       (error) => !error.message.includes(secret),
     );
   assert.equal(inspectPublicEnv({ VITE_GOOGLE_API_KEY: "not-public" }).length, 1);
+  assert.equal(inspectPublicEnv({ VITE_SUPABASE_PUBLISHABLE_KEY: jwt("service_role") }).length, 1);
   assert.equal(inspectPublicEnv({ VITE_SUPABASE_PUBLISHABLE_KEY: jwt("anon") }).length, 0);
 });
 test("Compiled-bundle scanner catches privileged keys and injected server values", () => {
@@ -68,4 +69,14 @@ test("Social image is a compressed 1200×630 PNG", async () => {
   assert.equal(png.readUInt32BE(16), 1200);
   assert.equal(png.readUInt32BE(20), 630);
   assert.ok(png.length < 60000);
+});
+
+test("404 metadata survives old and new router not-found flags", () => {
+  for (const match of [
+    { status: "notFound" },
+    { status: "success", _notFound: true },
+    { status: "success", globalNotFound: true },
+  ])
+    assert.equal(hasNotFoundMatch([match]), true);
+  assert.equal(hasNotFoundMatch([{ status: "success" }]), false);
 });

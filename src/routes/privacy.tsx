@@ -39,9 +39,10 @@ function Privacy() {
       </p>
       <h2>3. Cosa è pubblico e cosa è privato</h2>
       <p>
-        Il profilo, la libreria e le informazioni di lettura, i voti, le recensioni, le liste
-        pubbliche, gli autori seguiti e le relazioni sociali possono essere consultati da altri
-        visitatori. Evita di inserire informazioni riservate nei campi pubblici.
+        Il profilo, le recensioni, le liste pubbliche, gli autori seguiti e le relazioni sociali
+        possono essere consultati da altri visitatori. I dettagli della libreria e delle letture
+        sono consultabili dagli altri utenti autenticati del servizio. Evita di inserire
+        informazioni riservate nei campi condivisi.
       </p>
       <p>
         I frammenti, le note personali, le preferenze salvate nell’account, le liste impostate come

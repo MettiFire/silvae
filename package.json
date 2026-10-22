@@ -5,13 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "node scripts/audit-client-secrets.mjs --env && vite build && node scripts/audit-client-secrets.mjs --bundle",
+    "build:dev": "node scripts/audit-client-secrets.mjs --env --mode development && vite build --mode development && node scripts/audit-client-secrets.mjs --bundle --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "prebuild": "node scripts/audit-client-secrets.mjs --env",
-    "postbuild": "node scripts/audit-client-secrets.mjs --bundle",
     "audit:client": "node scripts/audit-client-secrets.mjs --bundle"
   },
   "overrides": {

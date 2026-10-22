@@ -10,7 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
-import { pageSeo } from "@/lib/site-seo";
+import { pageSeo, hasNotFoundMatch } from "@/lib/site-seo";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider, themeInitScript } from "@/lib/theme";
@@ -96,12 +96,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       ...pageSeo(
-        matches.some((m) => m.globalNotFound)
+        hasNotFoundMatch(matches)
           ? "Pagina non trovata — Paginae"
           : "Paginae — Una vita tra le pagine",
         "Organizza le tue letture, crea liste, conserva citazioni e scopri nuovi libri su Paginae.",
         undefined,
-        matches.some((m) => m.globalNotFound),
+        hasNotFoundMatch(matches),
       ).meta,
     ],
     links: [

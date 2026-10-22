@@ -29,3 +29,13 @@ export function pageSeo(title: string, description: string, path?: string, noind
     links: path ? [{ rel: "canonical", href: `${SITE_URL}${path}` }] : [],
   };
 }
+
+/** Router releases use different flags for an unmatched root route. */
+export function hasNotFoundMatch(
+  matches: readonly { status?: string; _notFound?: boolean; globalNotFound?: boolean }[],
+): boolean {
+  return matches.some(
+    (match) =>
+      match.status === "notFound" || match._notFound === true || match.globalNotFound === true,
+  );
+}

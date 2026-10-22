@@ -2,7 +2,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadEnv } from "vite";
-import { assertPublicClientKey } from "../src/lib/public-client-key.ts";
 export function inspectClientText(text, secrets = []) {
   const findings = [];
   if (/sb_secret_[A-Za-z0-9_-]{16,}/.test(text)) findings.push("Supabase secret key");
@@ -29,7 +28,12 @@ export function inspectPublicEnv(env) {
     .map((key) => `${key}: public variable not approved`);
   if (env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     try {
-      assertPublicClientKey(env.VITE_SUPABASE_PUBLISHABLE_KEY);
+      const key = env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const publishable = /^sb_publishable_[A-Za-z0-9_-]+$/.test(key);
+      const anon =
+        key.startsWith("eyJ") &&
+        JSON.parse(Buffer.from(key.split(".")[1], "base64url")).role === "anon";
+      if (!publishable && !anon) throw new Error("Invalid public key");
     } catch {
       errors.push("VITE_SUPABASE_PUBLISHABLE_KEY: expected publishable or anon key");
     }
@@ -46,8 +50,10 @@ async function files(dir) {
   return nested.flat();
 }
 async function main() {
+  const modeIndex = process.argv.indexOf("--mode");
+  const mode = modeIndex >= 0 ? process.argv[modeIndex + 1] : "production";
   const env = {
-    ...loadEnv(process.env.NODE_ENV ?? "production", process.cwd(), ""),
+    ...loadEnv(mode, process.cwd(), ""),
     ...process.env,
   };
   const errors = inspectPublicEnv(env);
@@ -56,7 +62,9 @@ async function main() {
       .filter(
         ([key, value]) =>
           !key.startsWith("VITE_") &&
-          /(?:SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY|SERVICE_ROLE_KEY)$/.test(key) &&
+          /(?:SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY|SERVICE_ROLE_KEY|DATABASE_URL|DB_MIGRATION_URL|DB_URL)$/.test(
+            key,
+          ) &&
           typeof value === "string",
       )
       .map(([, value]) => value);
