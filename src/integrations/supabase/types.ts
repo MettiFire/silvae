@@ -172,6 +172,71 @@ export type Database = {
         }
         Relationships: []
       }
+      fragments: {
+        Row: {
+          book_id: string
+          created_at: string
+          dedupe_key: string
+          deleted_at: string | null
+          favorite: boolean
+          highlighted_at: string | null
+          id: string
+          kind: string
+          note: string
+          position: string
+          quote: string
+          source: string
+          source_ref: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          dedupe_key: string
+          deleted_at?: string | null
+          favorite?: boolean
+          highlighted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote: string
+          source?: string
+          source_ref?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          dedupe_key?: string
+          deleted_at?: string | null
+          favorite?: boolean
+          highlighted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote?: string
+          source?: string
+          source_ref?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragments_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_items: {
         Row: {
           book_id: string
@@ -182,7 +247,11 @@ export type Database = {
           id: string
           last_reread_at: string | null
           needs_review: boolean
+          progress_percent: number | null
+          progress_source: string | null
+          progress_updated_at: string | null
           rating: number | null
+          reading_session_id: string
           reread_count: number
           started_at: string | null
           status: string
@@ -199,7 +268,11 @@ export type Database = {
           id?: string
           last_reread_at?: string | null
           needs_review?: boolean
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
           rating?: number | null
+          reading_session_id?: string
           reread_count?: number
           started_at?: string | null
           status?: string
@@ -216,7 +289,11 @@ export type Database = {
           id?: string
           last_reread_at?: string | null
           needs_review?: boolean
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
           rating?: number | null
+          reading_session_id?: string
           reread_count?: number
           started_at?: string | null
           status?: string
@@ -300,6 +377,53 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_progress_events: {
+        Row: {
+          book_id: string
+          created_at: string
+          external_id: string | null
+          id: string
+          locator: string | null
+          observed_at: string
+          percentage: number
+          session_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          locator?: string | null
+          observed_at: string
+          percentage: number
+          session_id: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          locator?: string | null
+          observed_at?: string
+          percentage?: number
+          session_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_progress_events_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           body: string
@@ -366,7 +490,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fragment_books: {
+        Args: never
+        Returns: {
+          authors: string[]
+          id: string
+          title: string
+        }[]
+      }
+      record_reading_progress: {
+        Args: {
+          p_book_id: string
+          p_external_id: string
+          p_finished?: boolean
+          p_locator?: string
+          p_observed_at: string
+          p_percentage: number
+          p_session_id: string
+          p_source: string
+        }
+        Returns: string
+      }
+      start_reading_session: { Args: { p_book_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
