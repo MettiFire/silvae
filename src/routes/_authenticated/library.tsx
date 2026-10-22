@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
@@ -12,17 +13,13 @@ import { sortLibrary, type LibraryOrder } from "@/lib/library-order";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/library")({
-  head: () => ({
-    meta: [
-      { title: "La mia libreria — Paginae" },
-      {
-        name: "description",
-        content: "Tutti i tuoi libri per stato di lettura, con filtri, voti e progresso.",
-      },
-      { property: "og:title", content: "La mia libreria — Paginae" },
-      { property: "og:description", content: "I tuoi libri per stato, voto e genere." },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "La mia libreria — Paginae",
+      "Organizza libri letti, in lettura e da leggere, con voti, date e filtri per genere.",
+      undefined,
+      true,
+    ),
   component: LibraryPage,
 });
 

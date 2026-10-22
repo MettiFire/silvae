@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -27,17 +28,13 @@ const GENRE_LABELS: Record<string, string> = {
   Business: "Economia e impresa",
 };
 export const Route = createFileRoute("/discover")({
-  head: () => ({
-    meta: [
-      { title: "Esplora — Paginae" },
-      {
-        name: "description",
-        content: "Scopri nuovi libri per genere, anno e rating, con consigli personalizzati.",
-      },
-      { property: "og:title", content: "Discover — Paginae" },
-      { property: "og:description", content: "Scopri nuovi libri e consigli su misura." },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Esplora libri e nuove letture — Paginae",
+      "Scopri libri in base ai tuoi gusti e alla tua libreria, esplora generi e autori e trova la tua prossima lettura.",
+      "/discover",
+      false,
+    ),
   component: Discover,
 });
 

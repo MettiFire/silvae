@@ -8,9 +8,17 @@ import { BookmarkRating } from "@/components/BookmarkRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
 
-export function BookCover({ book, className }: { book: Book; className?: string }) {
+export function BookCover({
+  book,
+  className,
+  priority = false,
+}: {
+  book: Book;
+  className?: string;
+  priority?: boolean;
+}) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(priority);
   const [loadedUrl, setLoadedUrl] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const initial = coverUrls(book);
@@ -46,19 +54,26 @@ export function BookCover({ book, className }: { book: Book; className?: string 
   return (
     <div ref={ref} className={cn("cover-frame relative overflow-hidden", className)}>
       {source ? (
-        <img
-          key={source}
-          src={source}
-          alt={`Copertina di ${book.title}`}
-          loading="lazy"
-          className="h-full w-full object-cover"
-          onLoad={(e) => {
-            if (e.currentTarget.naturalWidth <= 2)
-              setFailed((previous) => new Set(previous).add(source));
-            else setLoadedUrl(source);
-          }}
-          onError={() => setFailed((previous) => new Set(previous).add(source))}
-        />
+        (visible || priority) && (
+          <img
+            key={source}
+            src={source}
+            alt={`Copertina di ${book.title}`}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            decoding="async"
+            width={300}
+            height={450}
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-cover"
+            onLoad={(e) => {
+              if (e.currentTarget.naturalWidth <= 2)
+                setFailed((previous) => new Set(previous).add(source));
+              else setLoadedUrl(source);
+            }}
+            onError={() => setFailed((previous) => new Set(previous).add(source))}
+          />
+        )
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
           <span className="font-display text-xs text-muted-foreground">{book.title}</span>

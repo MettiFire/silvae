@@ -90,6 +90,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <img
                       src={profile.avatar_url}
                       alt=""
+                      width={32}
+                      height={32}
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                       className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (
@@ -136,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           Paginae.
         </Link>
         <p>Le storie passano. Qualcosa resta.</p>
-        <div className="flex gap-5">
+        <div className="flex flex-wrap gap-x-5 gap-y-3">
           {user && (
             <>
               <Link to="/settings">Impostazioni</Link>
@@ -151,6 +155,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </>
           )}
           <Link to="/discover">Esplora il catalogo</Link>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Termini e condizioni</Link>
         </div>
       </footer>
       <nav aria-label="Navigazione mobile" className="mobile-nav">

@@ -1,12 +1,14 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReaderProfile } from "@/components/ReaderProfile";
 export const Route = createFileRoute("/u/$username")({
-  head: () => ({
-    meta: [
-      { title: "Profilo lettore — Paginae" },
-      { name: "description", content: "Letture, libri preferiti, liste e autori seguiti." },
-    ],
-  }),
+  head: ({ params }) =>
+    pageSeo(
+      `@${params.username} — Profilo su Paginae`,
+      `Scopri letture, liste pubbliche, libri preferiti e autori seguiti da @${params.username}.`,
+      `/u/${encodeURIComponent(params.username)}`,
+      true,
+    ),
   component: PublicProfile,
 });
 function PublicProfile() {

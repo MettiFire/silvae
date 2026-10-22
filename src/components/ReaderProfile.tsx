@@ -292,7 +292,15 @@ export function ReaderProfileView({
       </div>
       <header className="profile-identity">
         {profile.avatar_url ? (
-          <img className="profile-avatar" src={profile.avatar_url} alt={`Foto di ${name}`} />
+          <img
+            className="profile-avatar"
+            src={profile.avatar_url}
+            alt={`Foto di ${name}`}
+            width={112}
+            height={112}
+            decoding="async"
+            referrerPolicy="no-referrer"
+          />
         ) : (
           <span className="profile-avatar" aria-hidden="true">
             {name.slice(0, 1)}

@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,7 +15,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescripti
 import { parseCSV, detectMapping, importRow, normalize, FIELD_LABELS, type ColumnMapping, type ImportField } from "@/lib/csv-import";
 
 export const Route = createFileRoute("/_authenticated/import")({
-  head: () => ({ meta: [{ title: "Importa libri da CSV — Paginae" }] }),
+  head: () =>
+    pageSeo(
+      "Importa la tua libreria — Paginae",
+      "Importa libri e date di lettura da CSV Goodreads, Bookshelf e altri formati, verificando i dati prima del salvataggio.",
+      undefined,
+      true,
+    ),
   component: ImportPage,
 });
 type Result = { title: string; message: string; bookId?: string; kind: 'imported' | 'skipped' | 'error' };

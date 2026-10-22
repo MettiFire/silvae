@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
@@ -6,16 +7,13 @@ import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { ProgressBar } from "@/components/ProgressBar";
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Paginae — Una vita tra le pagine" },
-      {
-        name: "description",
-        content:
-          "Custodisci le tue letture, raccogli libri in liste e incontra chi condivide le tue storie.",
-      },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Paginae — Una vita tra le pagine",
+      "Custodisci le tue letture, raccogli libri in liste, conserva citazioni e scopri la tua prossima storia.",
+      "/",
+      false,
+    ),
   component: Home,
 });
 function Home() {
@@ -50,14 +48,14 @@ function Home() {
           </div>
           <div className="home-hero-art" aria-label="Dal catalogo di Paginae">
             {recommended.length ? (
-              recommended.slice(0, 2).map(({ book }) => (
+              recommended.slice(0, 2).map(({ book }, index) => (
                 <Link
                   key={book.id}
                   to="/book/$bookId"
                   params={{ bookId: book.id }}
                   className="hero-book"
                 >
-                  <BookCover book={book} />
+                  <BookCover book={book} priority={index === 0} />
                 </Link>
               ))
             ) : (

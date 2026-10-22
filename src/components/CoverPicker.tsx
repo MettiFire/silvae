@@ -37,7 +37,10 @@ export function CoverPicker({ book }: { book: Book }) {
 
   async function onFile(file: File) {
     if (!user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Scegli un’immagine più piccola di 5 MB"); return; }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Scegli un’immagine più piccola di 5 MB");
+      return;
+    }
     if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
       toast.error("Scegli un file immagine");
       return;
@@ -87,7 +90,11 @@ export function CoverPicker({ book }: { book: Book }) {
             </div>
 
             <label className="mb-5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 text-sm transition hover:border-primary/50">
-              {busy ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Upload className="h-4 w-4 text-primary" />}
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Upload className="h-4 w-4 text-primary" />
+              )}
               {busy ? "Attendi…" : "Carica un'immagine dal tuo dispositivo"}
               <input
                 type="file"
@@ -103,9 +110,13 @@ export function CoverPicker({ book }: { book: Book }) {
               />
             </label>
 
-            {isLoading && <p className="text-sm text-muted-foreground">Cerco copertine alternative…</p>}
+            {isLoading && (
+              <p className="text-sm text-muted-foreground">Cerco copertine alternative…</p>
+            )}
             {!isLoading && options.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nessuna copertina alternativa trovata: puoi caricarne una tua.</p>
+              <p className="text-sm text-muted-foreground">
+                Nessuna copertina alternativa trovata: puoi caricarne una tua.
+              </p>
             )}
 
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
@@ -121,7 +132,11 @@ export function CoverPicker({ book }: { book: Book }) {
                 >
                   <img
                     src={url}
-                    alt=""
+                    alt={`Copertina alternativa di ${book.title}`}
+                    decoding="async"
+                    width={150}
+                    height={225}
+                    referrerPolicy="no-referrer"
                     loading="lazy"
                     className="aspect-[2/3] w-full object-cover"
                     onError={(e) => {

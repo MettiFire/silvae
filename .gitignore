@@ -33,3 +33,8 @@ kindle-progress*.json
 *.njsproj
 *.sln
 *.sw?
+
+# Local server credentials (the existing Lovable .env contains public configuration only)
+.env
+.env.*
+!.env.example

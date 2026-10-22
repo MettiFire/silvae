@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { AnnualReadingGoal } from "@/components/AnnualReadingGoal";
@@ -7,16 +8,13 @@ import { useLibrary } from "@/lib/library";
 import { useReadingChallenges } from "@/lib/use-reading-challenges";
 
 export const Route = createFileRoute("/_authenticated/challenges")({
-  head: () => ({
-    meta: [
-      { title: "Sfide di lettura — Paginae" },
-      {
-        name: "description",
-        content:
-          "Premi letterari, letture dal mondo e percorsi personali. Iscriviti a una sfida e segui i tuoi progressi.",
-      },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Sfide di lettura — Paginae",
+      "Scegli percorsi tra premi letterari, letture dal mondo e obiettivi annuali e segui i tuoi progressi.",
+      undefined,
+      true,
+    ),
   component: Challenges,
 });
 function Challenges() {

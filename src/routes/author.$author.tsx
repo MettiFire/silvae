@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -15,15 +16,13 @@ import { hasReadBook } from "@/lib/library-order";
 export const Route = createFileRoute("/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
     typeof s["olid"] === "string" && /^OL\d+A$/.test(s["olid"]) ? { olid: s["olid"] } : {},
-  head: () => ({
-    meta: [
-      { title: "Autore — Paginae" },
-      {
-        name: "description",
-        content: "Segui un autore, scopri la sua storia e consulta le opere più recenti.",
-      },
-    ],
-  }),
+  head: ({ params }) =>
+    pageSeo(
+      `${params.author} — Autore su Paginae`,
+      `Biografia, bibliografia e nuove letture di ${params.author}. Segui l’autore su Paginae.`,
+      `/author/${encodeURIComponent(params.author)}`,
+      false,
+    ),
   component: AuthorPage,
 });
 function AuthorPage() {
@@ -159,6 +158,10 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           {data.photo && !photoFailed && (
             <img
               src={data.photo}
+              width={112}
+              height={144}
+              decoding="async"
+              referrerPolicy="no-referrer"
               alt={`Ritratto di ${data.name}`}
               onError={() => setPhotoFailed(true)}
               className="h-36 w-28 shrink-0 rounded-xl object-cover"

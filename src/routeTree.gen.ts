@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
 import { Route as AuthenticatedDevicesRouteImport } from './routes/_authenticated/devices'
@@ -45,6 +47,16 @@ const AuthRoute = AuthRouteImport.update({
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
@@ -122,6 +134,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/devices': typeof AuthenticatedDevicesRoute
@@ -141,6 +155,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
   '/devices': typeof AuthenticatedDevicesRoute
@@ -162,6 +178,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
   '/_authenticated/devices': typeof AuthenticatedDevicesRoute
@@ -183,6 +201,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/discover'
+    | '/privacy'
+    | '/terms'
     | '/calendar'
     | '/challenges'
     | '/devices'
@@ -202,6 +222,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/discover'
+    | '/privacy'
+    | '/terms'
     | '/calendar'
     | '/challenges'
     | '/devices'
@@ -222,6 +244,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/discover'
+    | '/privacy'
+    | '/terms'
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
     | '/_authenticated/devices'
@@ -243,6 +267,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DiscoverRoute: typeof DiscoverRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   AuthorAuthorRoute: typeof AuthorAuthorRoute
   BookBookIdRoute: typeof BookBookIdRoute
   ListListIdRoute: typeof ListListIdRoute
@@ -277,6 +303,20 @@ declare module '@tanstack/react-router' {
       path: '/discover'
       fullPath: '/discover'
       preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/calendar': {
@@ -414,6 +454,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DiscoverRoute: DiscoverRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   AuthorAuthorRoute: AuthorAuthorRoute,
   BookBookIdRoute: BookBookIdRoute,
   ListListIdRoute: ListListIdRoute,

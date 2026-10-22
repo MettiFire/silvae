@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prebuild": "node scripts/audit-client-secrets.mjs --env",
+    "postbuild": "node scripts/audit-client-secrets.mjs --bundle",
+    "audit:client": "node scripts/audit-client-secrets.mjs --bundle"
   },
   "overrides": {
     "rolldown": "1.2.1"

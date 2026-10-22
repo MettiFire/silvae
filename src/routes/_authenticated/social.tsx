@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -8,7 +9,13 @@ import { useAuth } from "@/lib/auth";
 import { getProfileMap } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
 export const Route = createFileRoute("/_authenticated/social")({
-  head: () => ({ meta: [{ title: "Lettori — Paginae" }] }),
+  head: () =>
+    pageSeo(
+      "Lettori e community — Paginae",
+      "Scopri lettori, segui i loro profili e ritrova le persone con cui condividi le tue letture.",
+      undefined,
+      true,
+    ),
   component: Social,
 });
 const VERB: Record<string, string> = {

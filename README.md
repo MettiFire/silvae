@@ -459,3 +459,38 @@ un frammento collegato. I libri esistenti non vengono riscritti. Le reimportazio
 riutilizzano i libri già associati e i fingerprint dei frammenti per evitare
 nuovi duplicati. L’importazione non modifica stato, date o progresso di lettura.
 Non sono richieste nuove migrazioni rispetto alla funzione Frammenti esistente.
+
+### Privacy, metadati, risorse e verifica del lancio
+
+Le pagine pubbliche `/privacy` e `/terms` sono raggiungibili dal footer e dalla
+pagina di accesso. Nome e contatto del titolare sono in `src/lib/legal.ts`.
+I testi descrivono il comportamento attuale; regione dei servizi, accordi con i
+fornitori e conservazione dei backup vanno verificati nelle configurazioni effettive.
+
+`src/lib/site-seo.ts` centralizza title, description, canonical e anteprima social
+1200×630 (`public/images/paginae-social.png`, circa 34 KB). Le pagine personali e
+di accesso hanno `noindex`. `public/sitemap.xml` include le pagine pubbliche statiche;
+`public/robots.txt` indica la sitemap e limita i percorsi personali. Robots non è
+un controllo di autorizzazione: l’accesso ai dati continua a dipendere da Auth e RLS.
+Se cambia dominio, aggiornare SITE_URL, sitemap e robots insieme.
+
+I font WOFF2 sono ospitati localmente con licenze OFL; non viene più caricata la
+stylesheet di Google Fonts. Le copertine principali hanno priorità, mentre quelle
+fuori vista vengono richieste solo entrando nel margine di visibilità. Le immagini
+hanno dimensioni stabili e descrizioni alternative, tranne quelle decorative che
+usano un alt vuoto. Copertine e foto di terzi rimangono erogate dai rispettivi host:
+non viene introdotto un proxy di immagini esterno o una ricompressione non verificata.
+`public/_headers` configura cache per font e immagini, dove supportato dall’hosting.
+
+`npm run build` verifica automaticamente le variabili pubbliche prima della build
+e analizza il bundle client al termine. Sono consentite solo le tre variabili
+VITE del progetto Supabase; la chiave deve essere publishable o legacy anon.
+Chiavi secret, JWT service_role, chiavi private, chiavi Google e valori di variabili
+server sensibili bloccano l’audit se finiscono negli asset pubblici. I valori non
+vengono stampati nei messaggi. `npm run audit:client` ripete il controllo del bundle.
+Conservare i segreti backend nella configurazione dell’hosting, senza prefisso VITE_.
+
+L’audit PageSpeed mobile del sito pubblicato prima di queste modifiche ha misurato
+71 Performance, 96 Accessibility, 100 Best Practices e 100 SEO (22 ottobre 2026):
+https://pagespeed.web.dev/analysis/https-paginae-lovable-app/bvtu7yx89i?form_factor=mobile
+Un nuovo punteggio delle modifiche richiede Publish e una nuova analisi pubblica.

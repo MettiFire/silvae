@@ -649,6 +649,10 @@ function SlotRow({
           <img
             src={winner.cover}
             alt={`Copertina di ${winner.title}`}
+            width={56}
+            height={80}
+            decoding="async"
+            referrerPolicy="no-referrer"
             loading="lazy"
             className="hidden h-20 w-14 shrink-0 rounded-md object-cover sm:block"
             onError={(e) => {

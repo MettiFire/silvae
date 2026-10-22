@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import {
@@ -17,17 +18,13 @@ import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 
 export const Route = createFileRoute("/_authenticated/stats")({
-  head: () => ({
-    meta: [
-      { title: "Statistiche di lettura — Paginae" },
-      {
-        name: "description",
-        content: "Pagine lette, libri per mese, generi preferiti e ritmo medio di lettura.",
-      },
-      { property: "og:title", content: "Statistiche di lettura — Paginae" },
-      { property: "og:description", content: "Pagine lette, generi preferiti e ritmo di lettura." },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Statistiche di lettura — Paginae",
+      "Esplora le tue statistiche: libri e pagine letti, generi, autori e ritmo di lettura nel tempo.",
+      undefined,
+      true,
+    ),
   component: Stats,
 });
 

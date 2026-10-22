@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { useState } from "react";
 import { ListEditor } from "@/components/ListEditor";
 import { ListBookPicker } from "@/components/ListBookPicker";
@@ -14,19 +15,13 @@ import { useAuth } from "@/lib/auth";
 import type { Book } from "@/lib/books";
 
 export const Route = createFileRoute("/list/$listId")({
-  head: () => ({
-    meta: [
-      { title: "Lista di lettura — Paginae" },
-      {
-        name: "description",
-        content: "Una lista di libri curata su Paginae: sfogliala e salvala nel tuo profilo.",
-      },
-      { property: "og:title", content: "Lista di lettura — Paginae" },
-      { property: "og:description", content: "Una lista di libri curata su Paginae." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: ({ params }) =>
+    pageSeo(
+      "Lista di lettura — Paginae",
+      "Una raccolta di libri curata su Paginae. Sfoglia i titoli di una lista condivisa da un lettore.",
+      `/list/${encodeURIComponent(params.listId)}`,
+      true,
+    ),
   component: ListPage,
 });
 

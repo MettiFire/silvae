@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -28,17 +29,13 @@ import {
 } from "@/lib/library";
 
 export const Route = createFileRoute("/book/$bookId")({
-  head: () => ({
-    meta: [
-      { title: "Scheda libro — Paginae" },
-      {
-        name: "description",
-        content: "Dettagli del libro, valutazioni della community e recensioni su Paginae.",
-      },
-      { property: "og:title", content: "Scheda libro — Paginae" },
-      { property: "og:description", content: "Dettagli, valutazioni e recensioni del libro." },
-    ],
-  }),
+  head: ({ params }) =>
+    pageSeo(
+      "Scheda libro — Paginae",
+      "Consulta descrizione, autore, copertina e valutazioni di un libro e aggiungilo alla tua libreria.",
+      `/book/${encodeURIComponent(params.bookId)}`,
+      false,
+    ),
   component: BookPage,
 });
 
@@ -229,7 +226,7 @@ function BookPage() {
       )}
       <div className="book-detail-layout grid gap-8 md:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
         <div>
-          <BookCover book={book} />
+          <BookCover book={book} priority />
           {item && <CoverPicker book={book} />}
           {user && (
             <div className="mt-4 space-y-3">
@@ -531,7 +528,12 @@ export function Avatar({
     return (
       <img
         src={url}
-        alt=""
+        alt={`Foto di ${name}`}
+        loading="lazy"
+        decoding="async"
+        width={size}
+        height={size}
+        referrerPolicy="no-referrer"
         style={{ width: size, height: size }}
         className="rounded-full object-cover"
       />

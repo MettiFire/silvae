@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCover } from "@/components/BookCard";
@@ -5,17 +6,13 @@ import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
-  head: () => ({
-    meta: [
-      { title: "Calendario letture — Paginae" },
-      {
-        name: "description",
-        content: "Le tue letture completate mese per mese, in ordine cronologico.",
-      },
-      { property: "og:title", content: "Calendario letture — Paginae" },
-      { property: "og:description", content: "Le tue letture completate mese per mese." },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Calendario delle letture — Paginae",
+      "Ritrova le tue letture completate nel calendario e segui il tuo percorso mese per mese.",
+      undefined,
+      true,
+    ),
   component: CalendarPage,
 });
 

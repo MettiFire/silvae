@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
+import { pageSeo } from "@/lib/site-seo";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider, themeInitScript } from "@/lib/theme";
@@ -19,19 +20,33 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        <p className="mb-8 font-display text-2xl">Paginae.</p>
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Pagina non trovata</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">
+          Questa pagina è fuori catalogo.
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          La pagina che cerchi non esiste o è stata spostata.
+          Il collegamento potrebbe essere cambiato. Puoi tornare al diario o cercare la tua prossima
+          lettura nel catalogo.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Torna alla home
+            Torna al diario
+          </Link>
+          <Link to="/discover" className="button-outline">
+            Esplora i libri
           </Link>
         </div>
+        <nav
+          aria-label="Documenti legali"
+          className="mt-10 flex justify-center gap-5 text-xs text-muted-foreground"
+        >
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Termini e condizioni</Link>
+        </nav>
       </div>
     </div>
   );
@@ -76,28 +91,34 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Paginae — Tracking libri e letture" },
-      {
-        name: "description",
-        content:
-          "Paginae: traccia le tue letture, valuta i libri, crea liste e sfide di lettura in un'esperienza editoriale elegante.",
-      },
-      { property: "og:title", content: "Paginae — Tracking libri e letture" },
-      { property: "og:description", content: "Traccia letture, voti, liste e sfide di lettura." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      ...pageSeo(
+        matches.some((m) => m.globalNotFound)
+          ? "Pagina non trovata — Paginae"
+          : "Paginae — Una vita tra le pagine",
+        "Organizza le tue letture, crea liste, conserva citazioni e scopri nuovi libri su Paginae.",
+        undefined,
+        matches.some((m) => m.globalNotFound),
+      ).meta,
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap",
+        rel: "preload",
+        href: "/fonts/dm-sans-0.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        href: "/fonts/lora-1.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],

@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,12 +15,13 @@ export const Route = createFileRoute("/auth")({
       ? { accountDeleted: true }
       : {}),
   }),
-  head: () => ({
-    meta: [
-      { title: "Accedi a Paginae" },
-      { name: "description", content: "Accedi con email e password o con Google." },
-    ],
-  }),
+  head: () =>
+    pageSeo(
+      "Accedi o registrati — Paginae",
+      "Accedi a Paginae con email e password o Google per organizzare libri, letture, liste e citazioni.",
+      "/auth",
+      true,
+    ),
   component: AuthPage,
 });
 type Mode = "login" | "signup" | "forgot" | "recovery";
@@ -273,6 +275,17 @@ function AuthPage() {
                 </button>
               </>
             )}
+            <nav
+              aria-label="Documenti legali"
+              className="mt-6 flex flex-wrap justify-center gap-5 text-xs text-muted-foreground"
+            >
+              <Link to="/privacy" className="underline underline-offset-4">
+                Privacy
+              </Link>
+              <Link to="/terms" className="underline underline-offset-4">
+                Termini e condizioni
+              </Link>
+            </nav>
             {mode !== "recovery" && (
               <p className="mt-5 text-center text-sm text-muted-foreground">
                 {mode === "login" ? "Non hai un account? " : "Hai già un account? "}

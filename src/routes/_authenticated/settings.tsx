@@ -1,3 +1,4 @@
+import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,7 +28,13 @@ export const Route = createFileRoute("/_authenticated/settings")({
         ? (search["section"] as Section)
         : "profile",
   }),
-  head: () => ({ meta: [{ title: "Impostazioni — Paginae" }] }),
+  head: () =>
+    pageSeo(
+      "Impostazioni del profilo — Paginae",
+      "Gestisci profilo, gusti di lettura, tema, lingua, dispositivi e dati del tuo account Paginae.",
+      undefined,
+      true,
+    ),
   component: SettingsPage,
 });
 function SettingsPage() {
