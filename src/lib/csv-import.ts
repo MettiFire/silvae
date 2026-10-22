@@ -97,7 +97,7 @@ export function parseDate(value: string, order: 'day-first' | 'month-first' = 'd
   const months: Record<string, number> = { gen: 1, gennaio: 1, jan: 1, january: 1, feb: 2, febbraio: 2, february: 2, mar: 3, marzo: 3, march: 3, apr: 4, aprile: 4, april: 4, mag: 5, maggio: 5, may: 5, giu: 6, giugno: 6, jun: 6, june: 6, lug: 7, luglio: 7, jul: 7, july: 7, ago: 8, agosto: 8, aug: 8, august: 8, set: 9, sett: 9, settembre: 9, sep: 9, sept: 9, september: 9, ott: 10, ottobre: 10, oct: 10, october: 10, nov: 11, novembre: 11, november: 11, dic: 12, dicembre: 12, dec: 12, december: 12 };
   const named = value.trim().toLowerCase().match(/^(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})$/);
   const iso = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/);
-  const eu = value.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$/);
+  const eu = value.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
   if (named && months[named[2]!]) { day = Number(named[1]); month = months[named[2]!]!; year = Number(named[3]); }
   else if (iso) [, year, month, day] = iso.map(Number) as [number, number, number, number];
   else if (eu) {
