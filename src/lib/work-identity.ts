@@ -29,6 +29,12 @@ function authorParts(value: string) {
   const parts = textKey(reordered).split(" ").filter(Boolean);
   return {
     surname: parts.at(-1) ?? "",
+    fullFirstName:
+      parts.length > 1 &&
+      (parts[0]?.length ?? 0) > 1 &&
+      !/^[A-Z]{2,4}$/.test(reordered.trim().split(/\s+/)[0] ?? "")
+        ? parts[0]
+        : null,
     initials: parts
       .slice(0, -1)
       .map((p) => p[0])
@@ -40,6 +46,7 @@ export function sameAuthorName(a: string, b: string): boolean {
   if (textKey(a).replaceAll(" ", "") === textKey(b).replaceAll(" ", "")) return true;
   const x = authorParts(a),
     y = authorParts(b);
+  if (x.fullFirstName && y.fullFirstName && x.fullFirstName !== y.fullFirstName) return false;
   return (
     !!x.surname &&
     x.surname === y.surname &&

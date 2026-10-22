@@ -443,3 +443,19 @@ quando la pagina viene abbandonata. Se non è possibile distinguere una nuova op
 ad autore condiviso da una traduzione già posseduta, il suggerimento viene escluso;
 le altre letture restano disponibili. Nessuna associazione approssimativa modifica
 i libri, le copertine o i dati di lettura salvati. Non serve una migrazione SQL.
+
+### Associazione dei clippings Kindle
+
+L’importatore Frammenti riconosce insieme le sottolineature di ogni libro. Prima
+cerca nella libreria e nei libri già collegati ai frammenti; gestisce iniziali e
+nomi invertiti, diciture di edizione e traduzioni con identità dell’opera verificata.
+Per i libri mancanti cerca nel catalogo e propone automaticamente una corrispondenza
+con titolo/autore verificati. I casi ambigui restano selezionabili nell’anteprima;
+la scelta si applica a tutte le sottolineature dello stesso libro. È disponibile
+anche la ricerca manuale nel catalogo.
+
+I nuovi libri vengono salvati nel catalogo solo quando si importa effettivamente
+un frammento collegato. I libri esistenti non vengono riscritti. Le reimportazioni
+riutilizzano i libri già associati e i fingerprint dei frammenti per evitare
+nuovi duplicati. L’importazione non modifica stato, date o progresso di lettura.
+Non sono richieste nuove migrazioni rispetto alla funzione Frammenti esistente.

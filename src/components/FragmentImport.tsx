@@ -1,46 +1,157 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
 import {
   prepareFragmentImport,
-  matchFragmentBook,
+  fragmentBookGroup,
   type ImportedFragment,
 } from "@/lib/fragment-import";
+import { searchBooks, cacheBook, type Book } from "@/lib/books";
+import { associateFragmentBooks } from "@/lib/fragment-book-association";
+import { resolveRecommendationWork } from "@/lib/work-identity.functions";
 import { fragmentKey, validateFragment, requireFragmentUser, fragmentError } from "@/lib/fragments";
 export function FragmentImport({ close }: { close: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: library = [] } = useLibrary(user?.id);
-  const books = library.flatMap((i) => (i.books ? [i.books] : []));
-  const [rows, setRows] = useState<{ entry: ImportedFragment; bookId: string; skip: boolean }[]>(
-    [],
-  );
+  const libraryQuery = useLibrary(user?.id);
+  const previousBooks = useQuery({
+    queryKey: ["fragment-books", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fragment_books", {});
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [extraBooks, setExtraBooks] = useState<Book[]>([]);
+  const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
+  const [matching, setMatching] = useState(false);
+  const cancelled = useRef(false);
+  const [bookSearch, setBookSearch] = useState<Record<string, string>>({});
+  const [searching, setSearching] = useState<number | null>(null);
+  const hydrate = (b: { id: string; title: string; authors: string[] }): Book => ({
+    ...b,
+    cover_url: null,
+    description: null,
+    categories: [],
+    page_count: null,
+    published_year: null,
+  });
+  const books = [
+    ...new Map(
+      [
+        ...extraBooks,
+        ...(previousBooks.data ?? []).map(hydrate),
+        ...(libraryQuery.data ?? []).flatMap((i) => (i.books ? [i.books] : [])),
+      ].map((b) => [b.id, b]),
+    ).values(),
+  ];
+  const [rows, setRows] = useState<
+    { entry: ImportedFragment; bookId: string; skip: boolean; automatic: boolean }[]
+  >([]);
   const [notices, setNotices] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(0);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
   const load = async (file: File) => {
+    cancelled.current = false;
+    setBusy(true);
+    setMatching(true);
+    setRows([]);
+    setExtraBooks([]);
+    setBookSearch({});
+    setNotices([]);
+    setProgress("");
     try {
       setError("");
       if (file.size > 10 * 1024 * 1024) throw Error("Il file supera 10 MB.");
       const parsed = prepareFragmentImport(file.name, new Uint8Array(await file.arrayBuffer()));
+      const [freshLibrary, freshFragments] = await Promise.all([
+        libraryQuery.refetch(),
+        previousBooks.refetch(),
+      ]);
+      if (freshLibrary.error) throw freshLibrary.error;
+      if (freshFragments.error) throw freshFragments.error;
+      const available = [
+        ...new Map(
+          [
+            ...(freshFragments.data ?? []).map(hydrate),
+            ...(freshLibrary.data ?? []).flatMap((i) => (i.books ? [i.books] : [])),
+          ].map((b) => [b.id, b]),
+        ).values(),
+      ];
+      setKnownIds(new Set(available.map((b) => b.id)));
+      const associations = await associateFragmentBooks(parsed.rows, available, {
+        search: (entry) =>
+          searchBooks(
+            `intitle:"${entry.title.replace(/["\n\r]/g, " ")}"${entry.authors[0] ? ` inauthor:"${entry.authors[0].replace(/["\n\r]/g, " ")}"` : ""}`,
+            { max: 8 },
+          ),
+        resolve: (book) =>
+          qc.fetchQuery({
+            queryKey: ["recommendation-work-v1", book.id, book.title, book.authors.join("|")],
+            queryFn: () => resolveRecommendationWork({ data: book }),
+            staleTime: 300000,
+          }),
+        progress: (done, total) => setProgress(`Riconoscimento libri: ${done} / ${total}`),
+        cancelled: () => cancelled.current,
+      });
+      setExtraBooks([
+        ...new Map(
+          [...associations.values()].flatMap((a) => a.candidates).map((b) => [b.id, b]),
+        ).values(),
+      ]);
       setRows(
-        parsed.rows.map((entry) => ({
-          entry,
-          bookId: matchFragmentBook(entry, books),
-          skip: false,
-        })),
+        parsed.rows.map((entry) => {
+          const match = associations.get(fragmentBookGroup(entry));
+          return {
+            entry,
+            bookId: match?.bookId ?? "",
+            automatic: match?.automatic ?? false,
+            skip: false,
+          };
+        }),
       );
-      setNotices(parsed.notices);
+      setNotices([
+        ...parsed.notices,
+        ...(cancelled.current
+          ? ["Riconoscimento interrotto. Puoi associare manualmente i libri rimasti."]
+          : []),
+      ]);
       setPage(0);
       setProgress("");
     } catch (e) {
       setError(fragmentError(e));
       setRows([]);
+    } finally {
+      setBusy(false);
+      setMatching(false);
+    }
+  };
+  const findBook = async (index: number) => {
+    const query = bookSearch[fragmentBookGroup(rows[index]!.entry)]?.trim();
+    if (busy || !query) return;
+    setSearching(index);
+    setError("");
+    try {
+      const hits = await searchBooks(query, { max: 8 });
+      setExtraBooks((previous) => [
+        ...new Map([...previous, ...hits].map((book) => [book.id, book])).values(),
+      ]);
+      if (!hits.length) setError("Nessun libro trovato. Prova con titolo e autore.");
+      else
+        setNotices((previous) => [
+          ...previous.filter((n) => !n.startsWith("Ricerca:")),
+          `Ricerca: ${hits.length} libri aggiunti alle opzioni. Scegli quello corretto dal menu.`,
+        ]);
+    } catch (e) {
+      setError(fragmentError(e));
+    } finally {
+      setSearching(null);
     }
   };
   const change = (index: number, patch: Partial<(typeof rows)[number]>) =>
@@ -48,17 +159,15 @@ export function FragmentImport({ close }: { close: () => void }) {
   const assignGroup = (index: number, bookId: string) =>
     setRows((r) =>
       r.map((v, i) =>
-        i === index ||
-        (v.entry.title === r[index]!.entry.title &&
-          v.entry.authors.join("|") === r[index]!.entry.authors.join("|"))
-          ? { ...v, bookId }
+        i === index || fragmentBookGroup(v.entry) === fragmentBookGroup(r[index]!.entry)
+          ? { ...v, bookId, automatic: false }
           : v,
       ),
     );
   const selected = rows.filter((r) => !r.skip && r.bookId);
   const unmapped = rows.filter((r) => !r.skip && !r.bookId).length;
   const run = async () => {
-    if (!user || busy || !selected.length) return;
+    if (!user || busy || searching !== null || !selected.length) return;
     setBusy(true);
     setError("");
     let inserted = 0,
@@ -66,10 +175,17 @@ export function FragmentImport({ close }: { close: () => void }) {
     const failed = new Set<ImportedFragment>();
     try {
       await requireFragmentUser(supabase, user.id);
+      const preparedBooks = new Set(knownIds);
       for (const [i, row] of selected.entries()) {
         setProgress(`${i + 1} / ${selected.length}`);
         try {
           const entry = validateFragment(row.entry);
+          if (!preparedBooks.has(row.bookId)) {
+            const book = books.find((b) => b.id === row.bookId);
+            if (!book) throw Error("Libro non disponibile: selezionalo di nuovo.");
+            await cacheBook(book);
+            preparedBooks.add(row.bookId);
+          }
           const key = await fragmentKey(
             row.bookId,
             row.entry.source,
@@ -126,18 +242,23 @@ export function FragmentImport({ close }: { close: () => void }) {
     <section className="mb-8 rounded-2xl border border-border bg-card p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-display text-xl font-bold">Importa sottolineature</h2>
-        <button disabled={busy} onClick={close} className="text-sm text-muted-foreground">
+        <button
+          disabled={busy || searching !== null}
+          onClick={close}
+          className="text-sm text-muted-foreground"
+        >
           Chiudi
         </button>
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
         Kindle My Clippings.txt, export Kobo TXT/Markdown/HTML e CSV, oppure lo ZIP Bookshelf con
-        Cards. I libri devono essere già nella tua libreria per associarli qui.
+        Cards. Riconosco automaticamente i libri nella tua libreria o già collegati ai frammenti;
+        cerco nel catalogo quelli mancanti. Puoi correggere l’associazione prima di importare.
       </p>
       <input
         aria-label="File delle sottolineature"
         type="file"
-        disabled={busy}
+        disabled={busy || searching !== null}
         accept=".txt,.md,.markdown,.csv,.html,.htm,.zip"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -146,6 +267,17 @@ export function FragmentImport({ close }: { close: () => void }) {
         }}
         className="max-w-full text-sm"
       />
+      {matching && (
+        <button
+          type="button"
+          onClick={() => {
+            cancelled.current = true;
+          }}
+          className="ml-3 text-sm underline"
+        >
+          Interrompi riconoscimento
+        </button>
+      )}
       {notices.map((n) => (
         <p key={n} className="mt-2 text-xs text-muted-foreground">
           {n}
@@ -159,8 +291,14 @@ export function FragmentImport({ close }: { close: () => void }) {
       {!!rows.length && (
         <>
           <p className="my-4 text-sm">
-            {rows.length} frammenti riconosciuti · {selected.length} da importare · {unmapped} da
-            associare. Nessuna frase viene usata per calcolare il progresso di lettura.
+            {rows.length} frammenti riconosciuti ·{" "}
+            {rows.filter((r) => r.automatic && r.bookId).length} associati automaticamente ·{" "}
+            {selected.length} da importare · {unmapped} da associare. Nessuna frase viene usata per
+            calcolare il progresso di lettura.
+          </p>
+          <p className="mb-4 text-xs text-muted-foreground">
+            I libri trovati nel catalogo vengono collegati ai frammenti al momento
+            dell’importazione, senza modificare la tua libreria o segnarli come letti.
           </p>
           <div className="space-y-4">
             {rows.slice(page * 10, page * 10 + 10).map((row, offset) => {
@@ -186,7 +324,13 @@ export function FragmentImport({ close }: { close: () => void }) {
                     rows={3}
                     className="mt-2 w-full rounded-lg border bg-background p-2 text-sm"
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">{row.entry.position}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {row.entry.authors.join(", ")}
+                    {row.entry.position ? ` · ${row.entry.position}` : ""}
+                  </p>
+                  {row.automatic && row.bookId && (
+                    <p className="mt-2 text-xs text-primary">Libro associato automaticamente</p>
+                  )}
                   <select
                     disabled={busy}
                     aria-label={`Libro per il frammento ${i + 1}`}
@@ -203,6 +347,31 @@ export function FragmentImport({ close }: { close: () => void }) {
                       </option>
                     ))}
                   </select>
+                  {!row.bookId && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <input
+                        aria-label={`Cerca libro per il frammento ${i + 1}`}
+                        placeholder="Cerca titolo, autore o ISBN"
+                        value={bookSearch[fragmentBookGroup(row.entry)] ?? ""}
+                        disabled={busy || searching !== null}
+                        onChange={(e) =>
+                          setBookSearch((previous) => ({
+                            ...previous,
+                            [fragmentBookGroup(row.entry)]: e.target.value,
+                          }))
+                        }
+                        className="min-w-0 flex-1 rounded border bg-background p-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy || searching !== null}
+                        onClick={() => void findBook(i)}
+                        className="rounded border px-3 py-2 text-sm"
+                      >
+                        {searching === i ? "Ricerca…" : "Cerca nel catalogo"}
+                      </button>
+                    </div>
+                  )}
                   <p className="mt-1 text-xs text-muted-foreground">
                     La scelta vale anche per gli altri frammenti con lo stesso titolo e autore nel
                     file.
@@ -236,7 +405,7 @@ export function FragmentImport({ close }: { close: () => void }) {
             </p>
           )}
           <button
-            disabled={busy || !selected.length}
+            disabled={busy || searching !== null || !selected.length}
             onClick={() => void run()}
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
           >

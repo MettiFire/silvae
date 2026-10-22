@@ -1,6 +1,7 @@
 import { unzipSync } from "fflate";
 import { parseCSV, parseDate, normalize } from "./csv-import.ts";
-import { descriptionText, sameBook } from "./book-metadata.ts";
+import { descriptionText } from "./book-metadata.ts";
+import { sameReadingWork, workTitle, textKey } from "./work-identity.ts";
 import type { Book } from "./books";
 import type { FragmentDraft, FragmentSource } from "./fragments";
 export type ImportedFragment = FragmentDraft & {
@@ -47,6 +48,8 @@ export function parseKindleClippings(text: string) {
     }
     const heading = lines[0] ?? "";
     const author = heading.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+    const editionLabel =
+      author?.[2] && /\b(?:edition|edizione|kindle|ebook|paperback|hardcover)\b/i.test(author[2]);
     const position = metadata
       .split("|")
       .filter((x) => /page|pagina|página|location|posizione|position|seite/i.test(x))
@@ -62,8 +65,8 @@ export function parseKindleClippings(text: string) {
     const quote = lines.slice(2).join("\n").trim();
     if (quote)
       rows.push(
-        draft(quote, author?.[1]?.trim() ?? heading, {
-          authors: author?.[2] ? [author[2].trim()] : [],
+        draft(quote, editionLabel ? heading : (author?.[1]?.trim() ?? heading), {
+          authors: author?.[2] && !editionLabel ? [author[2].trim()] : [],
           source: "kindle",
           position: position.slice(0, 300),
         }),
@@ -240,10 +243,22 @@ export function prepareFragmentImport(name: string, bytes: Uint8Array) {
   if (result.rows.length > 2000) throw new Error("Importa al massimo 2.000 frammenti per file.");
   return result;
 }
+export function fragmentBookGroup(row: ImportedFragment): string {
+  return JSON.stringify([workTitle(row.title), row.authors.map(textKey).sort(), row.sourceBookId]);
+}
+export function matchingFragmentBooks(row: ImportedFragment, books: Book[]): Book[] {
+  const unique = [...new Map(books.map((book) => [book.id, book])).values()];
+  const exact = row.sourceBookId ? unique.find((b) => b.id === row.sourceBookId) : null;
+  if (exact) return [exact];
+  if (!row.title.trim()) return [];
+  if (!row.authors.length)
+    return row.source === "kindle"
+      ? unique.filter((b) => workTitle(b.title) === workTitle(row.title))
+      : [];
+  const source = { id: "clipping-source", title: row.title, authors: row.authors };
+  return unique.filter((b) => sameReadingWork(source, b));
+}
 export function matchFragmentBook(row: ImportedFragment, books: Book[]): string {
-  const exact = row.sourceBookId ? books.find((b) => b.id === row.sourceBookId) : null;
-  if (exact) return exact.id;
-  if (!row.title || !row.authors.length) return "";
-  const matches = books.filter((b) => sameBook({ title: row.title, authors: row.authors }, b));
+  const matches = matchingFragmentBooks(row, books);
   return matches.length === 1 ? matches[0]!.id : "";
 }

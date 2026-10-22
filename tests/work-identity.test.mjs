@@ -147,3 +147,8 @@ test("Recommendation feed contains at most one language/edition of a verified wo
   );
   assert.equal(result.length, 1);
 });
+
+test("Different full first names do not become the same author through shared initials", () => {
+  assert.equal(sameAuthorName("John Smith", "James Smith"), false);
+  assert.equal(sameAuthorName("John Smith", "J. Smith"), true);
+});
