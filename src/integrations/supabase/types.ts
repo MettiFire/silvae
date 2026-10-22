@@ -263,6 +263,7 @@ export type Database = {
           book_id: string
           created_at: string
           current_page: number
+          custom_cover_url: string | null
           favorite: boolean
           finished_at: string | null
           id: string
@@ -284,6 +285,7 @@ export type Database = {
           book_id: string
           created_at?: string
           current_page?: number
+          custom_cover_url?: string | null
           favorite?: boolean
           finished_at?: string | null
           id?: string
@@ -305,6 +307,7 @@ export type Database = {
           book_id?: string
           created_at?: string
           current_page?: number
+          custom_cover_url?: string | null
           favorite?: boolean
           finished_at?: string | null
           id?: string
