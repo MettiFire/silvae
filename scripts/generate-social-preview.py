@@ -5,7 +5,6 @@ from PIL import Image, ImageDraw, ImageFont
 root = Path(__file__).resolve().parents[1]
 
 # Same look on macOS and Linux: pick the first font that actually exists here.
-# Same look on macOS and Linux: pick the first font that actually exists here.
 # Each kind maps to (fc-style filter, base family names in preference order).
 CANDIDATES = {
     'serif': ('Regular', ['Georgia', 'Liberation Serif', 'Noto Serif', 'DejaVu Serif']),
