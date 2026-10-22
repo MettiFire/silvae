@@ -17,8 +17,8 @@ import type { Book } from "@/lib/books";
 export const Route = createFileRoute("/list/$listId")({
   head: ({ params }) =>
     pageSeo(
-      "Lista di lettura — Paginae",
-      "Una raccolta di libri curata su Paginae. Sfoglia i titoli di una lista condivisa da un lettore.",
+      "Lista di lettura — Silvae",
+      "Una raccolta di libri curata su Silvae. Sfoglia i titoli di una lista condivisa da un lettore.",
       `/list/${encodeURIComponent(params.listId)}`,
       true,
     ),

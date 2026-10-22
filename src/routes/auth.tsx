@@ -17,8 +17,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () =>
     pageSeo(
-      "Accedi o registrati — Paginae",
-      "Accedi a Paginae con email e password o Google per organizzare libri, letture, liste e citazioni.",
+      "Accedi o registrati — Silvae",
+      "Accedi a Silvae con email e password o Google per organizzare libri, letture, liste e citazioni.",
       "/auth",
       true,
     ),
@@ -46,7 +46,7 @@ function AuthPage() {
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(
-    accountDeleted ? "Il tuo account Paginae e i dati collegati sono stati eliminati." : "",
+    accountDeleted ? "Il tuo account Silvae e i dati collegati sono stati eliminati." : "",
   );
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -148,7 +148,7 @@ function AuthPage() {
     <div className="auth-layout">
       <aside className="auth-editorial">
         <Link to="/" className="wordmark">
-          Paginae.
+          Silvae.
         </Link>
         <div>
           <p className="eyebrow">Una vita tra le pagine</p>
@@ -170,7 +170,7 @@ function AuthPage() {
       <div className="auth-form-panel">
         <div className="w-full max-w-sm">
           <Link to="/" className="mb-8 inline-block text-xs text-muted-foreground">
-            ← Torna a Paginae
+            ← Torna a Silvae
           </Link>
           <div>
             <h1 className="font-display text-3xl font-normal tracking-tight">{titles[mode]}</h1>

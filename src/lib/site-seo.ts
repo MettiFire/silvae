@@ -1,7 +1,7 @@
-export const SITE_URL = "https://paginae.lovable.app";
-export const SOCIAL_IMAGE = `${SITE_URL}/images/paginae-social.png`;
+export const SITE_URL = "https://silvae.lovable.app";
+export const SOCIAL_IMAGE = `${SITE_URL}/images/silvae-social.png`;
 export const SOCIAL_ALT =
-  "Paginae. Tieni il filo di ogni storia. La tua libreria, le tue scoperte, le tue parole.";
+  "Silvae. Tieni il filo di ogni storia. La tua libreria, le tue scoperte, le tue parole.";
 export function pageSeo(title: string, description: string, path?: string, noindex = false) {
   return {
     meta: [
@@ -10,7 +10,7 @@ export function pageSeo(title: string, description: string, path?: string, noind
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Paginae" },
+      { property: "og:site_name", content: "Silvae" },
       { property: "og:locale", content: "it_IT" },
       { property: "og:image", content: SOCIAL_IMAGE },
       { property: "og:image:secure_url", content: SOCIAL_IMAGE },

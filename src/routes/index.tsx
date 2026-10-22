@@ -9,7 +9,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 export const Route = createFileRoute("/")({
   head: () =>
     pageSeo(
-      "Paginae — Una vita tra le pagine",
+      "Silvae — Una vita tra le pagine",
       "Custodisci le tue letture, raccogli libri in liste, conserva citazioni e scopri la tua prossima storia.",
       "/",
       false,
@@ -46,7 +46,7 @@ function Home() {
               </Link>
             </div>
           </div>
-          <div className="home-hero-art" aria-label="Dal catalogo di Paginae">
+          <div className="home-hero-art" aria-label="Dal catalogo di Silvae">
             {recommended.length ? (
               recommended.slice(0, 2).map(({ book }, index) => (
                 <Link

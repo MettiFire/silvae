@@ -1,9 +1,25 @@
 import { useSyncExternalStore } from "react";
 export type BookDensity = "large" | "standard" | "compact";
-const KEY = "paginae:book-density";
+const KEY = "silvae:book-density";
+/** Saved under the previous site name; carried over so readers keep their choice. */
+const LEGACY_KEY = "paginae:book-density";
 let fallback: BookDensity = "standard";
 const listeners = new Set<() => void>();
+let migrated = false;
+function migrate() {
+  if (migrated) return;
+  migrated = true;
+  try {
+    if (window.localStorage.getItem(KEY) === null) {
+      const legacy = window.localStorage.getItem(LEGACY_KEY);
+      if (legacy !== null) window.localStorage.setItem(KEY, legacy);
+    }
+  } catch {
+    /* Storage unavailable: the control still works for this tab. */
+  }
+}
 function snapshot(): BookDensity {
+  migrate();
   try {
     const value = window.localStorage.getItem(KEY);
     return value === "large" || value === "compact" || value === "standard" ? value : fallback;

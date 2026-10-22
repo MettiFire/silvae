@@ -131,7 +131,7 @@ export function ReaderConnections() {
       new Blob([JSON.stringify(config, null, 2)], { type: "application/json" }),
     );
     a.href = url;
-    a.download = "paginae-device.json";
+    a.download = "silvae-device.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -482,7 +482,7 @@ export function ReaderSetup({
             <li>
               Avvia il comando sostituendo il percorso con quello del tuo lettore:
               <code className="mt-2 block overflow-x-auto rounded bg-accent p-3">
-                python3 reader-bridge.py --config paginae-device.json --path{" "}
+                python3 reader-bridge.py --config silvae-device.json --path{" "}
                 {setup.kind === "kindle" ? "/Volumes/Kindle" : "/Volumes/KOBOeReader"}
               </code>
             </li>

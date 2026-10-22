@@ -31,7 +31,7 @@ import {
 export const Route = createFileRoute("/book/$bookId")({
   head: ({ params }) =>
     pageSeo(
-      "Scheda libro — Paginae",
+      "Scheda libro — Silvae",
       "Consulta descrizione, autore, copertina e valutazioni di un libro e aggiungilo alla tua libreria.",
       `/book/${encodeURIComponent(params.bookId)}`,
       false,

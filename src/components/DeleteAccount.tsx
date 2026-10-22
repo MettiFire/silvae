@@ -47,7 +47,7 @@ export function DeleteAccount() {
     <section className="mt-10 border-t border-destructive/30 pt-6">
       <h2 className="font-display text-2xl">Elimina account</h2>
       <p className="my-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-        Elimina definitivamente il tuo account Paginae e i dati collegati: profilo, libreria, liste,
+        Elimina definitivamente il tuo account Silvae e i dati collegati: profilo, libreria, liste,
         recensioni, frammenti, sfide, autori seguiti e collegamenti ai dispositivi. L’operazione non
         può essere annullata.
       </p>
@@ -77,7 +77,7 @@ export function DeleteAccount() {
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminare definitivamente il tuo account?</AlertDialogTitle>
             <AlertDialogDescription>
-              Perderai l’accesso e tutti i tuoi dati personali su Paginae. Questa operazione è
+              Perderai l’accesso e tutti i tuoi dati personali su Silvae. Questa operazione è
               irreversibile. Gli account Amazon, Kobo o Google collegati rimangono attivi presso i
               rispettivi servizi.
             </AlertDialogDescription>

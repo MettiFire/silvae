@@ -18,8 +18,8 @@ export const Route = createFileRoute("/author/$author")({
     typeof s["olid"] === "string" && /^OL\d+A$/.test(s["olid"]) ? { olid: s["olid"] } : {},
   head: ({ params }) =>
     pageSeo(
-      `${params.author} — Autore su Paginae`,
-      `Biografia, bibliografia e nuove letture di ${params.author}. Segui l’autore su Paginae.`,
+      `${params.author} — Autore su Silvae`,
+      `Biografia, bibliografia e nuove letture di ${params.author}. Segui l’autore su Silvae.`,
       `/author/${encodeURIComponent(params.author)}`,
       false,
     ),

@@ -33,7 +33,7 @@ test("Compiled-bundle scanner catches privileged keys and injected server values
   assert.deepEqual(inspectClientText(jwt("anon")), []);
 });
 test("Page metadata contains canonical, description and complete social previews", () => {
-  const seo = pageSeo("Privacy — Paginae", "Come trattiamo i dati.", "/privacy");
+  const seo = pageSeo("Privacy — Silvae", "Come trattiamo i dati.", "/privacy");
   assert.equal(seo.links[0].href, SITE_URL + "/privacy");
   for (const name of [
     "og:title",
@@ -65,7 +65,7 @@ test("Crawler files exclude private screens and point to the correct production 
     assert.ok(sitemap.includes("<loc>" + SITE_URL + publicPath + "</loc>"));
 });
 test("Social image is a compressed 1200×630 PNG", async () => {
-  const png = await fs.readFile(new URL("../public/images/paginae-social.png", import.meta.url));
+  const png = await fs.readFile(new URL("../public/images/silvae-social.png", import.meta.url));
   assert.equal(png.readUInt32BE(16), 1200);
   assert.equal(png.readUInt32BE(20), 630);
   assert.ok(png.length < 60000);

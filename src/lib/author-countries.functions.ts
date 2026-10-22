@@ -10,7 +10,7 @@ let queue: Promise<unknown> = Promise.resolve();
 async function json(url: string) {
   const response = await fetch(url, {
     signal: AbortSignal.timeout(10000),
-    headers: { "User-Agent": "Paginae/1.0 (public author bibliography)" },
+    headers: { "User-Agent": "Silvae/1.0 (public author bibliography)" },
   });
   if (!response.ok) throw Error("Catalogo non disponibile");
   return response.json();

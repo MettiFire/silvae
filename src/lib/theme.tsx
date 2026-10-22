@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 export type Theme = "light" | "dark" | "system";
 
-const STORAGE_KEY = "paginae-theme";
+const STORAGE_KEY = "silvae-theme";
+/** Saved under the previous site name; carried over so readers keep their choice. */
+const LEGACY_STORAGE_KEY = "paginae-theme";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -19,7 +21,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 /** Inline script: applies the stored theme before first paint (no flash). */
-export const themeInitScript = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+export const themeInitScript = `(function(){try{var k='${STORAGE_KEY}';var t=localStorage.getItem(k);if(t===null){var o=localStorage.getItem('${LEGACY_STORAGE_KEY}');if(o!==null){t=o;localStorage.setItem(k,o);}}t=t||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 function applyTheme(theme: Theme): "light" | "dark" {
   const dark =

@@ -13,4 +13,4 @@ Disallow: /challenges
 Disallow: /social
 Disallow: /_serverFn/
 
-Sitemap: https://paginae.lovable.app/sitemap.xml
+Sitemap: https://silvae.lovable.app/sitemap.xml

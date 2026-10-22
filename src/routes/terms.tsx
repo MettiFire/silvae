@@ -4,8 +4,8 @@ import { pageSeo } from "@/lib/site-seo";
 export const Route = createFileRoute("/terms")({
   head: () =>
     pageSeo(
-      "Termini e condizioni — Paginae",
-      "Le condizioni per utilizzare Paginae: account, librerie, recensioni, frammenti, contenuti degli utenti e cancellazione del servizio.",
+      "Termini e condizioni — Silvae",
+      "Le condizioni per utilizzare Silvae: account, librerie, recensioni, frammenti, contenuti degli utenti e cancellazione del servizio.",
       "/terms",
     ),
   component: Terms,
@@ -14,12 +14,12 @@ function Terms() {
   return (
     <LegalLayout
       title="Termini e condizioni"
-      intro="Le regole per usare Paginae e condividere uno spazio dedicato alle letture."
+      intro="Le regole per usare Silvae e condividere uno spazio dedicato alle letture."
     >
       <h2>1. Il servizio e il gestore</h2>
       <LegalContact />
       <p>
-        Paginae permette di organizzare letture, salvare recensioni e liste, seguire autori e
+        Silvae permette di organizzare letture, salvare recensioni e liste, seguire autori e
         lettori, partecipare a sfide e raccogliere citazioni personali. I cataloghi e le
         integrazioni disponibili possono cambiare nel tempo.
       </p>
@@ -32,7 +32,7 @@ function Terms() {
       <h2>3. Contenuti e diritti</h2>
       <p>
         Resti responsabile dei contenuti che inserisci e mantieni i diritti che ti appartengono.
-        Autorizzi Paginae a conservarli ed elaborarli per offrire le funzioni che richiedi e a
+        Autorizzi Silvae a conservarli ed elaborarli per offrire le funzioni che richiedi e a
         mostrarli agli altri solo quando la funzione utilizzata li rende pubblici. I frammenti
         personali sono privati.
       </p>
