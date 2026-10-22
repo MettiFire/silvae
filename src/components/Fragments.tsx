@@ -137,7 +137,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
     queryKey: ["fragment-books", user?.id],
     enabled: !!user && !book,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("fragment_books", {});
+      const { data, error } = await supabase.rpc("fragment_books");
       if (error) throw error;
       return data;
     },
