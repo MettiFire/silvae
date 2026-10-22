@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+import { requireFragmentUser } from "./fragments.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cacheBook, type Book } from "@/lib/books";
@@ -37,7 +39,13 @@ export type LibraryItem = {
   books: Book | null;
 };
 
-const SELECT = "*, books(*)";
+const SELECT = "*, books(id,title,authors,cover_url,published_year,page_count,categories)";
+function libraryRows(data: unknown[]) {
+  return (data as LibraryItem[]).map((item) => ({
+    ...item,
+    books: item.books ? { ...item.books, description: item.books.description ?? null } : null,
+  }));
+}
 
 export async function logActivity(
   userId: string,
@@ -54,14 +62,22 @@ export function useLibrary(userId?: string) {
   return useQuery({
     queryKey: ["library", userId],
     enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("library_items")
-        .select(SELECT)
-        .eq("user_id", userId!)
-        .order("updated_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as LibraryItem[];
+    queryFn: async ({ signal }) => {
+      const items: LibraryItem[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase
+          .from("library_items")
+          .select(SELECT)
+          .eq("user_id", userId!)
+          .order("updated_at", { ascending: false })
+          .order("id")
+          .range(offset, offset + 499)
+          .abortSignal(signal);
+        if (error) throw error;
+        items.push(...libraryRows(data ?? []));
+        if ((data?.length ?? 0) < 500) break;
+      }
+      return items;
     },
   });
 }
@@ -79,7 +95,7 @@ export function useLibraryItem(bookId: string) {
         .eq("book_id", bookId)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as LibraryItem) ?? null;
+      return data ? libraryRows([data])[0]! : null;
     },
   });
 }
@@ -98,6 +114,7 @@ export function useSaveToLibrary() {
       extra?: LibraryPatch | undefined;
     }) => {
       if (!user) throw new Error("Accedi per gestire la tua libreria");
+      await requireFragmentUser(supabase, user.id);
       await cacheBook(book);
       const { data: previous, error: readError } = await supabase
         .from("library_items")
@@ -135,9 +152,11 @@ export function useSaveToLibrary() {
         },
       );
     },
+    onError: () => toast.error("Modifica non salvata. Controlla la connessione e riprova."),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["library"] });
       void qc.invalidateQueries({ queryKey: ["library-item"] });
+      void qc.invalidateQueries({ queryKey: ["community-rating"] });
       void qc.invalidateQueries({ queryKey: ["activities"] });
     },
   });
@@ -156,29 +175,50 @@ export function useUpdateItem() {
       patch: LibraryPatch;
       activity?: { type: string; bookId: string; metadata?: Record<string, unknown> } | undefined;
     }) => {
-      const { error } = await supabase.from("library_items").update(patch).eq("id", id);
+      if (!user) throw Error("Accedi per modificare la libreria.");
+      await requireFragmentUser(supabase, user.id);
+      const { error } = await supabase
+        .from("library_items")
+        .update(patch)
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .single();
       if (error) throw error;
       if (activity && user)
         await logActivity(user.id, activity.type, activity.bookId, activity.metadata ?? {});
     },
+    onError: () => toast.error("Modifica non salvata. Controlla la connessione e riprova."),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["library"] });
       void qc.invalidateQueries({ queryKey: ["library-item"] });
+      void qc.invalidateQueries({ queryKey: ["community-rating"] });
       void qc.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 }
 
 export function useRemoveItem() {
+  const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("library_items").delete().eq("id", id);
+      if (!user) throw Error("Accedi per modificare la libreria.");
+      await requireFragmentUser(supabase, user.id);
+      const { error } = await supabase
+        .from("library_items")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .single();
       if (error) throw error;
     },
+    onError: () => toast.error("Modifica non salvata. Controlla la connessione e riprova."),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["library"] });
       void qc.invalidateQueries({ queryKey: ["library-item"] });
+      void qc.invalidateQueries({ queryKey: ["community-rating"] });
     },
   });
 }

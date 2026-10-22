@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /** Custom half-step rating using a bookmark icon instead of stars. */
@@ -15,14 +14,24 @@ export function BookmarkRating({
   readOnly?: boolean;
   className?: string;
 }) {
-  const [hover, setHover] = useState<number | null>(null);
-  const shown = hover ?? value ?? 0;
-
+  const shown = value ?? 0;
+  const interactive = !readOnly && !!onChange;
   return (
     <div
-      className={cn("inline-flex items-center gap-0.5", className)}
-      role={readOnly ? "img" : "radiogroup"}
-      aria-label={`Valutazione ${value ?? 0} su 5`}
+      className={cn(
+        "relative inline-flex items-center gap-0.5",
+        interactive &&
+          "min-h-7 rounded-sm focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-ring",
+        className,
+      )}
+      role={interactive ? undefined : "img"}
+      aria-label={
+        interactive
+          ? undefined
+          : value == null
+            ? "Nessuna valutazione"
+            : `Valutazione ${value} su 5`
+      }
     >
       {[1, 2, 3, 4, 5].map((slot) => {
         const fill = Math.max(0, Math.min(1, shown - (slot - 1)));
@@ -32,34 +41,46 @@ export function BookmarkRating({
             <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
               <Bookmark size={size} filled className="text-primary" />
             </span>
-            {!readOnly && (
-              <>
-                <button
-                  type="button"
-                  aria-label={`${slot - 0.5} su 5`}
-                  className="absolute inset-y-0 left-0 w-1/2 cursor-pointer"
-                  onMouseEnter={() => setHover(slot - 0.5)}
-                  onMouseLeave={() => setHover(null)}
-                  onClick={() => onChange?.(value === slot - 0.5 ? null : slot - 0.5)}
-                />
-                <button
-                  type="button"
-                  aria-label={`${slot} su 5`}
-                  className="absolute inset-y-0 right-0 w-1/2 cursor-pointer"
-                  onMouseEnter={() => setHover(slot)}
-                  onMouseLeave={() => setHover(null)}
-                  onClick={() => onChange?.(value === slot ? null : slot)}
-                />
-              </>
-            )}
           </span>
         );
       })}
+      {interactive && (
+        <>
+          <span aria-hidden="true" className="ml-1 text-[9px] text-muted-foreground">
+            ⌄
+          </span>
+          <select
+            aria-label={
+              value == null ? "Assegna una valutazione" : `Modifica valutazione: ${value} su 5`
+            }
+            value={value ?? ""}
+            onChange={(event) =>
+              onChange?.(event.target.value === "" ? null : Number(event.target.value))
+            }
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          >
+            <option value="">Non valutato</option>
+            {Array.from({ length: 11 }, (_, i) => i / 2).map((score) => (
+              <option key={score} value={score}>
+                {score} / 5
+              </option>
+            ))}
+          </select>
+        </>
+      )}
     </div>
   );
 }
 
-function Bookmark({ size, filled, className }: { size: number; filled?: boolean; className?: string }) {
+function Bookmark({
+  size,
+  filled,
+  className,
+}: {
+  size: number;
+  filled?: boolean;
+  className?: string;
+}) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path

@@ -14,6 +14,13 @@ export type Database = {
   }
   public: {
     Tables: {
+      author_follows: {
+        Row: { user_id: string; author_id: string; author_name: string; followed_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+
       reader_connections: {
         Row: { id: string; user_id: string; name: string; kind: string; mode: string; created_at: string; last_received_at: string | null; revoked_at: string | null }
         Insert: never
@@ -474,6 +481,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      book_community_rating: { Args: { p_book_id: string }; Returns: { average_rating: number | null; ratings_count: number }[] }
+
       create_reader_connection: { Args: { p_name: string; p_kind: string; p_secret: string }; Returns: string }
       revoke_reader_connection: { Args: { p_connection: string }; Returns: undefined }
       bind_reader_document: { Args: { p_document: string; p_book: string }; Returns: string }

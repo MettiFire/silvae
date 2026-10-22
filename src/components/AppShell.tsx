@@ -2,7 +2,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   BarChart3,
   CalendarDays,
-  Cable,
   Compass,
   Home,
   Quote,
@@ -11,139 +10,195 @@ import {
   Moon,
   Sun,
   Target,
-  Upload,
   User,
   Users,
+  Settings,
+  MoreHorizontal,
+  ArrowUpRight,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
-import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookDensity } from "@/lib/book-density";
-import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-
+import { toast } from "sonner";
 const NAV = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/discover", label: "Discover", icon: Compass },
-  { to: "/library", label: "La mia libreria", icon: Library },
+  { to: "/", label: "Il diario", icon: Home },
+  { to: "/discover", label: "Esplora", icon: Compass },
+  { to: "/library", label: "Libreria", icon: Library },
   { to: "/challenges", label: "Sfide", icon: Target },
-  { to: "/calendar", label: "Calendario", icon: CalendarDays },
   { to: "/fragments", label: "Frammenti", icon: Quote },
-  { to: "/social", label: "Social", icon: Users },
+  { to: "/social", label: "Lettori", icon: Users },
+  { to: "/calendar", label: "Calendario", icon: CalendarDays },
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
-  { to: "/profile", label: "Profilo", icon: User },
-  { to: "/devices", label: "Dispositivi", icon: Cable },
-  { to: "/import", label: "Importa CSV", icon: Upload },
 ] as const;
-
 export function AppShell({ children }: { children: ReactNode }) {
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-
+  const [more, setMore] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  async function signOut() {
+    setLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      void navigate({ to: "/auth" });
+    } catch {
+      toast.error("Non è stato possibile uscire. Riprova.");
+    } finally {
+      setLoggingOut(false);
+    }
+  }
   return (
-    <div data-book-density={density} className="flex min-h-screen bg-background">
+    <div data-book-density={density} className="app-shell min-h-screen bg-background">
+      <a href="#contenuto" className="skip-link">
+        Vai al contenuto
+      </a>
       <ReadingPreferences onboarding />
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 md:flex">
-        <Link to="/" className="mb-6 flex items-center gap-2 px-2">
-          <Logo className="h-7 w-7 text-primary" />
-          <span className="font-display text-lg font-bold tracking-tight">Paginae</span>
+      <header className="site-header">
+        <div className="masthead site-width">
+          <Link to="/" className="wordmark" aria-label="Paginae, pagina iniziale">
+            Paginae<span>.</span>
+          </Link>
+          <span className="masthead-caption">
+            Una vita
+            <br />
+            tra le pagine
+          </span>
+          <div className="masthead-search">
+            <GlobalSearch />
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={toggle}
+              aria-label={resolved === "dark" ? "Attiva tema chiaro" : "Attiva tema scuro"}
+              className="icon-button"
+            >
+              {resolved === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            {user ? (
+              <>
+                <Link to="/settings" aria-label="Impostazioni del profilo" className="icon-button">
+                  <Settings size={17} />
+                </Link>
+                <Link to="/profile" className="account-link" aria-label="Il mio profilo">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="account-initial">
+                      {(profile?.display_name || profile?.username || "L")
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </span>
+                  )}
+                  <span className="hidden text-xs font-medium lg:inline">
+                    {profile?.display_name || profile?.username || "Il mio profilo"}
+                  </span>
+                </Link>
+              </>
+            ) : (
+              <Link to="/auth" className="button-ink whitespace-nowrap">
+                Accedi <ArrowUpRight size={14} />
+              </Link>
+            )}
+          </div>
+        </div>
+        <div className="site-width nav-rule">
+          <nav aria-label="Navigazione principale" className="desktop-nav">
+            {NAV.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                activeOptions={{ exact: to === "/" }}
+                className="nav-link"
+                activeProps={{ className: "nav-link is-active" }}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <span className="nav-note">Il tuo prossimo capitolo.</span>
+        </div>
+      </header>
+      <main id="contenuto" tabIndex={-1} className="app-page site-width">
+        {children}
+      </main>
+      <footer className="site-footer site-width">
+        <Link to="/" className="font-display text-2xl">
+          Paginae.
         </Link>
-        <nav className="flex flex-1 flex-col gap-0.5">
-          {NAV.map(({ to, label, icon: Icon }) => (
+        <p>Le storie passano. Qualcosa resta.</p>
+        <div className="flex gap-5">
+          {user && (
+            <>
+              <Link to="/settings">Impostazioni</Link>
+              <button
+                disabled={loggingOut}
+                onClick={() => void signOut()}
+                className="inline-flex items-center gap-1"
+              >
+                <LogOut size={12} />
+                Esci
+              </button>
+            </>
+          )}
+          <Link to="/discover">Esplora il catalogo</Link>
+        </div>
+      </footer>
+      <nav aria-label="Navigazione mobile" className="mobile-nav">
+        {[NAV[0], NAV[1], NAV[2], { to: "/profile", label: "Profilo", icon: User } as const].map(
+          ({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               activeOptions={{ exact: to === "/" }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition hover:bg-sidebar-accent"
-              activeProps={{ className: "bg-sidebar-accent text-primary" }}
+              activeProps={{ className: "is-active" }}
             >
-              <Icon className="h-4 w-4" />
-              {label}
+              <Icon size={19} />
+              <span>{label}</span>
             </Link>
-          ))}
-        </nav>
-        {user ? (
-          <button
-            type="button"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              void navigate({ to: "/auth" });
-            }}
-            className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-sidebar-accent"
-          >
-            <LogOut className="h-4 w-4" />
-            Esci {profile?.username ? `(@${profile.username})` : ""}
-          </button>
-        ) : (
-          <Link
-            to="/auth"
-            className="mt-4 rounded-lg bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
-          >
-            Accedi
-          </Link>
+          ),
         )}
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8">
-          <Link to="/" className="md:hidden">
-            <Logo className="h-6 w-6 text-primary" />
-          </Link>
-          <GlobalSearch />
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label="Cambia tema"
-            className="ml-auto rounded-lg border border-border bg-card p-2 transition hover:bg-accent"
-          >
-            {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-        </header>
-        <nav
-          aria-label="Altre sezioni"
-          className="flex gap-4 overflow-x-auto border-b border-border px-4 py-2 text-xs md:hidden"
+        <button
+          aria-expanded={more}
+          aria-controls="mobile-other-nav"
+          onClick={() => setMore(!more)}
         >
-          {NAV.slice(5).map(({ to, label }) => (
-            <Link key={to} to={to} className="shrink-0 py-1">
+          <MoreHorizontal size={20} />
+          <span>Altro</span>
+        </button>
+      </nav>
+      {more && (
+        <div className="mobile-menu" id="mobile-other-nav">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="eyebrow">Il tuo spazio</span>
+            <button onClick={() => setMore(false)} className="text-sm">
+              Chiudi
+            </button>
+          </div>
+          {NAV.slice(3).map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to} onClick={() => setMore(false)}>
+              <Icon size={17} />
               {label}
             </Link>
           ))}
-          {!user && (
-            <Link to="/auth" className="shrink-0 py-1 text-primary">
-              Accedi
-            </Link>
-          )}
-        </nav>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
-          <div className="mb-4 flex justify-end">
-            <BookGridSizeControl />
-          </div>
-          {children}
-        </main>
-        <nav className="sticky bottom-0 flex justify-around border-t border-border bg-background/95 py-2 backdrop-blur md:hidden">
-          {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className="flex flex-col items-center gap-0.5 px-2 text-[10px] text-muted-foreground"
-              activeProps={{ className: "text-primary" }}
-            >
-              <Icon className="h-5 w-5" />
-              {label.split(" ")[0]}
-            </Link>
-          ))}
-        </nav>
-      </div>
+          <Link to="/settings" onClick={() => setMore(false)}>
+            <Settings size={17} />
+            Impostazioni
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
-
 export function PageHeader({
   title,
   subtitle,
@@ -154,12 +209,32 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className={cn("mb-6 flex flex-wrap items-end justify-between gap-3")}>
+    <header className="page-heading">
       <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        <p className="eyebrow">Paginae / Il tuo spazio</p>
+        <h1>{title}</h1>
+        {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className="page-actions">{action}</div>}
+    </header>
+  );
+}
+export function SectionHeading({
+  title,
+  number,
+  children,
+}: {
+  title: string;
+  number?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="section-heading">
+      <h2>
+        {number && <span>{number}</span>}
+        {title}
+      </h2>
+      {children}
     </div>
   );
 }

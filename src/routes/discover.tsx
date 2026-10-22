@@ -3,16 +3,32 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { BookCard } from "@/components/BookCard";
 import { discoverBooks, GENRES, type Book } from "@/lib/books";
 import { toast } from "sonner";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { supabase } from "@/integrations/supabase/client";
 
+const GENRE_LABELS: Record<string, string> = {
+  Fiction: "Romanzi",
+  Nonfiction: "Saggistica",
+  Fantasy: "Fantasy",
+  "Science Fiction": "Fantascienza",
+  Mystery: "Gialli",
+  Thriller: "Thriller",
+  Romance: "Romance",
+  History: "Storia",
+  Biography: "Biografie e memoir",
+  Philosophy: "Filosofia",
+  Poetry: "Poesia",
+  Science: "Scienza e natura",
+  Business: "Economia e impresa",
+};
 export const Route = createFileRoute("/discover")({
   head: () => ({
     meta: [
-      { title: "Discover — Paginae" },
+      { title: "Esplora — Paginae" },
       {
         name: "description",
         content: "Scopri nuovi libri per genere, anno e rating, con consigli personalizzati.",
@@ -51,6 +67,7 @@ function Discover() {
   const {
     data: results = [],
     isFetching,
+    isPending: cataloguePending,
     isError,
     refetch,
   } = useQuery({
@@ -75,7 +92,11 @@ function Discover() {
 
   return (
     <AppShell>
-      <PageHeader title="Discover" subtitle="Trova la tua prossima lettura" />
+      <PageHeader
+        title="Esplora"
+        subtitle="Segui una curiosità. Trova una storia."
+        action={<BookGridSizeControl />}
+      />
 
       {(recsLoading || recsError || recommended.length > 0 || user) && (
         <section className="mb-10">
@@ -156,7 +177,10 @@ function Discover() {
           value={genre}
           onChange={setGenre}
           label="Genere"
-          options={[["all", "Tutti i generi"], ...GENRES.map((g) => [g, g] as [string, string])]}
+          options={[
+            ["all", "Tutti i generi"],
+            ...GENRES.map((g) => [g, GENRE_LABELS[g] ?? g] as [string, string]),
+          ]}
         />
         <Select
           value={year}
@@ -172,9 +196,9 @@ function Discover() {
         <Select
           value={String(minRating)}
           onChange={(v) => setMinRating(Number(v))}
-          label="Rating minimo"
+          label="Voto del catalogo"
           options={[
-            ["0", "Qualsiasi rating"],
+            ["0", "Qualsiasi voto"],
             ["3", "3+"],
             ["4", "4+"],
             ["4.5", "4.5+"],
@@ -185,7 +209,7 @@ function Discover() {
           onChange={(v) => setOrder(v as "relevance" | "newest")}
           label="Ordina"
           options={[
-            ["relevance", "Popolarità"],
+            ["relevance", "Rilevanza"],
             ["newest", "Novità"],
           ]}
         />
@@ -199,12 +223,12 @@ function Discover() {
           </button>
         </p>
       )}
-      {!isFetching && !isError && !filtered.length && (
+      {!cataloguePending && !isFetching && !isError && !filtered.length && (
         <p className="text-sm text-muted-foreground">
           Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo.
         </p>
       )}
-      {isFetching ? (
+      {cataloguePending || isFetching ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : (
         <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">

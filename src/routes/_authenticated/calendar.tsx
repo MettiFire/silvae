@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { BookCover } from "@/components/BookCard";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 
@@ -7,7 +8,10 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
       { title: "Calendario letture — Paginae" },
-      { name: "description", content: "Le tue letture completate mese per mese, in ordine cronologico." },
+      {
+        name: "description",
+        content: "Le tue letture completate mese per mese, in ordine cronologico.",
+      },
       { property: "og:title", content: "Calendario letture — Paginae" },
       { property: "og:description", content: "Le tue letture completate mese per mese." },
     ],
@@ -16,19 +20,44 @@ export const Route = createFileRoute("/_authenticated/calendar")({
 });
 
 const MONTHS = [
-  "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
+  "Gennaio",
+  "Febbraio",
+  "Marzo",
+  "Aprile",
+  "Maggio",
+  "Giugno",
+  "Luglio",
+  "Agosto",
+  "Settembre",
+  "Ottobre",
+  "Novembre",
+  "Dicembre",
 ];
 
 function CalendarPage() {
   const { user } = useAuth();
-  const { data: items = [] } = useLibrary(user?.id);
+  const { data: items = [], isLoading, isError } = useLibrary(user?.id);
   const year = new Date().getFullYear();
-  const finished = items.filter((i) => i.finished_at && new Date(i.finished_at).getFullYear() === year);
+  const finished = items.filter(
+    (i) => i.status === "read" && i.finished_at && new Date(i.finished_at).getFullYear() === year,
+  );
 
   return (
     <AppShell>
-      <PageHeader title={`Calendario ${year}`} subtitle={`${finished.length} libri completati quest'anno`} />
+      <PageHeader
+        title={`Calendario ${year}`}
+        subtitle={`${finished.length} libri completati quest'anno`}
+      />
+      {isLoading && (
+        <p role="status" className="editorial-empty">
+          Caricamento delle letture…
+        </p>
+      )}
+      {isError && (
+        <p role="alert" className="editorial-empty">
+          Il calendario non è disponibile. Ricarica la pagina per riprovare.
+        </p>
+      )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {MONTHS.map((m, idx) => {
           const monthBooks = finished.filter((i) => new Date(i.finished_at!).getMonth() === idx);
@@ -43,8 +72,13 @@ function CalendarPage() {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {monthBooks.map((i) => (
-                    <Link key={i.id} to="/book/$bookId" params={{ bookId: i.book_id }} className="w-10">
-                      <img src={i.books?.cover_url ?? ""} alt={i.books?.title ?? ""} className="cover-frame" />
+                    <Link
+                      key={i.id}
+                      to="/book/$bookId"
+                      params={{ bookId: i.book_id }}
+                      className="w-10"
+                    >
+                      {i.books && <BookCover book={i.books} />}
                     </Link>
                   ))}
                 </div>

@@ -29,6 +29,7 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
     Promise.all([
       qc.invalidateQueries({ queryKey: ["library"] }),
       qc.invalidateQueries({ queryKey: ["library-item"] }),
+      qc.invalidateQueries({ queryKey: ["community-rating", item.book_id] }),
     ]);
   const save = async () => {
     if (!user || busy) return;

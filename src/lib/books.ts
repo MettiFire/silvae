@@ -332,6 +332,7 @@ export async function cacheBook(book: Book) {
 
 export const GENRES = [
   "Fiction",
+  "Nonfiction",
   "Fantasy",
   "Science Fiction",
   "Mystery",

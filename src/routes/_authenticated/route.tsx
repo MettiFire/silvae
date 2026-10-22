@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Navigate, redirect } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -8,5 +9,16 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  const { user, loading } = useAuth();
+  if (loading)
+    return (
+      <p role="status" className="p-8 text-sm">
+        Verifica dell’accesso…
+      </p>
+    );
+  return user ? <Outlet /> : <Navigate to="/auth" replace />;
+}

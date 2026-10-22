@@ -1,171 +1,209 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, Sparkles } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
-import { BookCard } from "@/components/BookCard";
+import { ArrowRight, RefreshCw } from "lucide-react";
+import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
+import { BookCard, BookCover } from "@/components/BookCard";
+import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { ProgressBar } from "@/components/ProgressBar";
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Paginae — Traccia le tue letture" },
+      { title: "Paginae — Una vita tra le pagine" },
       {
         name: "description",
         content:
-          "Home di Paginae: continua le letture in corso, segui gli amici e scopri nuovi libri.",
+          "Custodisci le tue letture, raccogli libri in liste e incontra chi condivide le tue storie.",
       },
-      { property: "og:title", content: "Paginae — Traccia le tue letture" },
-      { property: "og:description", content: "Continua le letture in corso e scopri nuovi libri." },
     ],
   }),
   component: Home,
 });
-
 function Home() {
-  const {
-    user,
-    library,
-    recommended,
-    recsLoading: isPending,
-    recsError: isError,
-    retryRecs: refetch,
-    refresh,
-  } = useBookRecommendations();
+  const { user, library, recommended, recsLoading, recsError, retryRecs, refresh } =
+    useBookRecommendations();
   const reading = library.filter((i) => i.status === "reading");
   const finished = library.filter((i) => i.status === "read");
-
   return (
     <AppShell>
-      {!user && (
-        <section className="mb-10 overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-paper md:p-12">
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" /> Un Goodreads moderno, sobrio e
-            letterario
-          </p>
-          <h1 className="max-w-2xl font-display text-3xl font-extrabold leading-tight md:text-5xl">
-            Ogni libro che leggi, al suo posto.
-          </h1>
-          <p className="mt-3 max-w-xl text-muted-foreground">
-            Traccia il progresso pagina per pagina, dai il tuo voto, crea liste, sfide annuali e
-            segui cosa leggono gli amici.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Link
-              to="/auth"
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-            >
-              Inizia ora
-            </Link>
-            <Link
-              to="/discover"
-              className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold"
-            >
-              Esplora libri
-            </Link>
+      {!user ? (
+        <section className="home-hero">
+          <div className="home-hero-copy">
+            <p className="eyebrow">Un posto per le tue letture</p>
+            <h1>
+              Tieni il filo.
+              <br />
+              Di ogni <em>storia.</em>
+            </h1>
+            <p className="max-w-md text-sm leading-7 text-muted-foreground">
+              I libri che hai amato, quelli che ti aspettano. Uno spazio per raccoglierli e trovare
+              la tua prossima lettura, insieme agli altri.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/auth" className="button-ink">
+                Comincia la tua libreria
+                <ArrowRight size={14} />
+              </Link>
+              <Link to="/discover" className="button-outline">
+                Sfoglia il catalogo
+              </Link>
+            </div>
+          </div>
+          <div className="home-hero-art" aria-label="Dal catalogo di Paginae">
+            {recommended.length ? (
+              recommended.slice(0, 2).map(({ book }) => (
+                <Link
+                  key={book.id}
+                  to="/book/$bookId"
+                  params={{ bookId: book.id }}
+                  className="hero-book"
+                >
+                  <BookCover book={book} />
+                </Link>
+              ))
+            ) : (
+              <div className="max-w-64 py-16 text-center font-display text-3xl italic leading-relaxed text-[var(--hero-ink)]">
+                C’è sempre
+                <br />
+                un’altra pagina.
+              </div>
+            )}
           </div>
         </section>
-      )}
-
-      {user && (
+      ) : (
         <>
-          <PageHeader title="Bentornato" subtitle="Riprendi da dove avevi lasciato" />
-          {reading.length === 0 ? (
-            <p className="mb-10 rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-              Nessuna lettura in corso.{" "}
-              <Link to="/discover" className="text-primary">
-                Scopri qualcosa di nuovo
+          <PageHeader
+            title="Il tuo diario di lettura"
+            subtitle="Le storie in cui sei adesso. E quelle che verranno."
+            action={
+              <Link to="/profile" className="button-outline">
+                Il mio profilo ↗
               </Link>
-              .
-            </p>
-          ) : (
-            <div className="mb-10 grid gap-4 md:grid-cols-2">
-              {reading.map((item) => (
-                <Link
-                  key={item.id}
-                  to="/book/$bookId"
-                  params={{ bookId: item.book_id }}
-                  className="flex gap-4 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-                >
-                  <div className="w-16 shrink-0">
-                    {item.books && (
-                      <img src={item.books.cover_url ?? ""} alt="" className="cover-frame" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="line-clamp-1 font-display font-semibold">{item.books?.title}</h3>
-                    <p className="line-clamp-1 text-xs text-muted-foreground">
-                      {item.books?.authors.join(", ")}
-                    </p>
-                    <ProgressBar
-                      className="mt-3"
-                      current={item.current_page}
-                      percentage={item.progress_percent}
-                      total={item.total_pages ?? item.books?.page_count ?? 0}
-                    />
-                  </div>
+            }
+          />
+          <section>
+            <SectionHeading title="Dove eravamo rimasti" number="01">
+              <Link to="/library">La tua libreria ↗</Link>
+            </SectionHeading>
+            {reading.length ? (
+              <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+                {reading.slice(0, 4).map((item) => (
+                  <Link
+                    key={item.id}
+                    to="/book/$bookId"
+                    params={{ bookId: item.book_id }}
+                    className="flex items-center gap-6 border-b pb-6"
+                  >
+                    <div className="w-20 shrink-0">
+                      {item.books && <BookCover book={item.books} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="eyebrow mb-2">In lettura</p>
+                      <h3 className="font-display text-xl leading-snug">{item.books?.title}</h3>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {item.books?.authors.join(", ")}
+                      </p>
+                      <ProgressBar
+                        className="mt-5"
+                        current={item.current_page}
+                        percentage={item.progress_percent}
+                        total={item.total_pages ?? item.books?.page_count ?? 0}
+                      />
+                    </div>
+                    <ArrowRight size={16} className="hidden shrink-0 sm:block" />
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="editorial-empty">
+                Nessuna lettura in corso.{" "}
+                <Link to="/discover" className="underline">
+                  Trova il prossimo libro.
                 </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+              </p>
+            )}
+          </section>
+          <div className="stats-line">
             <Stat label="Libri letti" value={finished.length} />
             <Stat label="In lettura" value={reading.length} />
             <Stat label="Da leggere" value={library.filter((i) => i.status === "to_read").length} />
             <Stat
-              label="Pagine lette"
-              value={
-                finished.reduce((s, i) => s + (i.total_pages ?? 0), 0) +
-                reading.reduce((s, i) => s + i.current_page, 0)
-              }
+              label="Autori nella libreria"
+              value={new Set(library.flatMap((i) => i.books?.authors ?? [])).size}
             />
           </div>
         </>
       )}
-
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-          <BookOpen className="h-5 w-5 text-primary" /> Libri da scoprire
-        </h2>
-        <button onClick={refresh} className="rounded-lg border border-border px-3 py-2 text-sm">
-          Rinnova
-        </button>
-      </div>
-      {isPending && (
-        <p role="status" className="mb-4 text-sm text-muted-foreground">
-          Caricamento libri e copertine…
-        </p>
-      )}
-      {isError && (
-        <p role="alert" className="mb-4 text-sm">
-          Il catalogo non è disponibile al momento.{" "}
-          <button className="text-primary" onClick={() => void refetch()}>
-            Riprova
-          </button>
-        </p>
-      )}
-      {!isPending && !isError && !recommended.length && (
-        <p className="mb-4 text-sm text-muted-foreground">
-          Nessun suggerimento disponibile. Premi Rinnova oppure modifica i tuoi gusti nel profilo.
-        </p>
-      )}
-      <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        {recommended.map(({ book: b, reason }) => (
-          <div key={b.id}>
-            <BookCard book={b} />
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{reason}</p>
+      <section>
+        <SectionHeading
+          title={user ? "La prossima lettura" : "Una storia chiama l’altra"}
+          number={user ? "02" : "01"}
+        >
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:block">
+              <BookGridSizeControl />
+            </span>
+            <button
+              aria-label="Rinnova suggerimenti"
+              className="inline-flex items-center gap-2 text-xs"
+              onClick={refresh}
+            >
+              <RefreshCw size={13} />
+              Altri libri
+            </button>
           </div>
-        ))}
-      </div>
+        </SectionHeading>
+        <p className="mb-7 max-w-xl text-xs leading-relaxed text-muted-foreground">
+          {user
+            ? "Suggerimenti dai tuoi gusti e dai libri che hai già raccolto, letti e ancora da leggere."
+            : "Percorsi nel catalogo, per incontrare qualcosa che non stavi cercando."}
+        </p>
+        {recsLoading && (
+          <div className="book-grid grid" role="status" aria-label="Caricamento suggerimenti">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="aspect-[2/3] animate-pulse bg-muted" />
+            ))}
+          </div>
+        )}
+        {recsError && (
+          <p role="alert" className="editorial-empty">
+            Il catalogo non è disponibile.{" "}
+            <button onClick={() => void retryRecs()} className="underline">
+              Riprova
+            </button>
+          </p>
+        )}
+        {!recsLoading && !recsError && !recommended.length && (
+          <p className="editorial-empty">
+            Nessun suggerimento al momento. Rinnova i libri o aggiorna i gusti nelle impostazioni.
+          </p>
+        )}
+        {!recsLoading && (
+          <div className="book-grid grid gap-y-8">
+            {recommended.map(({ book, reason }) => (
+              <div key={book.id}>
+                <BookCard book={book} />
+                <p className="mt-3 border-t pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                  {reason}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-8 flex justify-end">
+          <Link to="/discover" className="inline-flex items-center gap-3 text-xs font-medium">
+            Continua a esplorare
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      </section>
     </AppShell>
   );
 }
-
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="font-display text-2xl font-bold">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div>
+      <strong>{value}</strong>
+      <span>{label}</span>
     </div>
   );
 }

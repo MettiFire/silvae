@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { requireFragmentUser } from "@/lib/fragments";
+import { getProfileMap } from "@/lib/profile-data";
 import { Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -27,7 +29,10 @@ export const Route = createFileRoute("/book/$bookId")({
   head: () => ({
     meta: [
       { title: "Scheda libro — Paginae" },
-      { name: "description", content: "Dettagli del libro, valutazioni della community e recensioni su Paginae." },
+      {
+        name: "description",
+        content: "Dettagli del libro, valutazioni della community e recensioni su Paginae.",
+      },
       { property: "og:title", content: "Scheda libro — Paginae" },
       { property: "og:description", content: "Dettagli, valutazioni e recensioni del libro." },
     ],
@@ -42,41 +47,92 @@ function BookPage() {
   const [expanded, setExpanded] = useState(false);
   const [pageInput, setPageInput] = useState("");
   const [reviewText, setReviewText] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
 
-  const { data: book, isLoading, isError, refetch } = useQuery({ queryKey: ["book", bookId], queryFn: () => getBook(bookId) });
+  const {
+    data: book,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({ queryKey: ["book", bookId], queryFn: () => getBook(bookId) });
   const { data: item } = useLibraryItem(bookId);
   const save = useSaveToLibrary();
   const update = useUpdateItem();
 
-  const { data: reviews = [] } = useQuery({
+  const {
+    data: reviews = [],
+    isError: reviewsError,
+    isPending: reviewsLoading,
+  } = useQuery({
     queryKey: ["reviews", bookId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("id, body, rating, created_at, user_id, profiles:profiles!inner(username, display_name, avatar_url)")
+        .select("id, body, rating, created_at, user_id")
         .eq("book_id", bookId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
-      return data ?? [];
+      const profiles = await getProfileMap((data ?? []).map((r) => r.user_id));
+      return (data ?? []).map((r) => ({ ...r, profiles: profiles.get(r.user_id) ?? null }));
     },
   });
 
-  const { data: communityRating } = useQuery({
+  const {
+    data: communityRating,
+    isLoading: ratingLoading,
+    isError: ratingError,
+  } = useQuery({
     queryKey: ["community-rating", bookId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("library_items").select("rating").eq("book_id", bookId).not("rating", "is", null);
-      if (error) throw error;
-      const values = (data ?? []).map((r) => Number(r.rating));
-      if (!values.length) return null;
-      return values.reduce((a, b) => a + b, 0) / values.length;
+      const aggregated = await supabase.rpc("book_community_rating", { p_book_id: bookId });
+      if (!aggregated.error) {
+        const row = aggregated.data?.[0];
+        return row?.ratings_count
+          ? { average: Number(row.average_rating), count: Number(row.ratings_count) }
+          : null;
+      }
+      if (!["PGRST202", "42883"].includes(aggregated.error.code)) throw aggregated.error;
+      // Keep older deployments usable until the aggregate migration is applied.
+      const values: number[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase
+          .from("library_items")
+          .select("rating")
+          .eq("book_id", bookId)
+          .eq("status", "read")
+          .not("rating", "is", null)
+          .order("id")
+          .range(offset, offset + 499);
+        if (error) throw error;
+        values.push(
+          ...(data ?? [])
+            .map((r) => Number(r.rating))
+            .filter((r) => Number.isFinite(r) && r >= 0 && r <= 5),
+        );
+        if ((data?.length ?? 0) < 500) break;
+      }
+      return values.length
+        ? { average: values.reduce((a, b) => a + b, 0) / values.length, count: values.length }
+        : null;
     },
   });
 
   useEffect(() => {
     if (item) setPageInput(String(item.current_page));
-  }, [item?.id]);
+  }, [item?.id, item?.current_page]);
 
-  if (isError) return <AppShell><p role="alert">Impossibile caricare il libro. <button onClick={() => void refetch()} className="text-primary">Riprova</button></p></AppShell>;
+  if (isError)
+    return (
+      <AppShell>
+        <p role="alert">
+          Impossibile caricare il libro.{" "}
+          <button onClick={() => void refetch()} className="text-primary">
+            Riprova
+          </button>
+        </p>
+      </AppShell>
+    );
   if (isLoading || !book) {
     return (
       <AppShell>
@@ -90,59 +146,84 @@ function BookPage() {
   const setStatus = (status: ReadingStatus) => {
     save.mutate(
       { book, status },
-      { onSuccess: () => toast.success(`Spostato in "${STATUS_LABEL[status]}"`), onError: () => toast.error("Impossibile salvare il libro. Riprova.") },
+      {
+        onSuccess: () => toast.success(`Spostato in "${STATUS_LABEL[status]}"`),
+        onError: () => toast.error("Impossibile salvare il libro. Riprova."),
+      },
     );
   };
 
   const saveProgress = () => {
     if (!item) return;
-    const page = Math.max(0, Math.min(Number(pageInput) || 0, totalPages || Number(pageInput) || 0));
+    const page = Math.max(
+      0,
+      Math.min(Number(pageInput) || 0, totalPages || Number(pageInput) || 0),
+    );
     const done = totalPages > 0 && page >= totalPages;
-    update.mutate({
-      id: item.id,
-      patch: {
-        current_page: page,
-        status: done ? "read" : "reading",
-        finished_at: done ? new Date().toISOString() : null,
+    update.mutate(
+      {
+        id: item.id,
+        patch: {
+          current_page: page,
+          status: done ? "read" : "reading",
+          finished_at: done ? new Date().toISOString() : null,
+        },
+        activity: done
+          ? { type: "finished", bookId: book.id, metadata: { title: book.title } }
+          : undefined,
       },
-      activity: done ? { type: "finished", bookId: book.id, metadata: { title: book.title } } : undefined,
-    }, {
-      onSuccess: () => toast.success(done ? "Complimenti, libro completato!" : "Progresso aggiornato"),
-      onError: () => toast.error("Progresso non salvato. Riprova."),
-    });
+      {
+        onSuccess: () =>
+          toast.success(done ? "Complimenti, libro completato!" : "Progresso aggiornato"),
+      },
+    );
   };
 
   const submitReview = async () => {
-    if (!user || !reviewText.trim()) return;
-    const { error } = await supabase.from("reviews").insert({
-      user_id: user.id,
-      book_id: book.id,
-      body: reviewText.trim(),
-      rating: item?.rating ?? null,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
+    if (!user || !reviewText.trim() || reviewBusy) return;
+    setReviewBusy(true);
+    try {
+      await requireFragmentUser(supabase, user.id);
+      const { error } = await supabase.from("reviews").insert({
+        user_id: user.id,
+        book_id: book.id,
+        body: reviewText.trim(),
+        rating: item?.rating ?? null,
+      });
+      if (error) throw error;
+      await supabase.from("activities").insert({
+        user_id: user.id,
+        type: "reviewed",
+        book_id: book.id,
+        metadata: { title: book.title },
+      });
+      setReviewText("");
+      await qc.invalidateQueries({ queryKey: ["reviews", bookId] });
+      void qc.invalidateQueries({ queryKey: ["activities"] });
+      toast.success("Recensione pubblicata");
+    } catch {
+      toast.error("Recensione non pubblicata. Controlla la connessione e riprova.");
+    } finally {
+      setReviewBusy(false);
     }
-    await supabase.from("activities").insert({
-      user_id: user.id,
-      type: "reviewed",
-      book_id: book.id,
-      metadata: { title: book.title },
-    });
-    setReviewText("");
-    void qc.invalidateQueries({ queryKey: ["reviews", bookId] });
-    void qc.invalidateQueries({ queryKey: ["activities"] });
-    toast.success("Recensione pubblicata");
   };
 
   return (
     <AppShell>
-      {item?.needs_review && <div className="mb-5 rounded-xl border border-border bg-accent p-4 text-sm">
-        Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto.
-        <button disabled={update.isPending} className="ml-2 font-medium text-primary" onClick={() => update.mutate({ id: item.id, patch: { needs_review: false } }, { onError: () => toast.error("Verifica non salvata") })}>Conferma dati corretti</button>
-      </div>}
-      <div className="grid gap-8 md:grid-cols-[260px_1fr]">
+      {item?.needs_review && (
+        <div className="mb-5 rounded-xl border border-border bg-accent p-4 text-sm">
+          Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa
+          nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto.
+          <button
+            disabled={update.isPending}
+            className="ml-2 font-medium text-primary"
+            onClick={() => update.mutate({ id: item.id, patch: { needs_review: false } }, {})}
+          >
+            Conferma dati corretti
+          </button>
+        </div>
+      )}
+      <div className="book-detail-layout grid gap-8 md:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
         <div>
           <BookCover book={book} />
           {item && <CoverPicker book={book} />}
@@ -170,10 +251,14 @@ function BookPage() {
                   <button
                     type="button"
                     aria-pressed={item.favorite}
-                    onClick={() => update.mutate({ id: item.id, patch: { favorite: !item.favorite } })}
+                    onClick={() =>
+                      update.mutate({ id: item.id, patch: { favorite: !item.favorite } })
+                    }
                     className="flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm"
                   >
-                    <Heart className={`h-4 w-4 ${item.favorite ? "fill-primary text-primary" : ""}`} />
+                    <Heart
+                      className={`h-4 w-4 ${item.favorite ? "fill-primary text-primary" : ""}`}
+                    />
                     Preferito
                   </button>
                   <button
@@ -187,7 +272,11 @@ function BookPage() {
                           status: "read",
                           finished_at: new Date().toISOString(),
                         },
-                        activity: { type: "reread", bookId: book.id, metadata: { title: book.title } },
+                        activity: {
+                          type: "reread",
+                          bookId: book.id,
+                          metadata: { title: book.title },
+                        },
                       })
                     }
                     className="flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm"
@@ -201,27 +290,46 @@ function BookPage() {
         </div>
 
         <div className="min-w-0">
-          <h1 className="font-display text-3xl font-extrabold leading-tight">{book.title}</h1>
+          <p className="eyebrow mb-4">Dalla biblioteca</p>
+          <h1 className="font-display text-4xl font-normal leading-tight tracking-tight lg:text-5xl">
+            {book.title}
+          </h1>
           <p className="mt-1 text-muted-foreground">
             {book.authors.map((a, idx) => (
               <span key={a}>
                 {idx > 0 && ", "}
-                <Link to="/author/$author" params={{ author: a }} className="text-primary hover:underline">
+                <Link
+                  to="/author/$author"
+                  params={{ author: a }}
+                  className="text-primary hover:underline"
+                >
                   {a}
                 </Link>
               </span>
             ))}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {[book.published_year, book.page_count ? `${book.page_count} pagine` : null].filter(Boolean).join(" · ")}
+            {[book.published_year, book.page_count ? `${book.page_count} pagine` : null]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">Community</p>
+              <p className="text-xs text-muted-foreground">
+                Chi l’ha letto {communityRating ? `· ${communityRating.count} voti` : ""}
+              </p>
               <div className="flex items-center gap-2">
-                <BookmarkRating value={communityRating ?? book.average_rating ?? 0} readOnly size={16} />
-                <span className="text-sm">{(communityRating ?? book.average_rating ?? 0).toFixed(1)}</span>
+                <BookmarkRating value={communityRating?.average ?? null} readOnly size={16} />
+                <span className="text-sm">
+                  {communityRating
+                    ? communityRating.average.toFixed(1)
+                    : ratingError
+                      ? "Valutazioni non disponibili"
+                      : ratingLoading
+                        ? "Caricamento voti…"
+                        : "Ancora nessun voto"}
+                </span>
               </div>
             </div>
             {item && (
@@ -236,10 +344,20 @@ function BookPage() {
             )}
           </div>
 
+          {book.average_rating != null && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Voto del catalogo esterno: {book.average_rating.toFixed(1)} / 5
+              {book.ratings_count ? ` · ${book.ratings_count} valutazioni` : ""}
+            </p>
+          )}
+
           {book.categories.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
               {book.categories.map((c) => (
-                <span key={c} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+                <span
+                  key={c}
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+                >
                   {c}
                 </span>
               ))}
@@ -249,7 +367,11 @@ function BookPage() {
           {item && (item.status === "reading" || item.current_page > 0) && (
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
               <p className="mb-2 font-display font-semibold">Progresso di lettura</p>
-              <ProgressBar current={item.current_page} total={totalPages} percentage={item.progress_percent} />
+              <ProgressBar
+                current={item.current_page}
+                total={totalPages}
+                percentage={item.progress_percent}
+              />
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sono a pagina</span>
                 <input
@@ -272,10 +394,19 @@ function BookPage() {
             </div>
           )}
 
-          {item && <ReadingProgress key={`${item.id}:${item.reading_session_id}:${item.progress_updated_at}`} item={item} />}
+          {item && (
+            <ReadingProgress
+              key={`${item.id}:${item.reading_session_id}:${item.progress_updated_at}`}
+              item={item}
+            />
+          )}
 
           <h2 className="mt-6 font-display text-lg font-semibold">Descrizione del libro</h2>
-          {!book.description && <p className="mt-2 text-sm text-muted-foreground">Nessuna descrizione disponibile nei cataloghi consultati per questo libro.</p>}
+          {!book.description && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Nessuna descrizione disponibile nei cataloghi consultati per questo libro.
+            </p>
+          )}
           {book.description && (
             <div className="mt-6">
               <div
@@ -296,13 +427,15 @@ function BookPage() {
           <Fragments book={book} />
 
           <section className="mt-10">
-            <h2 className="font-display text-xl font-bold">Recensioni</h2>
+            <h2 className="font-display text-xl font-bold">Recensioni recenti</h2>
             {user && (
               <div className="mt-3">
                 <textarea
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={3}
+                  maxLength={10000}
+                  disabled={reviewBusy}
                   placeholder="Scrivi la tua recensione…"
                   aria-label="Testo recensione"
                   className="w-full rounded-xl border border-border bg-card p-3 text-sm outline-none focus:border-primary/60"
@@ -310,31 +443,61 @@ function BookPage() {
                 <button
                   type="button"
                   onClick={submitReview}
+                  disabled={reviewBusy || !reviewText.trim()}
                   className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
-                  Pubblica
+                  {reviewBusy ? "Pubblicazione…" : "Pubblica"}
                 </button>
               </div>
             )}
             <div className="mt-5 space-y-4">
-              {reviews.length === 0 && <p className="text-sm text-muted-foreground">Ancora nessuna recensione.</p>}
+              {reviewsError && (
+                <p role="alert" className="text-sm text-destructive">
+                  Le recensioni non sono disponibili. Riprova più tardi.
+                </p>
+              )}
+              {reviewsLoading && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  Caricamento recensioni…
+                </p>
+              )}
+              {!reviewsLoading && !reviewsError && reviews.length === 0 && (
+                <p className="text-sm text-muted-foreground">Ancora nessuna recensione.</p>
+              )}
               {reviews.map((r) => {
-                const p = r.profiles as unknown as { username: string; display_name: string | null; avatar_url: string | null };
+                const p = r.profiles as unknown as {
+                  username: string;
+                  display_name: string | null;
+                  avatar_url: string | null;
+                };
                 return (
                   <article key={r.id} className="rounded-xl border border-border bg-card p-4">
                     <div className="flex items-center gap-3">
                       <Avatar url={p?.avatar_url} name={p?.display_name ?? p?.username ?? "?"} />
                       <div>
-                        <Link to="/u/$username" params={{ username: p?.username ?? "" }} className="text-sm font-medium hover:underline">
+                        <Link
+                          to="/u/$username"
+                          params={{ username: p?.username ?? "" }}
+                          className="text-sm font-medium hover:underline"
+                        >
                           {p?.display_name ?? p?.username}
                         </Link>
                         <p className="text-xs text-muted-foreground">
                           {new Date(r.created_at as string).toLocaleDateString("it-IT")}
                         </p>
                       </div>
-                      {r.rating != null && <BookmarkRating value={Number(r.rating)} readOnly size={14} className="ml-auto" />}
+                      {r.rating != null && (
+                        <BookmarkRating
+                          value={Number(r.rating)}
+                          readOnly
+                          size={14}
+                          className="ml-auto"
+                        />
+                      )}
                     </div>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{r.body as string}</p>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">
+                      {r.body as string}
+                    </p>
                   </article>
                 );
               })}
@@ -346,8 +509,24 @@ function BookPage() {
   );
 }
 
-export function Avatar({ url, name, size = 36 }: { url?: string | null; name: string; size?: number }) {
-  if (url) return <img src={url} alt="" style={{ width: size, height: size }} className="rounded-full object-cover" />;
+export function Avatar({
+  url,
+  name,
+  size = 36,
+}: {
+  url?: string | null;
+  name: string;
+  size?: number;
+}) {
+  if (url)
+    return (
+      <img
+        src={url}
+        alt=""
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover"
+      />
+    );
   return (
     <span
       style={{ width: size, height: size }}

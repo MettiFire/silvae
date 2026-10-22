@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { Grid2x2, List } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
@@ -29,8 +30,9 @@ type View = "grid" | "list";
 
 function LibraryPage() {
   const { user } = useAuth();
-  const { data: items = [], isLoading } = useLibrary(user?.id);
+  const { data: items = [], isLoading, isError, refetch } = useLibrary(user?.id);
   const update = useUpdateItem();
+  const [visible, setVisible] = useState(40);
   const [tab, setTab] = useState<ReadingStatus>("read");
   const [order, setOrder] = useState<LibraryOrder>("last-read");
   const [q, setQ] = useState("");
@@ -73,22 +75,24 @@ function LibraryPage() {
 
   return (
     <AppShell>
-      <PageHeader title="La mia libreria" subtitle={`${items.length} libri in totale`} />
+      <PageHeader
+        title="La mia libreria"
+        subtitle={`${items.length} libri raccolti, una storia alla volta`}
+        action={<BookGridSizeControl />}
+      />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="shelf-tabs" role="tablist" aria-label="Stato di lettura">
         {(Object.keys(STATUS_LABEL) as ReadingStatus[]).map((s) => (
           <button
             key={s}
             type="button"
+            role="tab"
+            aria-selected={tab === s}
             onClick={() => {
+              setVisible(40);
               setTab(s);
               setOrder(s === "read" ? "last-read" : "added");
             }}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
-              tab === s
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card hover:bg-accent"
-            }`}
           >
             {STATUS_LABEL[s]} ({items.filter((i) => i.status === s).length})
           </button>
@@ -197,7 +201,15 @@ function LibraryPage() {
         </p>
       )}
       {isLoading && <p className="text-sm text-muted-foreground">Caricamento…</p>}
-      {!isLoading && filtered.length === 0 && (
+      {isError && (
+        <p role="alert" className="editorial-empty">
+          La libreria non si è caricata.{" "}
+          <button onClick={() => void refetch()} className="underline">
+            Riprova
+          </button>
+        </p>
+      )}
+      {!isLoading && !isError && filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
           Nessun libro in questa sezione.
         </p>
@@ -205,7 +217,7 @@ function LibraryPage() {
 
       {view === "list" ? (
         <div className="space-y-3">
-          {filtered.map((i) => (
+          {filtered.slice(0, visible).map((i) => (
             <div key={i.id} className="flex gap-4 rounded-xl border border-border bg-card p-3">
               <Link to="/book/$bookId" params={{ bookId: i.book_id }} className="w-12 shrink-0">
                 {i.books && <BookCover book={i.books} />}
@@ -225,7 +237,8 @@ function LibraryPage() {
                 {i.status === "reading" && (
                   <ProgressBar
                     className="mt-2 max-w-sm"
-                    percentage={i.progress_percent} current={i.current_page}
+                    percentage={i.progress_percent}
+                    current={i.current_page}
                     total={i.total_pages ?? 0}
                   />
                 )}
@@ -240,7 +253,7 @@ function LibraryPage() {
         </div>
       ) : (
         <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-          {filtered.map((i) =>
+          {filtered.slice(0, visible).map((i) =>
             i.books ? (
               <BookCard
                 key={i.id}
@@ -258,7 +271,8 @@ function LibraryPage() {
                     {i.status === "reading" && (
                       <ProgressBar
                         className="mt-1"
-                        percentage={i.progress_percent} current={i.current_page}
+                        percentage={i.progress_percent}
+                        current={i.current_page}
                         total={i.total_pages ?? 0}
                         showLabel={false}
                       />
@@ -269,6 +283,11 @@ function LibraryPage() {
             ) : null,
           )}
         </div>
+      )}
+      {filtered.length > visible && (
+        <button className="button-outline mt-8" onClick={() => setVisible(visible + 40)}>
+          Mostra altri libri
+        </button>
       )}
     </AppShell>
   );

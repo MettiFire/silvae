@@ -20,6 +20,7 @@ import { Route as AuthenticatedFragmentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
@@ -81,6 +82,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSocialRoute = AuthenticatedSocialRouteImport.update({
   id: '/social',
   path: '/social',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/library'
     | '/profile'
+    | '/settings'
     | '/social'
     | '/stats'
     | '/author/$author'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/library'
     | '/profile'
+    | '/settings'
     | '/social'
     | '/stats'
     | '/author/$author'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/library'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/social'
     | '/_authenticated/stats'
     | '/author/$author'
@@ -316,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/social': {
       id: '/_authenticated/social'
       path: '/social'
@@ -369,6 +388,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
 }
@@ -381,6 +401,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSocialRoute: AuthenticatedSocialRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,
 }

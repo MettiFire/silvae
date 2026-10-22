@@ -11,43 +11,62 @@ import { cn } from "@/lib/utils";
 export function BookCover({ book, className }: { book: Book; className?: string }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(false);
-  const [loadedUrl, setLoadedUrl] = useState('');
+  const [loadedUrl, setLoadedUrl] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const initial = coverUrls(book);
-  const exhausted = !initial.some(url => !failed.has(url));
+  const exhausted = !initial.some((url) => !failed.has(url));
   const { data: alternatives = [] } = useQuery({
-    queryKey: ['cover-fallbacks', book.id, book.cover_url],
+    queryKey: ["cover-fallbacks", book.id, book.cover_url],
     queryFn: () => coverCandidates(book),
     enabled: visible && exhausted,
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
-  const source = [...new Set([...initial, ...alternatives])].find(url => !failed.has(url));
+  const source = [...new Set([...initial, ...alternatives])].find((url) => !failed.has(url));
   useEffect(() => {
     if (!ref.current) return;
-    const observer = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) { setVisible(true); observer.disconnect(); }
-    }, { rootMargin: '200px' });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
     observer.observe(ref.current);
     return () => observer.disconnect();
   }, [book.id]);
   useEffect(() => {
     if (!source || !visible || loadedUrl === source) return;
     // Some cover hosts hang instead of returning 404: move to the next edition.
-    const timer = setTimeout(() => setFailed(previous => new Set(previous).add(source)), 8000);
+    const timer = setTimeout(() => setFailed((previous) => new Set(previous).add(source)), 8000);
     return () => clearTimeout(timer);
   }, [source, visible, loadedUrl]);
-  return <div ref={ref} className={cn('cover-frame relative overflow-hidden', className)}>
-    {source ? <img key={source} src={source} alt={`Copertina di ${book.title}`} loading="lazy" className="h-full w-full object-cover"
-      onLoad={e => {
-        if (e.currentTarget.naturalWidth <= 2) setFailed(previous => new Set(previous).add(source));
-        else setLoadedUrl(source);
-      }} onError={() => setFailed(previous => new Set(previous).add(source))} /> :
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
-        <span className="font-display text-xs text-muted-foreground">{book.title}</span>
-        <span className="text-[10px] text-muted-foreground">Copertina non disponibile</span>
-      </div>}
-  </div>;
+  return (
+    <div ref={ref} className={cn("cover-frame relative overflow-hidden", className)}>
+      {source ? (
+        <img
+          key={source}
+          src={source}
+          alt={`Copertina di ${book.title}`}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onLoad={(e) => {
+            if (e.currentTarget.naturalWidth <= 2)
+              setFailed((previous) => new Set(previous).add(source));
+            else setLoadedUrl(source);
+          }}
+          onError={() => setFailed((previous) => new Set(previous).add(source))}
+        />
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
+          <span className="font-display text-xs text-muted-foreground">{book.title}</span>
+          <span className="text-[10px] text-muted-foreground">Copertina non disponibile</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function BookCard({
@@ -68,9 +87,9 @@ export function BookCard({
   const density = useBookDensity();
   const small = compact ?? density === "compact";
   return (
-    <div className="group relative">
+    <div className="book-card group relative">
       <Link to="/book/$bookId" params={{ bookId: book.id }} className="block">
-        <div className="relative overflow-hidden rounded-xl transition-transform duration-200 group-hover:-translate-y-1">
+        <div className="cover-wrap relative overflow-hidden">
           <BookCover book={book} />
         </div>
         <h3
@@ -93,7 +112,12 @@ export function BookCard({
           className="absolute right-2 top-2 rounded-full bg-card/85 p-1.5 opacity-0 backdrop-blur transition group-hover:opacity-100 focus-visible:opacity-100 data-[on=true]:opacity-100"
           data-on={favorite}
         >
-          <Heart className={cn("h-4 w-4", favorite ? "fill-primary text-primary" : "text-muted-foreground")} />
+          <Heart
+            className={cn(
+              "h-4 w-4",
+              favorite ? "fill-primary text-primary" : "text-muted-foreground",
+            )}
+          />
         </button>
       )}
       {footer}

@@ -383,3 +383,29 @@ redirect al login. La lettura autenticata, la precisione della stima e la copert
 di acquisti/Send to Kindle **restano da provare con l'account e il Kindle reali**.
 Non presentare questo prototipo come sincronizzazione funzionante o supporto
 universale dei documenti personali.
+
+### Profilo pubblico e nuova interfaccia
+
+`/profile` e `/u/:username` condividono il profilo di lettura: letti dal più recente,
+da leggere, preferiti, liste, autori seguiti e collegamenti ai follower. La vista
+personale permette di creare/modificare liste e visualizza anche quelle private;
+le visite di altri utenti mostrano soltanto quelle pubbliche, con RLS nel database.
+Le liste consentono aggiunta dalla libreria o ricerca nel catalogo.
+
+I controlli personali sono in `/settings`, suddivisi in profilo, gusti, aspetto,
+dispositivi e dati. `/devices` è mantenuto come redirect a
+`/settings?section=devices`. Il connettore sperimentale cloud Kindle non è attivato.
+
+Applicare `20261022030000_public_author_follows.sql` prima di pubblicare:
+crea gli autori pubblici a partire dal solo campo `followed_authors_v1`, mantiene
+invariati gli altri metadati e sincronizza i futuri cambiamenti tramite trigger.
+Gli utenti possono leggere questa proiezione, non scriverla direttamente. La
+migrazione aggiunge anche `book_community_rating`, media/count dei soli libri
+completati con voto valido. La UI distingue questa media dal voto esterno e mantiene
+un fallback per i database non ancora migrati.
+
+La navigazione e il tema editoriale sono condivisi da tutte le sezioni. Le librerie
+vengono lette in blocchi senza descrizioni integrali; le liste paginano 36 libri e
+le anteprime dei profili richiedono quattro copertine. Logout/cambio account puliscono
+la cache. Verificare la migrazione su un ambiente di prova e pubblicare su Lovable:
+il push Git non conferma da solo l'avvenuta migrazione o il deploy pubblico.

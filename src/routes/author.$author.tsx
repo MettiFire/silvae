@@ -36,7 +36,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const { data: library = [] } = useLibrary(user?.id);
   const [chosen, setChosen] = useState<string | null>(selectedId ?? null);
   const [page, setPage] = useState(0);
-  const [sort, setSort] = useState<"new" | "title" | "popular">("new");
+  const [sort, setSort] = useState<"new" | "title" | "popular">("popular");
   const [busy, setBusy] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const candidates = useQuery({
