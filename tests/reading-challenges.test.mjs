@@ -204,3 +204,49 @@ test("Malformed account data never crashes the explorer or creates duplicate sub
   assert.equal(decodeEnrollments([e, e]).length, 1);
   assert.match(validateEnrollment({ ...e, deadline: "2020-01-01" }, []), /scadenza/);
 });
+
+test("World challenge groups every library book by author nationality, including translations", () => {
+  const e = createEnrollment("countries", joined);
+  e.assignments["country-1"] = { bookId: "", country: "IT" };
+  const library = [
+    item("a", "Opera italiana", "Italo Calvino"),
+    item("b", "English translation", "Calvino, Italo", { status: "to_read" }),
+    item("c", "Altra opera", "Italo Calvino"),
+  ];
+  const p = challengeProgress(e, library, { italocalvino: ["IT"] });
+  assert.equal(p.done, 1);
+  assert.deepEqual(
+    p.slots[0].matching.map((i) => i.book_id),
+    ["a", "b", "c"],
+  );
+  assert.equal(decodeEnrollments([e])[0].assignments["country-1"].country, "IT");
+});
+test("World challenge automatically selects distinct countries and respects dates and reading status", () => {
+  const e = createEnrollment("countries", joined);
+  e.includePast = false;
+  const p = challengeProgress(
+    e,
+    [
+      item("a", "A", "Autore A"),
+      item("b", "B", "Autore B", { status: "reading" }),
+      item("c", "C", "Autore C", { finished_at: "2025-01-01" }),
+    ],
+    { autorea: ["IT"], autoreb: ["FR"], autorec: ["DE"] },
+  );
+  assert.equal(p.done, 1);
+  assert.equal(p.slots[0].country, "IT");
+  assert.equal(new Set(p.slots.flatMap((s) => (s.country ? [s.country] : []))).size, 3);
+});
+test("A manual author confirmation applies to their other books without inventing unknown origins", () => {
+  const e = createEnrollment("countries", joined);
+  e.assignments["country-1"] = { bookId: "a", country: "IT" };
+  const p = challengeProgress(e, [
+    item("a", "A", "Autore A", { status: "to_read" }),
+    item("b", "B", "Autore A"),
+    item("c", "C", "Unknown"),
+  ]);
+  assert.equal(p.done, 1);
+  assert.equal(p.slots[0].completed.book_id, "b");
+  assert.equal(p.slots[0].matching.length, 2);
+  assert.equal(p.slots.filter((s) => s.country).length, 1);
+});

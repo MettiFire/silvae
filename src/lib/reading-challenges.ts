@@ -1,3 +1,4 @@
+import { authorCountryKey } from "./author-country-key.ts";
 import { readingDay, todayDay } from "./reading-dates.ts";
 import { AWARD_DATA, type AwardFamily, type AwardWinner } from "../data/reading-awards.ts";
 import type { LibraryItem } from "./library";
@@ -70,7 +71,7 @@ export const CHALLENGE_CATALOGUE: ChallengeDefinition[] = [
     name: "Dodici mesi, dodici paesi",
     tagline: "Il tuo passaporto di lettura",
     description:
-      "Dodici libri di autori provenienti da dodici paesi diversi. Associa un libro e conferma il paese per ogni tappa; puoi seguirle nell’ordine che preferisci.",
+      "Dodici paesi attraverso i loro autori. I libri della tua libreria vengono associati automaticamente alla nazionalità dell’autore: completa ogni tappa con una lettura valida.",
     kind: "thematic",
     color: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
   },
@@ -199,23 +200,67 @@ function matchesAward(item: LibraryItem, winner: AwardWinner): boolean {
     return false;
   return !winner.title || key(book.title) === key(winner.title);
 }
-export function challengeProgress(enrollment: ChallengeEnrollment, library: LibraryItem[]) {
+export function challengeProgress(
+  enrollment: ChallengeEnrollment,
+  library: LibraryItem[],
+  authorCountries: Record<string, string[]> = {},
+) {
+  // A manual confirmation also classifies other books by the same author.
+  const origins = { ...authorCountries };
+  for (const assignment of Object.values(enrollment.assignments)) {
+    if (enrollment.id !== "countries" || !assignment.country || !assignment.bookId) continue;
+    const book = library.find((item) => item.book_id === assignment.bookId)?.books;
+    for (const author of book?.authors.length === 1 ? book.authors : [])
+      origins[authorCountryKey(author)] = [
+        ...new Set([
+          ...(origins[authorCountryKey(author)] ?? []),
+          assignment.country.toUpperCase(),
+        ]),
+      ];
+  }
+  const bookCountries = (item: LibraryItem) => [
+    ...new Set((item.books?.authors ?? []).flatMap((a) => origins[authorCountryKey(a)] ?? [])),
+  ];
+  const reserved = new Set(
+    Object.values(enrollment.assignments).flatMap((a) =>
+      a.country ? [a.country.toUpperCase()] : [],
+    ),
+  );
+  const available = [...new Set(library.flatMap(bookCountries))]
+    .filter((c) => !reserved.has(c))
+    .sort((a, b) => {
+      const read = (c: string) =>
+        library.some((i) => bookCountries(i).includes(c) && eligibleReading(i, enrollment));
+      return Number(read(b)) - Number(read(a)) || a.localeCompare(b);
+    });
   const eligible = library.filter((item) => eligibleReading(item, enrollment));
   const used = new Set<string>(),
     countries = new Set<string>(),
     works = new Set<string>();
   const slots = challengeSlots(enrollment).map((slot) => {
     const manual = enrollment.assignments[slot.id];
+    const country =
+      enrollment.id === "countries"
+        ? (manual?.country?.toUpperCase() ?? available.shift())
+        : undefined;
+    const matching = country
+      ? library.filter(
+          (item) => bookCountries(item).includes(country) || manual?.bookId === item.book_id,
+        )
+      : [];
     const assigned = slot.fixedBookId
       ? eligible.find((item) => item.book_id === slot.fixedBookId)
       : manual
         ? eligible.find((item) => item.book_id === manual.bookId)
         : undefined;
-    const options = assigned
-      ? [assigned]
-      : manual
-        ? []
-        : eligible.filter((item) => slot.options.some((winner) => matchesAward(item, winner)));
+    const options =
+      enrollment.id === "countries"
+        ? matching.filter((item) => eligibleReading(item, enrollment))
+        : assigned
+          ? [assigned]
+          : manual
+            ? []
+            : eligible.filter((item) => slot.options.some((winner) => matchesAward(item, winner)));
     let completed: LibraryItem | undefined;
     for (const candidate of options) {
       if (used.has(candidate.book_id)) continue;
@@ -225,7 +270,6 @@ export function challengeProgress(enrollment: ChallengeEnrollment, library: Libr
         (candidate.books?.authors ?? []).map(authorKey).sort().join("|");
       if (works.has(work)) continue;
       if (enrollment.id === "countries") {
-        const country = key(manual?.country ?? "");
         if (!country || countries.has(country)) continue;
         countries.add(country);
       }
@@ -234,7 +278,7 @@ export function challengeProgress(enrollment: ChallengeEnrollment, library: Libr
       completed = candidate;
       break;
     }
-    return { ...slot, completed, assignment: manual };
+    return { ...slot, completed, assignment: manual, country, matching };
   });
   const done = slots.filter((slot) => slot.completed).length;
   return { slots, done, total: slots.length, complete: slots.length > 0 && done === slots.length };

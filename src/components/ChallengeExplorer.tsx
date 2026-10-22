@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   Award,
   ArrowRight,
@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import { ProgressBar } from "@/components/ProgressBar";
 import { BookCover } from "@/components/BookCard";
+import { resolveAuthorCountries } from "@/lib/author-countries.functions";
+import { authorCountryKey } from "@/lib/author-country-key";
 import { searchBooks } from "@/lib/books";
 import type { LibraryItem } from "@/lib/library";
 import { AWARDS_VERIFIED_AT, type AwardFamily } from "@/data/reading-awards";
@@ -83,9 +85,25 @@ export function ChallengeExplorer({
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const enrolled = active ? enrollments.find((entry) => entry.id === active) : undefined;
   const definition = CHALLENGE_CATALOGUE.find((entry) => entry.id === active);
+  const authors = useMemo(
+    () => [...new Set(library.flatMap((i) => i.books?.authors ?? []))],
+    [library],
+  );
+  const countryQueries = useQueries({
+    queries: authors.map((name) => ({
+      queryKey: ["author-countries", name],
+      queryFn: () => resolveAuthorCountries({ data: name }),
+      enabled: active === "countries" || enrollments.some((e) => e.id === "countries"),
+      staleTime: 5 * 60000,
+      retry: false,
+    })),
+  });
+  const authorCountries = Object.fromEntries(
+    authors.map((name, i) => [authorCountryKey(name), countryQueries[i]?.data ?? []]),
+  );
   const progress = useMemo(
-    () => (draft ? challengeProgress(draft, library) : null),
-    [draft, library],
+    () => (draft ? challengeProgress(draft, library, authorCountries) : null),
+    [draft, library, authorCountries],
   );
   function open(id: ChallengeId) {
     const existing = enrollments.find((entry) => entry.id === id);
@@ -120,7 +138,9 @@ export function ChallengeExplorer({
     const assignments = { ...draft.assignments };
     if (value) {
       if (
-        Object.entries(assignments).some(([id, a]) => id !== slot.id && a.bookId === value.bookId)
+        Object.entries(assignments).some(
+          ([id, a]) => id !== slot.id && !!value.bookId && a.bookId === value.bookId,
+        )
       ) {
         toast.error("Questo libro è già associato a un’altra tappa della sfida.");
         return;
@@ -207,7 +227,7 @@ export function ChallengeExplorer({
             : filter === "all" || c.kind === filter,
         ).map((c) => {
           const enrollment = enrollments.find((e) => e.id === c.id),
-            p = enrollment ? challengeProgress(enrollment, library) : null;
+            p = enrollment ? challengeProgress(enrollment, library, authorCountries) : null;
           const Icon = iconFor(c.id);
           return (
             <article
@@ -530,6 +550,12 @@ export function ChallengeExplorer({
                   Per traduzioni, edizioni o requisiti tematici, associa il libro corretto dalla tua
                   libreria. Un libro conta una sola volta in ciascuna sfida.
                 </p>
+                {draft.id === "countries" && countryQueries.some((q) => q.isFetching) && (
+                  <p role="status" className="mb-3 text-sm text-muted-foreground">
+                    Recupero progressivo dei paesi degli autori… Le tappe si aggiornano
+                    automaticamente.
+                  </p>
+                )}
                 <div className="space-y-3">
                   {progress.slots.slice(0, slotLimit).map((slot) => (
                     <SlotRow
@@ -628,13 +654,15 @@ function SlotRow({
   onAssign: (value: SlotAssignment | null) => Promise<void>;
 }) {
   const [bookId, setBookId] = useState(slot.assignment?.bookId ?? "");
-  const [country, setCountry] = useState(slot.assignment?.country ?? "");
+  const [country, setCountry] = useState(slot.country ?? "");
   const [showAssign, setShowAssign] = useState(false);
   const fixed = slot.fixedBookId
     ? library.find((item) => item.book_id === slot.fixedBookId)
     : undefined;
   const winner = slot.options[0];
-  const title = winner ? (winner.title ?? winner.author) : (fixed?.books?.title ?? slot.label);
+  const title = winner
+    ? (winner.title ?? winner.author)
+    : (fixed?.books?.title ?? (slot.country ? countryName(slot.country) : slot.label));
   return (
     <article
       className={`rounded-xl border p-4 ${slot.completed ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
@@ -679,10 +707,40 @@ function SlotRow({
               className="mt-2 block text-sm text-primary"
             >
               Letto: {slot.completed.books?.title}
-              {slot.assignment?.country ? ` · ${countryName(slot.assignment.country)}` : ""}
+              {slot.country ? ` · ${countryName(slot.country)}` : ""}
             </Link>
           )}
-          {!slot.completed && slot.assignment && (
+          {enrollment.id === "countries" && (
+            <div className="mt-2 space-y-1 text-sm">
+              <p className="text-xs text-muted-foreground">
+                {slot.matching.length} libri in libreria · valgono le letture che rispettano le date
+                della sfida. Nazionalità da Open Library e Wikidata; nessuna deduzione dalla lingua
+                del libro.
+              </p>
+              {slot.matching.map((item) => (
+                <Link
+                  key={item.id}
+                  to="/book/$bookId"
+                  params={{ bookId: item.book_id }}
+                  className="block text-primary"
+                >
+                  {item.books?.title} ·{" "}
+                  {item.status === "read"
+                    ? "Letto"
+                    : item.status === "reading"
+                      ? "In lettura"
+                      : "Da leggere"}
+                </Link>
+              ))}
+              {!slot.country && (
+                <p>
+                  Ricerca dei paesi degli autori; puoi anche scegliere un paese e confermare un
+                  libro manualmente.
+                </p>
+              )}
+            </div>
+          )}
+          {!slot.completed && slot.assignment && enrollment.id !== "countries" && (
             <p className="mt-2 text-xs text-muted-foreground">
               Libro associato:{" "}
               {library.find((item) => item.book_id === slot.assignment?.bookId)?.books?.title ??
@@ -713,8 +771,18 @@ function SlotRow({
           </>
         )}
         {joined && !slot.fixedBookId && (
-          <button className={buttonClass} onClick={() => setShowAssign((v) => !v)}>
-            {slot.assignment ? "Gestisci associazione" : "Associa dalla mia libreria"}
+          <button
+            className={buttonClass}
+            onClick={() => {
+              setCountry(slot.country ?? "");
+              setShowAssign((v) => !v);
+            }}
+          >
+            {enrollment.id === "countries"
+              ? "Scegli paese / conferma autore"
+              : slot.assignment
+                ? "Gestisci associazione"
+                : "Associa dalla mia libreria"}
           </button>
         )}
       </div>
@@ -723,7 +791,7 @@ function SlotRow({
           className="mt-4 space-y-3 rounded-lg bg-accent/40 p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            if (bookId)
+            if (bookId || (enrollment.id === "countries" && country))
               void onAssign({
                 bookId,
                 ...(enrollment.id === "countries" ? { country: country.trim() } : {}),
@@ -751,18 +819,24 @@ function SlotRow({
             </label>
           )}
           <label className="block space-y-1 text-sm">
-            {winner
-              ? winner.title
-                ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
-                : `Confermo che questo libro è un’opera di ${winner.author}`
-              : "Confermo che questo libro soddisfa il requisito della tappa"}
+            {enrollment.id === "countries"
+              ? "Facoltativo: conferma un libro se manca la nazionalità. Per i libri con un solo autore, la conferma vale anche per le sue altre opere."
+              : winner
+                ? winner.title
+                  ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
+                  : `Confermo che questo libro è un’opera di ${winner.author}`
+                : "Confermo che questo libro soddisfa il requisito della tappa"}
             <select
-              required
+              required={enrollment.id !== "countries"}
               value={bookId}
               onChange={(e) => setBookId(e.target.value)}
               className={inputClass}
             >
-              <option value="">Scegli un libro dalla tua libreria</option>
+              <option value="">
+                {enrollment.id === "countries"
+                  ? "Automatico: tutti i libri di questo paese"
+                  : "Scegli un libro dalla tua libreria"}
+              </option>
               {library.map((item) => (
                 <option key={item.id} value={item.book_id}>
                   {item.books?.title} — {item.books?.authors.join(", ")}
@@ -772,7 +846,11 @@ function SlotRow({
             </select>
           </label>
           <div className="flex flex-wrap gap-2">
-            <button type="submit" disabled={saving || !bookId} className={primaryClass}>
+            <button
+              type="submit"
+              disabled={saving || (enrollment.id === "countries" ? !country : !bookId)}
+              className={primaryClass}
+            >
               Salva associazione
             </button>
             {slot.assignment && (
