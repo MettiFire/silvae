@@ -10,113 +10,10 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
-      author_follows: {
-        Row: { user_id: string; author_id: string; author_name: string; followed_at: string }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-
-      reader_connections: {
-        Row: { id: string; user_id: string; name: string; kind: string; mode: string; created_at: string; last_received_at: string | null; revoked_at: string | null }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-      reader_documents: {
-        Row: { id: string; connection_id: string; user_id: string; external_id: string; title: string; authors: string[]; book_id: string | null; session_id: string | null; confirmed_manual_at: string | null; progress_payload: Json | null; last_received_at: string; result: string }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-
-      fragments: {
-        Row: {
-          id: string;
-          user_id: string;
-          book_id: string;
-          kind: string;
-          quote: string;
-          note: string;
-          position: string;
-          tags: string[];
-          favorite: boolean;
-          source: string;
-          source_ref: string | null;
-          dedupe_key: string;
-          highlighted_at: string | null;
-          created_at: string;
-          updated_at: string;
-          deleted_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          book_id: string;
-          kind?: string;
-          quote: string;
-          note?: string;
-          position?: string;
-          tags?: string[];
-          favorite?: boolean;
-          source?: string;
-          source_ref?: string | null;
-          dedupe_key: string;
-          highlighted_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          deleted_at?: string | null;
-        };
-        Update: {
-          kind?: string;
-          quote?: string;
-          note?: string;
-          position?: string;
-          tags?: string[];
-          favorite?: boolean;
-          deleted_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "fragments_book_id_fkey";
-            columns: ["book_id"];
-            isOneToOne: false;
-            referencedRelation: "books";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      reading_progress_events: {
-        Row: {
-          id: string;
-          user_id: string;
-          book_id: string;
-          session_id: string;
-          percentage: number;
-          locator: string | null;
-          source: string;
-          external_id: string | null;
-          observed_at: string;
-          created_at: string;
-        };
-        Insert: {
-          user_id: string;
-          book_id: string;
-          session_id: string;
-          percentage: number;
-          locator?: string | null;
-          source: string;
-          external_id?: string | null;
-          observed_at: string;
-        };
-        Update: never;
-        Relationships: [];
-      };
-
       activities: {
         Row: {
           book_id: string | null
@@ -151,6 +48,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      author_follows: {
+        Row: {
+          author_id: string
+          author_name: string
+          followed_at: string
+          user_id: string
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          followed_at?: string
+          user_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          followed_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       book_lists: {
         Row: {
@@ -275,21 +193,87 @@ export type Database = {
         }
         Relationships: []
       }
+      fragments: {
+        Row: {
+          book_id: string
+          created_at: string
+          dedupe_key: string
+          deleted_at: string | null
+          favorite: boolean
+          highlighted_at: string | null
+          id: string
+          kind: string
+          note: string
+          position: string
+          quote: string
+          source: string
+          source_ref: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          dedupe_key: string
+          deleted_at?: string | null
+          favorite?: boolean
+          highlighted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote: string
+          source?: string
+          source_ref?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          dedupe_key?: string
+          deleted_at?: string | null
+          favorite?: boolean
+          highlighted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote?: string
+          source?: string
+          source_ref?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragments_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_items: {
         Row: {
           book_id: string
           created_at: string
-          progress_percent: number | null
-          progress_source: string | null
-          progress_updated_at: string | null
-          reading_session_id: string
           current_page: number
+          custom_cover_url: string | null
           favorite: boolean
           finished_at: string | null
           id: string
           last_reread_at: string | null
           needs_review: boolean
+          progress_percent: number | null
+          progress_source: string | null
+          progress_updated_at: string | null
           rating: number | null
+          reading_session_id: string
           reread_count: number
           started_at: string | null
           status: string
@@ -300,17 +284,18 @@ export type Database = {
         Insert: {
           book_id: string
           created_at?: string
-          progress_percent?: number | null
-          progress_source?: string | null
-          progress_updated_at?: string | null
-          reading_session_id?: string
           current_page?: number
+          custom_cover_url?: string | null
           favorite?: boolean
           finished_at?: string | null
           id?: string
           last_reread_at?: string | null
           needs_review?: boolean
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
           rating?: number | null
+          reading_session_id?: string
           reread_count?: number
           started_at?: string | null
           status?: string
@@ -321,17 +306,18 @@ export type Database = {
         Update: {
           book_id?: string
           created_at?: string
-          progress_percent?: number | null
-          progress_source?: string | null
-          progress_updated_at?: string | null
-          reading_session_id?: string
           current_page?: number
+          custom_cover_url?: string | null
           favorite?: boolean
           finished_at?: string | null
           id?: string
           last_reread_at?: string | null
           needs_review?: boolean
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
           rating?: number | null
+          reading_session_id?: string
           reread_count?: number
           started_at?: string | null
           status?: string
@@ -415,6 +401,210 @@ export type Database = {
         }
         Relationships: []
       }
+      reader_annotations: {
+        Row: {
+          document_id: string
+          external_id: string
+          id: string
+          kind: string
+          note: string
+          position: string
+          quote: string
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          external_id: string
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote: string
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          external_id?: string
+          id?: string
+          kind?: string
+          note?: string
+          position?: string
+          quote?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_annotations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "reader_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reader_connections: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          last_received_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          last_received_at?: string | null
+          mode: string
+          name: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          last_received_at?: string | null
+          mode?: string
+          name?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reader_credentials: {
+        Row: {
+          connection_id: string
+          credential_hash: string
+        }
+        Insert: {
+          connection_id: string
+          credential_hash: string
+        }
+        Update: {
+          connection_id?: string
+          credential_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_credentials_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: true
+            referencedRelation: "reader_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reader_documents: {
+        Row: {
+          authors: string[]
+          book_id: string | null
+          confirmed_manual_at: string | null
+          connection_id: string
+          external_id: string
+          id: string
+          last_received_at: string
+          progress_payload: Json | null
+          result: string
+          session_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          authors?: string[]
+          book_id?: string | null
+          confirmed_manual_at?: string | null
+          connection_id: string
+          external_id: string
+          id?: string
+          last_received_at?: string
+          progress_payload?: Json | null
+          result?: string
+          session_id?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          authors?: string[]
+          book_id?: string | null
+          confirmed_manual_at?: string | null
+          connection_id?: string
+          external_id?: string
+          id?: string
+          last_received_at?: string
+          progress_payload?: Json | null
+          result?: string
+          session_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_documents_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reader_documents_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "reader_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_progress_events: {
+        Row: {
+          book_id: string
+          created_at: string
+          external_id: string | null
+          id: string
+          locator: string | null
+          observed_at: string
+          percentage: number
+          session_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          locator?: string | null
+          observed_at: string
+          percentage: number
+          session_id: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          locator?: string | null
+          observed_at?: string
+          percentage?: number
+          session_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_progress_events_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           body: string
@@ -481,34 +671,88 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      delete_own_account: { Args: { p_expected_user_id: string; p_confirmation: string }; Returns: boolean }
-      book_community_rating: { Args: { p_book_id: string }; Returns: { average_rating: number | null; ratings_count: number }[] }
-
-      create_reader_connection: { Args: { p_name: string; p_kind: string; p_secret: string }; Returns: string }
-      revoke_reader_connection: { Args: { p_connection: string }; Returns: undefined }
-      bind_reader_document: { Args: { p_document: string; p_book: string }; Returns: string }
-      ingest_reader_batch: { Args: { p_connection: string; p_credential: string; p_documents: Json }; Returns: Json }
-      reader_kosync: { Args: { p_connection: string; p_credential: string; p_document?: string }; Returns: Json }
-
+      apply_reader_document: { Args: { p_document: string }; Returns: string }
+      bind_reader_document: {
+        Args: { p_book: string; p_document: string }
+        Returns: string
+      }
+      book_community_rating: {
+        Args: { p_book_id: string }
+        Returns: {
+          average_rating: number
+          ratings_count: number
+        }[]
+      }
+      check_reader_credential: {
+        Args: { p_connection: string; p_credential: string }
+        Returns: {
+          created_at: string
+          id: string
+          kind: string
+          last_received_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reader_connections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_reader_connection: {
+        Args: { p_kind: string; p_name: string; p_secret: string }
+        Returns: string
+      }
+      delete_own_account: {
+        Args: { p_confirmation: string; p_expected_user_id: string }
+        Returns: boolean
+      }
       fragment_books: {
-        Args: Record<string, never>;
-        Returns: { id: string; title: string; authors: string[] }[];
-      };
+        Args: never
+        Returns: {
+          authors: string[]
+          id: string
+          title: string
+        }[]
+      }
+      ingest_reader_batch: {
+        Args: { p_connection: string; p_credential: string; p_documents: Json }
+        Returns: Json
+      }
+      publish_author_follows: {
+        Args: { p_metadata: Json; p_user: string }
+        Returns: undefined
+      }
+      reader_kosync: {
+        Args: {
+          p_connection: string
+          p_credential: string
+          p_document?: string
+        }
+        Returns: Json
+      }
       record_reading_progress: {
         Args: {
-          p_book_id: string;
-          p_percentage: number;
-          p_observed_at: string;
-          p_source: string;
-          p_external_id: string | null;
-          p_session_id: string;
-          p_finished?: boolean;
-          p_locator?: string | null;
-        };
-        Returns: string;
-      };
-      start_reading_session: { Args: { p_book_id: string }; Returns: string };
-    };
+          p_book_id: string
+          p_external_id: string
+          p_finished?: boolean
+          p_locator?: string
+          p_observed_at: string
+          p_percentage: number
+          p_session_id: string
+          p_source: string
+        }
+        Returns: string
+      }
+      revoke_reader_connection: {
+        Args: { p_connection: string }
+        Returns: undefined
+      }
+      start_reading_session: { Args: { p_book_id: string }; Returns: string }
+    }
     Enums: {
       [_ in never]: never
     }

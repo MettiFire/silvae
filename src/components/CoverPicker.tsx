@@ -26,6 +26,7 @@ export function CoverPicker({ book }: { book: Book }) {
       await setBookCover(book.id, url);
       await qc.invalidateQueries({ queryKey: ["book", book.id] });
       await qc.invalidateQueries({ queryKey: ["library"] });
+      await qc.invalidateQueries({ queryKey: ["library-item"] });
       setOpen(false);
       toast.success("Copertina aggiornata");
     } catch (e) {
