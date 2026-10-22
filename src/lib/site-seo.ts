@@ -1,5 +1,5 @@
-export const SITE_URL = "https://paginae.lovable.app";
-export const SOCIAL_IMAGE = `${SITE_URL}/images/paginae-social.png`;
+export const SITE_URL = "https://silvae.lovable.app";
+export const SOCIAL_IMAGE = `${SITE_URL}/images/silvae-social.png`;
 export const SOCIAL_ALT =
   "Silvae. Tieni il filo di ogni storia. La tua libreria, le tue scoperte, le tue parole.";
 export function pageSeo(title: string, description: string, path?: string, noindex = false) {

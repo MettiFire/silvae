@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Silvae USB bridge: Kindle highlights; Kobo highlights and reading progress.
 Python 3.10+, standard library only. Never writes to the reader or reads ebook files.
-Run: python3 reader-bridge.py --config paginae-device.json --path /Volumes/Kindle
+Run: python3 reader-bridge.py --config silvae-device.json --path /Volumes/Kindle
 Keep this program running to sync on USB connection. Stop with Ctrl+C.
 """
 import argparse
@@ -61,7 +61,7 @@ def read_kobo(path):
     source = sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)
     source.execute('PRAGMA query_only=ON')
     # SQLite's backup API makes a coherent local snapshot, including committed WAL.
-    with tempfile.TemporaryDirectory(prefix='paginae-kobo-') as folder:
+    with tempfile.TemporaryDirectory(prefix='silvae-kobo-') as folder:
         target = sqlite3.connect(str(Path(folder) / 'snapshot.sqlite'))
         try:
             source.backup(target)

@@ -318,7 +318,7 @@ azioni distinte: la disconnessione conserva i dati già acquisiti.
 Avvio (nella cartella contenente programma e configurazione):
 
 ```sh
-python3 reader-bridge.py --config paginae-device.json --path /Volumes/Kindle
+python3 reader-bridge.py --config silvae-device.json --path /Volumes/Kindle
 # oppure /Volumes/KOBOeReader; Ctrl+C interrompe il ponte
 ```
 
@@ -364,7 +364,7 @@ tramite API private di Kindle per Web e a calcolare una **stima** percentuale da
 metodo documentato nel sorgente di [kindle-api](https://github.com/Xetera/kindle-api).
 Richiede Python 3.10+ e una sessione locale configurata interattivamente con
 `python3 scripts/kindle-cloud-probe.py --setup`. Cookie e parametri web-reader
-rimangono in `~/.paginae/kindle-session.json` (permessi 0600); non vengono inviati
+rimangono in `~/.silvae/kindle-session.json` (permessi 0600); non vengono inviati
 alla nostra app, a proxy o a host diversi da `read.amazon.com`.
 
 ```sh
@@ -468,7 +468,7 @@ I testi descrivono il comportamento attuale; regione dei servizi, accordi con i
 fornitori e conservazione dei backup vanno verificati nelle configurazioni effettive.
 
 `src/lib/site-seo.ts` centralizza title, description, canonical e anteprima social
-1200×630 (`public/images/paginae-social.png`, circa 34 KB). Le pagine personali e
+1200×630 (`public/images/silvae-social.png`, circa 34 KB). Le pagine personali e
 di accesso hanno `noindex`. `public/sitemap.xml` include le pagine pubbliche statiche;
 `public/robots.txt` indica la sitemap e limita i percorsi personali. Robots non è
 un controllo di autorizzazione: l’accesso ai dati continua a dipendere da Auth e RLS.

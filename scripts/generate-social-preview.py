@@ -21,7 +21,7 @@ for x, y, w, h, color in [(875, 186, 66, 300, '#753e49'), (951, 154, 58, 332, '#
 d.line((844, 494, 1120, 494), fill='#262d27', width=3)
 d.line((64, 551, 1136, 551), fill='#d5d7ca', width=2)
 d.text((68, 574), 'UN POSTO PER LE TUE LETTURE', font=f(sans, 17), fill='#666b60')
-d.text((912, 574), 'paginae.lovable.app', font=f(sans, 17), fill='#666b60')
-output = root/'public/images/paginae-social.png'
+d.text((912, 574), 'silvae.lovable.app', font=f(sans, 17), fill='#666b60')
+output = root/'public/images/silvae-social.png'
 im.save(output, optimize=True)
 print(f'{output.name}: {output.stat().st_size:,} bytes, 1200 × 630')
