@@ -425,3 +425,21 @@ frammenti e le credenziali dei dispositivi. I libri del catalogo condiviso e i d
 degli altri lettori rimangono. Nessuna chiave amministrativa viene esposta al browser.
 Dopo il successo vengono svuotate le query personali e chiusa la sessione locale.
 I test di cancellazione usano solo account sintetici nel database locale PGlite.
+
+### Suggerimenti: opere, edizioni e traduzioni
+
+Home ed Esplora escludono tutte le opere già in libreria, indipendentemente dallo
+stato. Il confronto distingue l’ID dell’edizione dall’opera: gestisce diciture di
+edizione, varianti delle iniziali dell’autore e associazioni di opere verificate
+tramite ISBN oppure titolo/autore e titolo dell’edizione restituito da Open Library.
+La ricerca usa termini liberi per trovare anche i titoli tradotti delle edizioni:
+la documentazione è https://openlibrary.org/dev/docs/api/search.
+
+Il riconoscimento aggiuntivo riguarda i candidati con autori presenti in libreria.
+I risultati pubblici sono memorizzati in cache sul server (massimo 2.000 voci,
+sette giorni per le associazioni riuscite), con richieste deduplicate e limitate.
+Il client esegue al massimo due verifiche contemporaneamente e annulla le richieste
+quando la pagina viene abbandonata. Se non è possibile distinguere una nuova opera
+ad autore condiviso da una traduzione già posseduta, il suggerimento viene escluso;
+le altre letture restano disponibili. Nessuna associazione approssimativa modifica
+i libri, le copertine o i dati di lettura salvati. Non serve una migrazione SQL.

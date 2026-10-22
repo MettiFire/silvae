@@ -1,7 +1,12 @@
 import { parseBookLanguage } from "./book-language.ts";
 import type { Book } from "./books";
 import type { LibraryItem } from "./library";
-import { sameBook } from "./book-metadata.ts";
+import {
+  canRecommendWork,
+  sameReadingWork,
+  sameAuthorName,
+  type WorkIdentities,
+} from "./work-identity.ts";
 
 export const PREFERENCES_FIELD = "reading_preferences_v1";
 export const READING_GENRES = [
@@ -256,9 +261,11 @@ export function rankRecommendations(
   dismissed: string[],
   limit = 12,
   rotation = 0,
+  identities: WorkIdentities = {},
 ) {
   const owned = new Set(library.map((i) => i.book_id));
   const hidden = new Set(dismissed);
+  const excluded = library.flatMap((i) => (i.books ? [i.books] : []));
   const avoided = preferences?.avoided ?? [];
   const items: { book: Book; reason: string; score: number; genreId: string }[] = [];
   for (const { book, genreId } of candidates) {
@@ -269,14 +276,11 @@ export function rankRecommendations(
         book.categories.some((c) => /\bfiction\b/i.test(c) && !/\bnon[ -]?fiction\b/i.test(c)))
     )
       continue;
-    if (
-      owned.has(book.id) ||
-      hidden.has(book.id) ||
-      library.some((i) => i.books && sameBook(i.books, book))
-    )
+    if (owned.has(book.id) || hidden.has(book.id) || !canRecommendWork(book, excluded, identities))
       continue;
     if (avoided.includes(genreId) || avoided.some((id) => matches(book, id))) continue;
-    if (items.some((i) => i.book.id === book.id || sameBook(i.book, book))) continue;
+    if (items.some((i) => i.book.id === book.id || sameReadingWork(i.book, book, identities)))
+      continue;
     const genre = READING_GENRES.find((g) => g.id === genreId);
     const liked = preferences?.liked.includes(genreId);
     let score = (liked ? 5 : 1) + rotationVariation(book.id, rotation);
@@ -286,7 +290,7 @@ export function rankRecommendations(
     for (const item of library) {
       if (!item.books) continue;
       const sameAuthor = book.authors.some((a) =>
-        item.books!.authors.some((b) => norm(a) === norm(b)),
+        item.books!.authors.some((b) => sameAuthorName(a, b)),
       );
       const sameGenre = matches(item.books, genreId);
       const low = item.rating != null && Number(item.rating) <= 2;
@@ -302,7 +306,7 @@ export function rankRecommendations(
             : libraryInterest(item) * 0.35;
         if (sameAuthor) {
           const author = book.authors.find((a) =>
-            item.books!.authors.some((b) => norm(a) === norm(b)),
+            item.books!.authors.some((b) => sameAuthorName(a, b)),
           );
           reason = strong
             ? `Un autore che hai apprezzato: ${author}`
@@ -335,7 +339,7 @@ export function rankRecommendations(
       item.score -
       result.filter((i) => i.genreId === item.genreId).length * 1.5 -
       result.filter((i) =>
-        i.book.authors.some((a) => item.book.authors.some((b) => norm(a) === norm(b))),
+        i.book.authors.some((a) => item.book.authors.some((b) => sameAuthorName(a, b))),
       ).length *
         2;
     items.sort((a, b) => adjusted(b) - adjusted(a));

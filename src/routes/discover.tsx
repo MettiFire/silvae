@@ -5,9 +5,10 @@ import { RefreshCw, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { BookCard } from "@/components/BookCard";
-import { discoverBooks, GENRES, type Book } from "@/lib/books";
+import { discoverBooks, GENRES } from "@/lib/books";
 import { toast } from "sonner";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
+import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 import { supabase } from "@/integrations/supabase/client";
 
 const GENRE_LABELS: Record<string, string> = {
@@ -53,6 +54,7 @@ function Discover() {
     recsError,
     retryRecs,
     refresh,
+    libraryReady,
   } = useBookRecommendations();
   const qc = useQueryClient();
   const [genre, setGenre] = useState("all");
@@ -61,8 +63,6 @@ function Discover() {
   const [order, setOrder] = useState<"relevance" | "newest">("relevance");
 
   const owned = useMemo(() => new Set(library.map((i) => i.book_id)), [library]);
-  const exclude = (list: Book[]) =>
-    list.filter((b) => !owned.has(b.id) && !dismissed.includes(b.id));
 
   const {
     data: results = [],
@@ -88,7 +88,20 @@ function Discover() {
     void qc.invalidateQueries({ queryKey: ["dismissed"] });
   };
 
-  const filtered = exclude(results).filter((b) => (b.average_rating ?? 0) >= minRating);
+  const excluded = useMemo(
+    () => library.flatMap((item) => (item.books ? [item.books] : [])),
+    [library],
+  );
+  const { eligible, verifying: catalogueVerifying } = useRecommendationWorkFilter(
+    results,
+    excluded,
+  );
+  const filtered = libraryReady
+    ? eligible.filter(
+        (b) =>
+          !owned.has(b.id) && !dismissed.includes(b.id) && (b.average_rating ?? 0) >= minRating,
+      )
+    : [];
 
   return (
     <AppShell>
@@ -215,6 +228,11 @@ function Discover() {
         />
       </div>
 
+      {catalogueVerifying && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          Controllo che i libri proposti siano letture nuove per te…
+        </p>
+      )}
       {isError && (
         <p role="alert" className="mb-4 text-sm">
           Impossibile caricare il catalogo.{" "}
@@ -223,11 +241,16 @@ function Discover() {
           </button>
         </p>
       )}
-      {!cataloguePending && !isFetching && !isError && !filtered.length && (
-        <p className="text-sm text-muted-foreground">
-          Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo.
-        </p>
-      )}
+      {!cataloguePending &&
+        !isFetching &&
+        !isError &&
+        !catalogueVerifying &&
+        libraryReady &&
+        !filtered.length && (
+          <p className="text-sm text-muted-foreground">
+            Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo.
+          </p>
+        )}
       {cataloguePending || isFetching ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : (

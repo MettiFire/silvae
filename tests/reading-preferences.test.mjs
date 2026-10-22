@@ -192,7 +192,10 @@ test("unread authors influence ranking without being described as already enjoye
     { book: book("unrelated", ["Poetry"]), genreId: "poetry" },
     { book: book("new", ["Poetry"], { authors: ["Writer"] }), genreId: "poetry" },
   ];
-  const result = rankRecommendations(list, null, [interest], []);
+  const result = rankRecommendations(list, null, [interest], [], 12, 0, {
+    owned: { workIds: ["OL1W"], titles: ["owned"], verified: true },
+    new: { workIds: ["OL2W"], titles: ["new"], verified: true },
+  });
   assert.equal(result[0].book.id, "new");
   assert.match(result[0].reason, /vuoi leggere/);
   assert.ok(!result.some((x) => x.book.id === "owned"));

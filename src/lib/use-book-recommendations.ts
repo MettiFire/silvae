@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
+import { useRecommendationWorkFilter } from "./use-recommendation-work-filter";
+import { sameAuthorName } from "./work-identity";
 import { searchBooks } from "@/lib/books";
 import {
   parsePreferences,
@@ -14,7 +16,12 @@ import { useBookLanguage } from "@/lib/use-book-language";
 import { nextRecommendationRotation } from "@/lib/recommendation-rotation";
 export function useBookRecommendations() {
   const { user, loading: authLoading } = useAuth();
-  const { data: library = [], isLoading: libraryLoading } = useLibrary(user?.id);
+  const {
+    data: library = [],
+    isLoading: libraryLoading,
+    isError: libraryError,
+    refetch: retryLibrary,
+  } = useLibrary(user?.id);
   const [seed, setSeed] = useState<number | null>(null);
   const initialized = useRef(false);
   useEffect(() => {
@@ -47,7 +54,11 @@ export function useBookRecommendations() {
     refetch: retryRecs,
   } = useQuery({
     queryKey: ["recs-v3", planKey, seed, user?.id, language ?? "any"],
-    enabled: seed !== null && languageReady && !authLoading && (!user || !libraryLoading),
+    enabled:
+      seed !== null &&
+      languageReady &&
+      !authLoading &&
+      (!user || (!libraryLoading && !libraryError)),
     queryFn: async () => {
       const lists = await Promise.allSettled(
         plan.map(async (g, index) => {
@@ -57,15 +68,7 @@ export function useBookRecommendations() {
           if (!books.length && offset > 0)
             books = await searchBooks(g.query, { max: 12, startIndex: 0, language });
           return books
-            .filter(
-              (book) =>
-                !g.author ||
-                book.authors.some(
-                  (a) =>
-                    a.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, "") ===
-                    g.author!.toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, ""),
-                ),
-            )
+            .filter((book) => !g.author || book.authors.some((a) => sameAuthorName(a, g.author!)))
             .map((book) => ({ book, genreId: g.genreId }));
         }),
       );
@@ -76,7 +79,19 @@ export function useBookRecommendations() {
     refetchOnMount: "always",
   });
 
-  const recommended = rankRecommendations(recs, preferences, library, dismissed, 12, seed ?? 0);
+  const candidates = useMemo(() => recs.map((r) => r.book), [recs]);
+  const excluded = useMemo(
+    () => library.flatMap((item) => (item.books ? [item.books] : [])),
+    [library],
+  );
+  const { identities, verifying: worksVerifying } = useRecommendationWorkFilter(
+    candidates,
+    excluded,
+  );
+  const libraryReady = !authLoading && (!user || (!libraryLoading && !libraryError));
+  const recommended = libraryReady
+    ? rankRecommendations(recs, preferences, library, dismissed, 12, seed ?? 0, identities)
+    : [];
   return {
     user,
     library,
@@ -85,9 +100,16 @@ export function useBookRecommendations() {
     languageReady,
     dismissed,
     recommended,
-    recsLoading: seed === null || authLoading || (!!user && libraryLoading) || recsLoading,
-    recsError,
-    retryRecs,
+    recsLoading:
+      seed === null ||
+      authLoading ||
+      (!!user && libraryLoading) ||
+      recsLoading ||
+      (!recommended.length && worksVerifying),
+    recsError: recsError || libraryError,
+    libraryReady,
+    worksVerifying,
+    retryRecs: () => (libraryError ? retryLibrary() : retryRecs()),
     refresh: () => setSeed(nextRecommendationRotation()),
   };
 }
