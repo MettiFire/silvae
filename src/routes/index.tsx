@@ -99,6 +99,7 @@ function Home() {
                     <ProgressBar
                       className="mt-3"
                       current={item.current_page}
+                      percentage={item.progress_percent}
                       total={item.total_pages ?? item.books?.page_count ?? 0}
                     />
                   </div>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { ReadingProgress } from "@/components/ReadingProgress";
+import { Fragments } from "@/components/Fragments";
 import { CoverPicker } from "@/components/CoverPicker";
 import { BookCover } from "@/components/BookCard";
 import { BookmarkRating } from "@/components/BookmarkRating";
@@ -247,7 +249,7 @@ function BookPage() {
           {item && (item.status === "reading" || item.current_page > 0) && (
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
               <p className="mb-2 font-display font-semibold">Progresso di lettura</p>
-              <ProgressBar current={item.current_page} total={totalPages} />
+              <ProgressBar current={item.current_page} total={totalPages} percentage={item.progress_percent} />
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sono a pagina</span>
                 <input
@@ -270,6 +272,8 @@ function BookPage() {
             </div>
           )}
 
+          {item && <ReadingProgress key={`${item.id}:${item.reading_session_id}:${item.progress_updated_at}`} item={item} />}
+
           <h2 className="mt-6 font-display text-lg font-semibold">Descrizione del libro</h2>
           {!book.description && <p className="mt-2 text-sm text-muted-foreground">Nessuna descrizione disponibile nei cataloghi consultati per questo libro.</p>}
           {book.description && (
@@ -288,6 +292,8 @@ function BookPage() {
               </button>
             </div>
           )}
+
+          <Fragments book={book} />
 
           <section className="mt-10">
             <h2 className="font-display text-xl font-bold">Recensioni</h2>

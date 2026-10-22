@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedFragmentsRouteImport } from './routes/_authenticated/fragments'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -52,6 +53,11 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
 const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   id: '/challenges',
   path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFragmentsRoute = AuthenticatedFragmentsRouteImport.update({
+  id: '/fragments',
+  path: '/fragments',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/fragments': typeof AuthenticatedFragmentsRoute
   '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/fragments': typeof AuthenticatedFragmentsRoute
   '/import': typeof AuthenticatedImportRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/fragments': typeof AuthenticatedFragmentsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/fragments'
     | '/import'
     | '/library'
     | '/profile'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/calendar'
     | '/challenges'
+    | '/fragments'
     | '/import'
     | '/library'
     | '/profile'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
+    | '/_authenticated/fragments'
     | '/_authenticated/import'
     | '/_authenticated/library'
     | '/_authenticated/profile'
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/challenges'
       fullPath: '/challenges'
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fragments': {
+      id: '/_authenticated/fragments'
+      path: '/fragments'
+      fullPath: '/fragments'
+      preLoaderRoute: typeof AuthenticatedFragmentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/import': {
@@ -326,6 +345,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedFragmentsRoute: typeof AuthenticatedFragmentsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -336,6 +356,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedFragmentsRoute: AuthenticatedFragmentsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,

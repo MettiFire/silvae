@@ -245,3 +245,46 @@ La libreria apre sulla sezione Letti con Ultimi letti: data di completamento o
 ultima rilettura decrescente, date mancanti in fondo, senza usare la data di
 modifica del voto. Sono disponibili anche primi letti, ultimi aggiunti e titolo;
 le sezioni dei libri non conclusi partono dagli ultimi aggiunti.
+
+### Frammenti e avanzamento ebook
+
+La migrazione `supabase/migrations/20261022010000_fragments_and_reading_progress.sql`
+va applicata al database Lovable Cloud prima di pubblicare questa versione. Il solo
+push Git/Publish non conferma l'applicazione della migrazione. Quote e note sono
+private tramite RLS; il cestino è reversibile. Non viene cancellato il catalogo.
+
+Frammenti supporta inserimento dal libro, preferiti, tag, filtri, modifica e import
+con anteprima e abbinamento esplicito del libro. Formati: Kindle My Clippings,
+CSV generici e Bookshelf Cards (anche ZIP Bookshelf), Markdown, TXT e HTML con
+blocchi di sottolineature riconoscibili. Note e segnalibri di My Clippings vengono
+segnalati come esclusi. Per HTML non riconosciuti usare TXT/Markdown/CSV.
+La reimportazione con lo stesso identificativo di origine non duplica i frammenti.
+
+L'avanzamento percentuale è distinto dalle pagine stampate. L'API registra eventi,
+scarta duplicati/eventi precedenti all'ultimo aggiornamento e separa le riletture.
+Il completamento richiede una scelta esplicita. Questa versione non collega account
+Amazon/Kobo e non sincronizza automaticamente dispositivi via Wi-Fi.
+
+Prototipo Kobo locale (testato su database sintetico, da validare su un dispositivo):
+
+```sh
+python3 scripts/export-kobo.py /percorso/copia/KoboReader.sqlite --output /percorso/locale/export
+```
+
+Usare una copia del database ottenuta con il dispositivo inattivo. Lo script legge
+SQLite in sola lettura, gestisce libri acquistati e caricati, non copia ebook né
+aggira DRM. `kobo-fragments.csv` è importabile in Frammenti; `kobo-progress.csv`
+serve solo all'ispezione e non viene sincronizzato automaticamente nell'app.
+Non caricare database personali o esportazioni nella repository.
+
+Verifica:
+
+```sh
+node --experimental-strip-types --test tests/*.test.mjs
+python3 tests/kobo-export.test.py
+npx tsc --noEmit
+npm run build
+```
+
+I test database eseguono la migrazione reale in PostgreSQL locale tramite PGlite,
+compresi RLS, isolamento utenti, deduplicazione, cestino e conflitti di avanzamento.

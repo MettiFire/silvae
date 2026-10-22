@@ -20,6 +20,10 @@ export type LibraryItem = {
   book_id: string;
   status: ReadingStatus;
   current_page: number;
+  progress_percent?: number | null;
+  progress_source?: string | null;
+  progress_updated_at?: string | null;
+  reading_session_id?: string;
   total_pages: number | null;
   rating: number | null;
   favorite: boolean;
@@ -95,8 +99,12 @@ export function useSaveToLibrary() {
     }) => {
       if (!user) throw new Error("Accedi per gestire la tua libreria");
       await cacheBook(book);
-      const { data: previous, error: readError } = await supabase.from("library_items")
-        .select("*").eq("user_id", user.id).eq("book_id", book.id).maybeSingle();
+      const { data: previous, error: readError } = await supabase
+        .from("library_items")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("book_id", book.id)
+        .maybeSingle();
       if (readError) throw readError;
       const now = new Date().toISOString();
       const total = previous?.total_pages ?? book.page_count;
@@ -108,16 +116,24 @@ export function useSaveToLibrary() {
           total_pages: total,
           started_at: previous?.started_at ?? (status === "reading" ? now : null),
           finished_at: status === "read" ? (previous?.finished_at ?? now) : null,
-          current_page: status === "read" ? (total ?? previous?.current_page ?? 0) : (previous?.current_page ?? 0),
+          current_page:
+            status === "read"
+              ? (total ?? previous?.current_page ?? 0)
+              : (previous?.current_page ?? 0),
           ...extra,
         },
         { onConflict: "user_id,book_id" },
       );
       if (error) throw error;
-      await logActivity(user.id, status === "read" ? "finished" : status === "reading" ? "started" : "added", book.id, {
-        title: book.title,
-        status,
-      });
+      await logActivity(
+        user.id,
+        status === "read" ? "finished" : status === "reading" ? "started" : "added",
+        book.id,
+        {
+          title: book.title,
+          status,
+        },
+      );
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["library"] });
@@ -142,7 +158,8 @@ export function useUpdateItem() {
     }) => {
       const { error } = await supabase.from("library_items").update(patch).eq("id", id);
       if (error) throw error;
-      if (activity && user) await logActivity(user.id, activity.type, activity.bookId, activity.metadata ?? {});
+      if (activity && user)
+        await logActivity(user.id, activity.type, activity.bookId, activity.metadata ?? {});
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["library"] });

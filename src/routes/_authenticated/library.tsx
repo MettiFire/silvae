@@ -225,7 +225,7 @@ function LibraryPage() {
                 {i.status === "reading" && (
                   <ProgressBar
                     className="mt-2 max-w-sm"
-                    current={i.current_page}
+                    percentage={i.progress_percent} current={i.current_page}
                     total={i.total_pages ?? 0}
                   />
                 )}
@@ -258,7 +258,7 @@ function LibraryPage() {
                     {i.status === "reading" && (
                       <ProgressBar
                         className="mt-1"
-                        current={i.current_page}
+                        percentage={i.progress_percent} current={i.current_page}
                         total={i.total_pages ?? 0}
                         showLabel={false}
                       />
