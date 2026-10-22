@@ -15,7 +15,7 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/_authenticated/library")({
   head: () =>
     pageSeo(
-      "La mia libreria — Paginae",
+      "La mia libreria — Silvae",
       "Organizza libri letti, in lettura e da leggere, con voti, date e filtri per genere.",
       undefined,
       true,

@@ -11,7 +11,7 @@ import { requireFragmentUser } from "@/lib/fragments";
 export const Route = createFileRoute("/_authenticated/social")({
   head: () =>
     pageSeo(
-      "Lettori e community — Paginae",
+      "Lettori e community — Silvae",
       "Scopri lettori, segui i loro profili e ritrova le persone con cui condividi le tue letture.",
       undefined,
       true,

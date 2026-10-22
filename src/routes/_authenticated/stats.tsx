@@ -20,7 +20,7 @@ import { useLibrary } from "@/lib/library";
 export const Route = createFileRoute("/_authenticated/stats")({
   head: () =>
     pageSeo(
-      "Statistiche di lettura — Paginae",
+      "Statistiche di lettura — Silvae",
       "Esplora le tue statistiche: libri e pagine letti, generi, autori e ritmo di lettura nel tempo.",
       undefined,
       true,

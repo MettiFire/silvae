@@ -10,7 +10,7 @@ import { useReadingChallenges } from "@/lib/use-reading-challenges";
 export const Route = createFileRoute("/_authenticated/challenges")({
   head: () =>
     pageSeo(
-      "Sfide di lettura — Paginae",
+      "Sfide di lettura — Silvae",
       "Scegli percorsi tra premi letterari, letture dal mondo e obiettivi annuali e segui i tuoi progressi.",
       undefined,
       true,

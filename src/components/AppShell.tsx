@@ -61,8 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ReadingPreferences onboarding />
       <header className="site-header">
         <div className="masthead site-width">
-          <Link to="/" className="wordmark" aria-label="Paginae, pagina iniziale">
-            Paginae<span>.</span>
+          <Link to="/" className="wordmark" aria-label="Silvae, pagina iniziale">
+            Silvae<span>.</span>
           </Link>
           <span className="masthead-caption">
             Una vita
@@ -137,7 +137,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <footer className="site-footer site-width">
         <Link to="/" className="font-display text-2xl">
-          Paginae.
+          Silvae.
         </Link>
         <p>Le storie passano. Qualcosa resta.</p>
         <div className="flex flex-wrap gap-x-5 gap-y-3">
@@ -217,7 +217,7 @@ export function PageHeader({
   return (
     <header className="page-heading">
       <div>
-        <p className="eyebrow">Paginae / Il tuo spazio</p>
+        <p className="eyebrow">Silvae / Il tuo spazio</p>
         <h1>{title}</h1>
         {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>

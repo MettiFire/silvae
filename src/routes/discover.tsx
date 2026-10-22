@@ -30,7 +30,7 @@ const GENRE_LABELS: Record<string, string> = {
 export const Route = createFileRoute("/discover")({
   head: () =>
     pageSeo(
-      "Esplora libri e nuove letture — Paginae",
+      "Esplora libri e nuove letture — Silvae",
       "Scopri libri in base ai tuoi gusti e alla tua libreria, esplora generi e autori e trova la tua prossima lettura.",
       "/discover",
       false,

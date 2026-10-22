@@ -8,7 +8,7 @@ import { useLibrary } from "@/lib/library";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () =>
     pageSeo(
-      "Calendario delle letture — Paginae",
+      "Calendario delle letture — Silvae",
       "Ritrova le tue letture completate nel calendario e segui il tuo percorso mese per mese.",
       undefined,
       true,

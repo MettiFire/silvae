@@ -4,8 +4,8 @@ import { pageSeo } from "@/lib/site-seo";
 export const Route = createFileRoute("/privacy")({
   head: () =>
     pageSeo(
-      "Privacy policy — Paginae",
-      "Come Paginae tratta i dati del tuo account, delle letture e dei frammenti, quali informazioni sono pubbliche e come esercitare i tuoi diritti.",
+      "Privacy policy — Silvae",
+      "Come Silvae tratta i dati del tuo account, delle letture e dei frammenti, quali informazioni sono pubbliche e come esercitare i tuoi diritti.",
       "/privacy",
     ),
   component: Privacy,

@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () =>
     pageSeo(
-      "Il mio profilo — Paginae",
+      "Il mio profilo — Silvae",
       "Gestisci il tuo profilo di lettore, le letture, le liste e gli autori che segui.",
       undefined,
       true,

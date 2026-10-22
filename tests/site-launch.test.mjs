@@ -33,7 +33,7 @@ test("Compiled-bundle scanner catches privileged keys and injected server values
   assert.deepEqual(inspectClientText(jwt("anon")), []);
 });
 test("Page metadata contains canonical, description and complete social previews", () => {
-  const seo = pageSeo("Privacy — Paginae", "Come trattiamo i dati.", "/privacy");
+  const seo = pageSeo("Privacy — Silvae", "Come trattiamo i dati.", "/privacy");
   assert.equal(seo.links[0].href, SITE_URL + "/privacy");
   for (const name of [
     "og:title",

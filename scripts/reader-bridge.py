@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paginae USB bridge: Kindle highlights; Kobo highlights and reading progress.
+"""Silvae USB bridge: Kindle highlights; Kobo highlights and reading progress.
 Python 3.10+, standard library only. Never writes to the reader or reads ebook files.
 Run: python3 reader-bridge.py --config paginae-device.json --path /Volumes/Kindle
 Keep this program running to sync on USB connection. Stop with Ctrl+C.
@@ -171,7 +171,7 @@ def main():
     except (ValueError, OSError):
         parser.exit(2, 'Configurazione non valida o non leggibile. Scaricala da Dispositivi.\n')
     previous = None
-    print('Ponte USB attivo. I dati verranno inviati al tuo account Paginae. Ctrl+C per fermare.')
+    print('Ponte USB attivo. I dati verranno inviati al tuo account Silvae. Ctrl+C per fermare.')
     while True:
         try:
             path = locate(args.path, config['kind'])

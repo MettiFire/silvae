@@ -5,7 +5,7 @@ import { Fragments } from "@/components/Fragments";
 export const Route = createFileRoute("/_authenticated/fragments")({
   head: () =>
     pageSeo(
-      "Frammenti: citazioni e note — Paginae",
+      "Frammenti: citazioni e note — Silvae",
       "Il tuo archivio privato di frasi, sottolineature e note, con importazione da Kindle, Kobo e Bookshelf.",
       undefined,
       true,

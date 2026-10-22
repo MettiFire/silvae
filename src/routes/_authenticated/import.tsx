@@ -17,7 +17,7 @@ import { parseCSV, detectMapping, importRow, normalize, FIELD_LABELS, type Colum
 export const Route = createFileRoute("/_authenticated/import")({
   head: () =>
     pageSeo(
-      "Importa la tua libreria — Paginae",
+      "Importa la tua libreria — Silvae",
       "Importa libri e date di lettura da CSV Goodreads, Bookshelf e altri formati, verificando i dati prima del salvataggio.",
       undefined,
       true,

@@ -9,7 +9,7 @@ italic = '/System/Library/Fonts/Supplemental/Georgia Italic.ttf'
 sans = '/System/Library/Fonts/Supplemental/Arial.ttf'
 f = lambda path, size: ImageFont.truetype(path, size)
 d.line((64, 70, 1136, 70), fill='#d5d7ca', width=2)
-d.text((64, 94), 'Paginae.', font=f(serif, 55), fill='#753e49')
+d.text((64, 94), 'Silvae.', font=f(serif, 55), fill='#753e49')
 d.text((65, 216), 'Tieni il filo.', font=f(serif, 80), fill='#262d27')
 d.text((65, 305), 'Di ogni storia.', font=f(italic, 80), fill='#753e49')
 d.text((68, 456), 'La tua libreria, le tue scoperte, le tue parole.', font=f(sans, 25), fill='#666b60')

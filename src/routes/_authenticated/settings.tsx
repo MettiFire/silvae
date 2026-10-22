@@ -30,8 +30,8 @@ export const Route = createFileRoute("/_authenticated/settings")({
   }),
   head: () =>
     pageSeo(
-      "Impostazioni del profilo — Paginae",
-      "Gestisci profilo, gusti di lettura, tema, lingua, dispositivi e dati del tuo account Paginae.",
+      "Impostazioni del profilo — Silvae",
+      "Gestisci profilo, gusti di lettura, tema, lingua, dispositivi e dati del tuo account Silvae.",
       undefined,
       true,
     ),

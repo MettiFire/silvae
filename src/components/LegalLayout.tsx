@@ -14,7 +14,7 @@ export function LegalLayout({
   return (
     <AppShell>
       <article className="legal-page">
-        <p className="eyebrow">Paginae / Informazioni legali</p>
+        <p className="eyebrow">Silvae / Informazioni legali</p>
         <h1 className="mt-4 font-display text-4xl sm:text-5xl">{title}</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{intro}</p>
         <p className="mt-4 text-xs text-muted-foreground">Ultimo aggiornamento: {LEGAL.updated}</p>
@@ -31,7 +31,7 @@ export function LegalLayout({
         >
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Termini e condizioni</Link>
-          <Link to="/">Torna a Paginae</Link>
+          <Link to="/">Torna a Silvae</Link>
         </nav>
       </article>
     </AppShell>

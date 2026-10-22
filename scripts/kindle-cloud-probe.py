@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Experimental, local-only Kindle cloud progress probe. Python 3.10+.
-No Amazon credentials or results are sent to Paginae or another proxy.
+No Amazon credentials or results are sent to Silvae or another proxy.
 Setup: python3 kindle-cloud-probe.py --setup
 Probe: python3 kindle-cloud-probe.py --asin B012345678 --output kindle-progress.local.json
 Uses private Amazon endpoints; compatibility with your account is not guaranteed.
@@ -110,7 +110,7 @@ class AmazonClient:
     def __init__(self, session):
         session = validate_session(session)
         self.session = session
-        self.headers = {'Accept': 'application/json', 'User-Agent': 'Paginae-Kindle-Local-Probe/0.1', 'x-amzn-sessionid': session['cookies']['session-id']}
+        self.headers = {'Accept': 'application/json', 'User-Agent': 'Silvae-Kindle-Local-Probe/0.1', 'x-amzn-sessionid': session['cookies']['session-id']}
         jar = http.cookiejar.CookieJar()
         for key, value in session['cookies'].items():
             jar.set_cookie(http.cookiejar.Cookie(0, key, value, None, False, 'read.amazon.com', False, False, '/', True, True, None, True, None, None, {}))

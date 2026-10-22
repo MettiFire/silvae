@@ -20,7 +20,7 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <p className="mb-8 font-display text-2xl">Paginae.</p>
+        <p className="mb-8 font-display text-2xl">Silvae.</p>
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">
           Questa pagina è fuori catalogo.
@@ -97,9 +97,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       ...pageSeo(
         hasNotFoundMatch(matches)
-          ? "Pagina non trovata — Paginae"
-          : "Paginae — Una vita tra le pagine",
-        "Organizza le tue letture, crea liste, conserva citazioni e scopri nuovi libri su Paginae.",
+          ? "Pagina non trovata — Silvae"
+          : "Silvae — Una vita tra le pagine",
+        "Organizza le tue letture, crea liste, conserva citazioni e scopri nuovi libri su Silvae.",
         undefined,
         hasNotFoundMatch(matches),
       ).meta,
