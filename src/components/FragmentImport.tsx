@@ -21,7 +21,7 @@ export function FragmentImport({ close }: { close: () => void }) {
     queryKey: ["fragment-books", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("fragment_books", {});
+      const { data, error } = await supabase.rpc("fragment_books");
       if (error) throw error;
       return data ?? [];
     },

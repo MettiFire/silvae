@@ -8,6 +8,27 @@
       "when": 1792673595462,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792675732157,
+      "tag": "0001_fragments_and_reading_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792675785061,
+      "tag": "0002_reader_connections",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792675807352,
+      "tag": "0003_public_author_follows_and_account_deletion",
+      "breakpoints": true
     }
   ]
 }

@@ -68,7 +68,11 @@ async function main() {
           typeof value === "string",
       )
       .map(([, value]) => value);
-    for (const file of await files(".output/public"))
+    const outDir = await fs
+      .access(".output/public")
+      .then(() => ".output/public")
+      .catch(() => "dist/client");
+    for (const file of await files(outDir))
       if (/\.(?:js|html|map)$/.test(file)) {
         const text = await fs.readFile(file, "utf8");
         for (const finding of inspectClientText(text, secrets)) errors.push(`${file}: ${finding}`);
