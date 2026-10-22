@@ -14,6 +14,19 @@ export type Database = {
   }
   public: {
     Tables: {
+      reader_connections: {
+        Row: { id: string; user_id: string; name: string; kind: string; mode: string; created_at: string; last_received_at: string | null; revoked_at: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      reader_documents: {
+        Row: { id: string; connection_id: string; user_id: string; external_id: string; title: string; authors: string[]; book_id: string | null; session_id: string | null; confirmed_manual_at: string | null; progress_payload: Json | null; last_received_at: string; result: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+
       fragments: {
         Row: {
           id: string;
@@ -461,6 +474,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_reader_connection: { Args: { p_name: string; p_kind: string; p_secret: string }; Returns: string }
+      revoke_reader_connection: { Args: { p_connection: string }; Returns: undefined }
+      bind_reader_document: { Args: { p_document: string; p_book: string }; Returns: string }
+      ingest_reader_batch: { Args: { p_connection: string; p_credential: string; p_documents: Json }; Returns: Json }
+      reader_kosync: { Args: { p_connection: string; p_credential: string; p_document?: string }; Returns: Json }
+
       fragment_books: {
         Args: Record<string, never>;
         Returns: { id: string; title: string; authors: string[] }[];

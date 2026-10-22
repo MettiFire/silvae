@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   BarChart3,
   CalendarDays,
+  Cable,
   Compass,
   Home,
   Quote,
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/social", label: "Social", icon: Users },
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
   { to: "/profile", label: "Profilo", icon: User },
+  { to: "/devices", label: "Dispositivi", icon: Cable },
   { to: "/import", label: "Importa CSV", icon: Upload },
 ] as const;
 

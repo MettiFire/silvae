@@ -1,1 +1,4 @@
 project_id = "eouwfswqnpjgorlkrnyt"
+# KOReader uses x-auth-user/x-auth-key; database RPCs verify the hashed credential.
+[functions.reader-sync]
+verify_jwt = false

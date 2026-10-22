@@ -168,6 +168,15 @@ function ProfilePage() {
         </div>
       </section>
 
+      <section className="mb-6 rounded-2xl border bg-card p-5">
+        <h2 className="font-display text-xl font-bold">Kindle e Kobo</h2>
+        <p className="my-2 text-sm text-muted-foreground">
+          Configura il lettore e gestisci i libri sincronizzati.
+        </p>
+        <Link to="/devices" className="text-sm font-semibold text-primary hover:underline">
+          Gestisci dispositivi →
+        </Link>
+      </section>
       <ReadingPreferences />
       <FollowedAuthors />
 

@@ -288,3 +288,71 @@ npm run build
 
 I test database eseguono la migrazione reale in PostgreSQL locale tramite PGlite,
 compresi RLS, isolamento utenti, deduplicazione, cestino e conflitti di avanzamento.
+
+### Collegamenti Kindle/Kobo/KOReader
+
+**Profilo → Gestisci dispositivi** (oppure voce **Dispositivi** nel menu) permette
+ora di creare collegamenti personali revocabili e associare i documenti ricevuti
+alle edizioni della propria libreria. Non viene richiesto il login Amazon/Kobo.
+
+| Modalità | Dati | Requisito |
+| --- | --- | --- |
+| Kindle USB, incluso 11ª generazione | Evidenziazioni presenti in My Clippings, anche documenti caricati | Computer con Python 3.10+, lettore accessibile come disco, ponte in esecuzione |
+| Kobo USB | Percentuale con data valida, completamento esplicito, citazioni e note | Computer con Python 3.10+, database Kobo accessibile, ponte in esecuzione |
+| KOReader Wi-Fi | Posizione e percentuale | KOReader già installato, endpoint reader-sync attivo, sincronizzazione automatica abilitata |
+
+Il Kindle originale **non sincronizza il progresso via Wi-Fi con questa app**.
+Non è stato implementato un collegamento cloud universale: le API private Amazon
+richiedono sessioni e infrastruttura non disponibili come normale autorizzazione
+OAuth. La modalità KOReader non equivale a supporto nativo Kindle, non installa
+KOReader e non decifra libri protetti. Non è stata provata su dispositivi reali.
+
+Il ponte scaricabile dal sito corrisponde a `scripts/reader-bridge.py` (copia in
+`public/downloads/reader-bridge.py`, verificata dai test). Legge soltanto metadati
+e annotazioni, non i file ebook. La configurazione scaricata contiene una chiave
+che autorizza esclusivamente l'invio a quel collegamento, non la lettura della
+libreria. Il server conserva soltanto il suo hash. Non committare configurazioni,
+cookie o database personali. Disconnessione e cancellazione dei frammenti sono
+azioni distinte: la disconnessione conserva i dati già acquisiti.
+
+Avvio (nella cartella contenente programma e configurazione):
+
+```sh
+python3 reader-bridge.py --config paginae-device.json --path /Volumes/Kindle
+# oppure /Volumes/KOBOeReader; Ctrl+C interrompe il ponte
+```
+
+Il programma resta in primo piano, controlla ogni minuto e riprova dopo errori di
+rete o scollegamento USB. Non parte da solo all'accensione del computer e non
+funziona con il solo Wi-Fi del Kindle/Kobo originale. Kindle importa solo le
+evidenziazioni riconoscibili: note, segnalibri e clipping non presenti nel file
+non vengono trasferiti; non si deduce l'avanzamento dalle sottolineature.
+
+**Attivazione backend:** applicare prima la migrazione Frammenti
+`20261022010000_fragments_and_reading_progress.sql`, poi
+`20261022020000_reader_connections.sql`. Distribuire la Edge Function
+`supabase/functions/reader-sync` con `verify_jwt = false` come in config.toml.
+Il controllo delle credenziali dei lettori rimane obbligatorio nel database;
+non disattivare questo controllo. La funzione usa solo la chiave anon del progetto,
+non un token amministrativo. Il ponte USB usa direttamente RPC e non dipende dalla
+Edge Function. Infine verificare il flusso con un utente autenticato e pubblicare.
+
+KOReader: aprire un libro → Progress sync → Custom sync server:
+`https://<progetto>.supabase.co/functions/v1/reader-sync`. Scegliere **Login** con
+username/password dedicati mostrati dalla pagina, non Registrati. La registrazione
+anonima è disabilitata. Abilitare la sincronizzazione automatica e facoltativamente
+i metadati. Il protocollo non fornisce l'ora della lettura: si usa l'ora di ricezione.
+Dopo una modifica manuale nell'app, i progressi KOReader richiedono conferma in
+Dispositivi. I progressi Kobo con timestamp precedente vengono ignorati. Una nuova
+sessione di lettura richiede conferma dell'associazione; le citazioni non vengono
+duplicate né sovrascrivono modifiche personali. Le modifiche manuali nell'app non
+vengono inviate al lettore (nessuna posizione digitale viene inventata).
+
+Fonti di protocollo consultate il 22 ottobre 2026:
+- https://github.com/koreader/koreader/blob/master/plugins/kosync.koplugin/api.json
+- https://github.com/koreader/koreader/blob/master/plugins/kosync.koplugin/main.lua
+- https://github.com/koreader/koreader-sync-server
+- https://github.com/Xetera/kindle-api
+
+Test aggiuntivi: `python3 tests/reader-bridge.test.py`. La suite Node include
+ora test PostgreSQL delle connessioni e test del protocollo HTTP KOReader.
