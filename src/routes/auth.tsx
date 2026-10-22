@@ -6,8 +6,14 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { recovery?: boolean } =>
-    search["recovery"] === true || search["recovery"] === "true" ? { recovery: true } : {},
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { recovery?: boolean; accountDeleted?: boolean } => ({
+    ...(search["recovery"] === true || search["recovery"] === "true" ? { recovery: true } : {}),
+    ...(search["accountDeleted"] === true || search["accountDeleted"] === "true"
+      ? { accountDeleted: true }
+      : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Accedi a Paginae" },
@@ -31,13 +37,15 @@ function messageFor(error: unknown) {
   return message || "Operazione non riuscita. Riprova.";
 }
 function AuthPage() {
-  const { recovery } = Route.useSearch();
+  const { recovery, accountDeleted } = Route.useSearch();
   const [mode, setMode] = useState<Mode>(recovery ? "recovery" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(
+    accountDeleted ? "Il tuo account Paginae e i dati collegati sono stati eliminati." : "",
+  );
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { session } = useAuth();

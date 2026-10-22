@@ -481,6 +481,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_account: { Args: { p_expected_user_id: string; p_confirmation: string }; Returns: boolean }
       book_community_rating: { Args: { p_book_id: string }; Returns: { average_rating: number | null; ratings_count: number }[] }
 
       create_reader_connection: { Args: { p_name: string; p_kind: string; p_secret: string }; Returns: string }

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { ReaderConnections } from "@/components/ReaderConnections";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
@@ -16,7 +17,7 @@ const SECTIONS = {
   preferences: "Gusti di lettura",
   appearance: "Aspetto",
   devices: "Dispositivi",
-  data: "Dati e importazioni",
+  data: "Dati e account",
 } as const;
 type Section = keyof typeof SECTIONS;
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -124,6 +125,7 @@ function SettingsPage() {
               <Link to="/fragments" className="button-outline">
                 Apri Frammenti
               </Link>
+              <DeleteAccount />
             </section>
           )}
         </div>

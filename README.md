@@ -409,3 +409,19 @@ vengono lette in blocchi senza descrizioni integrali; le liste paginano 36 libri
 le anteprime dei profili richiedono quattro copertine. Logout/cambio account puliscono
 la cache. Verificare la migrazione su un ambiente di prova e pubblicare su Lovable:
 il push Git non conferma da solo l'avvenuta migrazione o il deploy pubblico.
+
+### Eliminazione account
+
+In **Impostazioni → Dati e account → Elimina account**, il lettore conferma scrivendo
+`ELIMINA`. Il client verifica nuovamente l’identità e chiama `delete_own_account`.
+Applicare sul backend la migrazione
+`supabase/migrations/20261022040000_delete_own_account.sql` prima del Publish:
+il solo push del codice non conferma che la funzione sia disponibile.
+
+La funzione è eseguibile solo da utenti autenticati, confronta l’ID atteso con
+`auth.uid()` e cancella esclusivamente il chiamante da `auth.users`. Le relazioni
+`ON DELETE CASCADE` eliminano atomicamente i suoi dati personali, compresi i
+frammenti e le credenziali dei dispositivi. I libri del catalogo condiviso e i dati
+degli altri lettori rimangono. Nessuna chiave amministrativa viene esposta al browser.
+Dopo il successo vengono svuotate le query personali e chiusa la sessione locale.
+I test di cancellazione usano solo account sintetici nel database locale PGlite.
