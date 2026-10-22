@@ -26,6 +26,7 @@ export type LibraryItem = {
   progress_source?: string | null;
   progress_updated_at?: string | null;
   reading_session_id?: string;
+  custom_cover_url?: string | null;
   total_pages: number | null;
   rating: number | null;
   favorite: boolean;
@@ -43,7 +44,13 @@ const SELECT = "*, books(id,title,authors,cover_url,published_year,page_count,ca
 function libraryRows(data: unknown[]) {
   return (data as LibraryItem[]).map((item) => ({
     ...item,
-    books: item.books ? { ...item.books, description: item.books.description ?? null } : null,
+    books: item.books
+      ? {
+          ...item.books,
+          cover_url: item.custom_cover_url || item.books.cover_url,
+          description: item.books.description ?? null,
+        }
+      : null,
   }));
 }
 

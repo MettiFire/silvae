@@ -226,8 +226,15 @@ function BookPage() {
       )}
       <div className="book-detail-layout grid gap-8 md:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
         <div>
-          <BookCover book={book} priority />
-          {item && <CoverPicker book={book} />}
+          <BookCover
+            book={item?.custom_cover_url ? { ...book, cover_url: item.custom_cover_url } : book}
+            priority
+          />
+          {item && (
+            <CoverPicker
+              book={item.custom_cover_url ? { ...book, cover_url: item.custom_cover_url } : book}
+            />
+          )}
           {user && (
             <div className="mt-4 space-y-3">
               <div className="flex flex-wrap gap-2">
