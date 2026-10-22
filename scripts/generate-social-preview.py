@@ -5,27 +5,31 @@ from PIL import Image, ImageDraw, ImageFont
 root = Path(__file__).resolve().parents[1]
 
 # Same look on macOS and Linux: pick the first font that actually exists here.
+# Same look on macOS and Linux: pick the first font that actually exists here.
+# Each kind maps to (fc-style filter, base family names in preference order).
 CANDIDATES = {
-    'serif': ['Georgia', 'Liberation Serif', 'Noto Serif', 'DejaVu Serif'],
-    'italic': ['Georgia Italic', 'Liberation Serif Italic', 'Noto Serif Italic', 'DejaVu Serif Italic'],
-    'sans': ['Arial', 'Liberation Sans', 'Noto Sans', 'DejaVu Sans'],
+    'serif': ('Regular', ['Georgia', 'Liberation Serif', 'Noto Serif', 'DejaVu Serif']),
+    'italic': ('Italic', ['Georgia', 'Liberation Serif', 'Noto Serif', 'DejaVu Serif']),
+    'sans': ('Regular', ['Arial', 'Liberation Sans', 'Noto Sans', 'DejaVu Sans']),
 }
 
 def resolve(kind):
     import subprocess
+    style, wanted = CANDIDATES[kind]
     try:
-        listing = subprocess.run(['fc-list', ':style=' + {
-            'serif': 'Regular', 'italic': 'Italic', 'sans': 'Regular'}[kind],
-            '-f', '%{family}|%{file}\n'], capture_output=True, text=True, timeout=15).stdout
+        listing = subprocess.run(
+            ['fc-list', f':style={style}', '-f', '%{family}|%{file}\n'],
+            capture_output=True, text=True, timeout=15).stdout
     except Exception:
         listing = ''
-    wanted = [c.lower() for c in CANDIDATES[kind]]
+    lines = listing.splitlines()
     for name in wanted:
-        for line in listing.splitlines():
+        for line in lines:
             family, _, path = line.partition('|')
-            if name in family.lower() and path.endswith('.ttf') and Path(path).exists():
+            family = family.split(',')[0].strip().lower()
+            if family == name.lower() and path.endswith('.ttf') and Path(path).exists():
                 return path
-    raise SystemExit(f'No font found for {kind}')
+    raise SystemExit(f'No {style} font found for {kind}')
 
 serif = resolve('serif')
 italic = resolve('italic')
