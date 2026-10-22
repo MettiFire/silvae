@@ -1,6 +1,6 @@
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
+import { readingStatistics } from "@/lib/reading-statistics";
 import { useLibrary } from "@/lib/library";
 
 export const Route = createFileRoute("/_authenticated/stats")({
@@ -28,76 +29,12 @@ export const Route = createFileRoute("/_authenticated/stats")({
   component: Stats,
 });
 
-const MONTHS = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-const DAYS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-const PAGES_PER_HOUR = 40;
-
 function Stats() {
   const { user } = useAuth();
   const { data: items = [], isLoading, isError } = useLibrary(user?.id);
 
-  const stats = useMemo(() => {
-    const read = items.filter((i) => i.status === "read");
-    const pagesOf = (i: (typeof items)[number]) => i.total_pages ?? i.books?.page_count ?? 0;
-    const totalPages =
-      read.reduce((s, i) => s + pagesOf(i) * (1 + i.reread_count), 0) +
-      items.filter((i) => i.status === "reading").reduce((s, i) => s + i.current_page, 0);
-
-    const inLastDays = (days: number) =>
-      read.filter(
-        (i) =>
-          i.finished_at &&
-          Date.now() - new Date(i.finished_at).getTime() >= 0 &&
-          Date.now() - new Date(i.finished_at).getTime() < days * 864e5,
-      );
-
-    const byMonth = MONTHS.map((m, idx) => ({
-      month: m,
-      libri: read.filter(
-        (i) =>
-          i.finished_at &&
-          new Date(i.finished_at).getFullYear() === new Date().getFullYear() &&
-          new Date(i.finished_at).getMonth() === idx,
-      ).length,
-    }));
-
-    const genreCounts = new Map<string, number>();
-    read.forEach((i) =>
-      (i.books?.categories ?? []).forEach((c) => genreCounts.set(c, (genreCounts.get(c) ?? 0) + 1)),
-    );
-    const byGenre = [...genreCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, value]) => ({ name, value }));
-
-    const byDay = DAYS.map((d, idx) => ({
-      day: d,
-      libri: read.filter((i) => i.finished_at && new Date(i.finished_at).getDay() === idx).length,
-    }));
-
-    const started = items.filter((i) => i.status !== "to_read").length;
-    const durations = read
-      .filter((i) => i.started_at && i.finished_at)
-      .map((i) => (new Date(i.finished_at!).getTime() - new Date(i.started_at!).getTime()) / 864e5)
-      .filter((days) => days >= 0);
-    const avgDays = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
-    const avgPages = read.length ? read.reduce((s, i) => s + pagesOf(i), 0) / read.length : 0;
-
-    return {
-      read,
-      totalPages,
-      last7: inLastDays(7).length,
-      last30: inLastDays(30).length,
-      last90: inLastDays(90).length,
-      byMonth,
-      byGenre,
-      byDay,
-      started,
-      completion: started ? Math.round((read.length / started) * 100) : 0,
-      pace: avgDays > 0 ? Math.round(avgPages / Math.max(1, avgDays)) : 0,
-      hours: Math.round(totalPages / PAGES_PER_HOUR),
-    };
-  }, [items]);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const stats = useMemo(() => readingStatistics(items, year), [items, year]);
 
   if (isLoading || isError)
     return (
@@ -126,13 +63,9 @@ function Stats() {
 
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card label="Libri letti" value={stats.read.length} />
-        <Card label="Pagine lette" value={stats.totalPages} />
-        <Card
-          label="Tempo stimato"
-          value={`${stats.hours} h`}
-          hint={`≈ ${Math.round(stats.hours / 24)} giorni`}
-        />
-        <Card label="Ritmo medio" value={`${stats.pace} pag/g`} />
+        <Card label="Pagine dei libri letti" value={stats.totalPages} />
+        <Card label="Tempo stimato" value={`${stats.hours} h`} hint="Stima a 40 pagine all’ora" />
+        <Card label="Ritmo medio" value={stats.pace == null ? "—" : `${stats.pace} pag/g`} />
         <Card label="Ultimi 7 giorni" value={stats.last7} />
         <Card label="Ultimi 30 giorni" value={stats.last30} />
         <Card label="Ultimi 90 giorni" value={stats.last90} />
@@ -141,10 +74,83 @@ function Stats() {
           value={`${stats.completion}%`}
           hint={`${stats.read.length}/${stats.started} iniziati`}
         />
+        <Card label="Autori letti" value={stats.authors} />
+        <Card
+          label="Voto medio assegnato"
+          value={stats.avgRating ? `${stats.avgRating}/5` : "—"}
+          hint={`${stats.rated} libri valutati`}
+        />
+        <Card
+          label="Lunghezza media"
+          value={stats.avgPages == null ? "—" : `${stats.avgPages} pag`}
+        />
+        <Card
+          label="Durata media di lettura"
+          value={stats.avgDays == null ? "—" : `${stats.avgDays} giorni`}
+          hint="Solo letture con inizio e fine"
+        />
+        <Card label="In lettura" value={stats.reading} />
+        <Card label="Da leggere" value={stats.waiting} />
+        <Card label="Abbandonati" value={stats.abandoned} />
       </div>
-
+      <p className="mb-6 text-xs text-muted-foreground">
+        I conteggi annuali usano la data di fine lettura, comprese le date importate.{" "}
+        {stats.undated > 0
+          ? `${stats.undated} libri letti senza una data valida non sono attribuiti a un anno.`
+          : ""}{" "}
+        Ogni libro conta una volta; le riletture senza uno storico delle date non vengono
+        distribuite negli anni. Le pagine e il tempo stimato si basano sui libri completati con
+        numero di pagine disponibile.
+      </p>
+      <div className="mb-6 rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 font-display font-semibold">Il tuo storico di lettura</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Libri e pagine completati per anno</caption>
+            <thead>
+              <tr className="border-b border-border">
+                <th scope="col" className="py-2">
+                  Anno
+                </th>
+                <th scope="col">Libri letti</th>
+                <th scope="col">Pagine</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.byYear.map((row) => (
+                <tr key={row.year} className="border-b border-border last:border-0">
+                  <th scope="row" className="py-3 font-medium">
+                    {row.year}
+                  </th>
+                  <td>{row.libri}</td>
+                  <td>{row.pages.toLocaleString("it-IT")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="mb-4 flex items-center gap-3">
+        <label htmlFor="statistics-year" className="text-sm">
+          Dettaglio mensile
+        </label>
+        <select
+          id="statistics-year"
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="rounded-lg border border-border bg-background px-3 py-2"
+        >
+          {[...new Set([year, ...stats.years])]
+            .sort((a, b) => b - a)
+            .map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+        </select>
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Libri letti per mese">
+        <Panel title={`Libri letti per mese · ${year}`}>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={stats.byMonth}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

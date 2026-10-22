@@ -19,6 +19,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { useBookDensity } from "@/lib/book-density";
+import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -61,8 +62,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ReadingPreferences onboarding />
       <header className="site-header">
         <div className="masthead site-width">
-          <Link to="/" className="wordmark" aria-label="Silvae, pagina iniziale">
-            Silvae<span>.</span>
+          <Link
+            to="/"
+            className="wordmark inline-flex items-center gap-2"
+            aria-label="Silvae, pagina iniziale"
+          >
+            <Logo className="h-12 w-12 text-primary" />
+            <span className="!text-foreground">
+              Silvae<span>.</span>
+            </span>
           </Link>
           <span className="masthead-caption">
             Una vita
@@ -136,7 +144,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <footer className="site-footer site-width">
-        <Link to="/" className="font-display text-2xl">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 font-display text-2xl"
+          aria-label="Silvae, pagina iniziale"
+        >
+          <Logo className="h-10 w-10 text-primary" />
           Silvae.
         </Link>
         <p>Le storie passano. Qualcosa resta.</p>
