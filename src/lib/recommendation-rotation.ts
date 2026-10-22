@@ -1,4 +1,4 @@
-const KEY = "paginae:recommendation-rotation";
+const KEY = "silvae:recommendation-rotation";
 export function advanceRotation(previous: number | null, random = Math.random): number {
   return previous != null && Number.isInteger(previous) && previous >= 0 && previous < 1_000_000
     ? (previous + 1) % 1_000_000

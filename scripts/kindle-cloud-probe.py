@@ -21,7 +21,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 AMAZON = 'https://read.amazon.com'
-DEFAULT_SESSION = Path.home() / '.paginae' / 'kindle-session.json'
+SESSION_PATH = Path.home() / '.silvae' / 'kindle-session.json'
+LEGACY_SESSION_PATH = Path.home() / '.paginae' / 'kindle-session.json'
+# A session saved under the previous site name is still used until it expires.
+DEFAULT_SESSION = SESSION_PATH if SESSION_PATH.exists() else LEGACY_SESSION_PATH
 REQUIRED_COOKIES = ('ubid-main', 'at-main', 'x-main', 'session-id')
 
 
