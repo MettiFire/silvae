@@ -325,7 +325,7 @@ export async function cacheBook(book: Book) {
       categories: book.categories,
       description: descriptionText(existing?.description || book.description) || null,
     },
-    { onConflict: "id" },
+    { onConflict: "id", ignoreDuplicates: true },
   );
   if (error) throw error;
 }

@@ -36,6 +36,13 @@
       "when": 1792675852299,
       "tag": "0004_personal_book_covers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792676369031,
+      "tag": "0005_block_book_catalog_edits",
+      "breakpoints": true
     }
   ]
 }
