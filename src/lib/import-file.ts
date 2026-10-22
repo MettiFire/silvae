@@ -50,15 +50,17 @@ export function prepareImportFile(name: string, bytes: Uint8Array) {
       const previous = latest.get(id);
       if (!previous || Number(row['Read Number'] || 1) >= Number(previous['Read Number'] || 1)) latest.set(id, row);
     }
-    const additions = ['Percent Complete', 'Read Count'];
+    const additions = ['Percent Complete', 'Read Count', 'Start Date', 'End Date', 'Reading Status'];
     for (const field of additions) if (!parsed.headers.includes(field)) parsed.headers.push(field);
     for (const row of parsed.rows) {
       const reading = latest.get(row['ID'] ?? '');
       if (!reading) continue;
       row['Percent Complete'] = reading['Percent Complete'] ?? '';
       row['Read Count'] = reading['Read Number'] ?? '';
-      if (!row['Start Date']) row['Start Date'] = reading['Start Date'] ?? '';
-      if (!row['End Date']) row['End Date'] = reading['End Date'] ?? '';
+      // Dates must describe the same (latest) session, including an empty end date for a reread in progress.
+      row['Start Date'] = reading['Start Date'] ?? row['Start Date'] ?? '';
+      row['End Date'] = reading['End Date'] ?? row['End Date'] ?? '';
+      if (reading['Status']) row['Reading Status'] = reading['Status'];
     }
     notices.push(`Storico di lettura collegato: ${latest.size} libri, con progresso e numero di letture.`);
   }

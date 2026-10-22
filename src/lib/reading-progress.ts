@@ -32,7 +32,7 @@ export async function saveManualPercent(
     p_source: "manual",
     p_observed_at: new Date().toISOString(),
     p_external_id: crypto.randomUUID(),
-    p_finished: finished,
+    p_finished: finished || percentage === 100,
   });
   if (error) throw error;
   if (data === "old_session" || data === "stale")

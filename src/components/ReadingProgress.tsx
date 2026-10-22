@@ -1,3 +1,4 @@
+import { canUpdateReading } from "@/lib/reading-dates";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,7 +33,7 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       qc.invalidateQueries({ queryKey: ["community-rating", item.book_id] }),
     ]);
   const save = async () => {
-    if (!user || busy) return;
+    if (!user || busy || !canUpdateReading(item)) return;
     setBusy(true);
     try {
       const percentage = finished ? 100 : parseProgressPercent(value);
@@ -71,11 +72,13 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       setBusy(false);
     }
   };
+  if (!canUpdateReading(item)) return null;
   return (
     <section className="mt-5 rounded-xl border border-border bg-card p-4">
       <h2 className="font-display font-semibold">Avanzamento percentuale</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Utile per gli ebook: la percentuale resta distinta dalle pagine dell’edizione.
+        Utile per gli ebook: la percentuale resta distinta dalle pagine dell’edizione. Al 100% il
+        libro viene segnato come letto.
       </p>
       {item.progress_percent != null && (
         <ProgressBar

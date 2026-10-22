@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { countFinishedInYear } from "@/lib/reading-dates";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -24,16 +25,11 @@ export function AnnualReadingGoal({ userId, library }: { userId: string; library
     },
   });
   const current = query.data?.find((item) => item.year === year);
+  const savedGoal = current?.goal;
   useEffect(() => {
-    if (current) setGoal(String(current.goal));
-  }, [current?.goal]);
-  const finished = (y: number) =>
-    library.filter(
-      (item) =>
-        item.status === "read" &&
-        item.finished_at &&
-        new Date(item.finished_at).getFullYear() === y,
-    ).length;
+    if (savedGoal != null) setGoal(String(savedGoal));
+  }, [savedGoal]);
+  const finished = (y: number) => countFinishedInYear(library, y);
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const value = Number(goal);

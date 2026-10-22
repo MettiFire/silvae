@@ -6,6 +6,8 @@ import { getProfileMap } from "@/lib/profile-data";
 import { Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { canUpdateReading } from "@/lib/reading-dates";
+import { ReadingDates } from "@/components/ReadingDates";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { Fragments } from "@/components/Fragments";
 import { CoverPicker } from "@/components/CoverPicker";
@@ -118,9 +120,10 @@ function BookPage() {
     },
   });
 
+  const savedPage = item?.current_page;
   useEffect(() => {
-    if (item) setPageInput(String(item.current_page));
-  }, [item?.id, item?.current_page]);
+    if (savedPage != null) setPageInput(String(savedPage));
+  }, [item?.id, savedPage]);
 
   if (isError)
     return (
@@ -154,7 +157,7 @@ function BookPage() {
   };
 
   const saveProgress = () => {
-    if (!item) return;
+    if (!item || !canUpdateReading(item) || update.isPending) return;
     const page = Math.max(
       0,
       Math.min(Number(pageInput) || 0, totalPages || Number(pageInput) || 0),
@@ -165,6 +168,7 @@ function BookPage() {
         id: item.id,
         patch: {
           current_page: page,
+          started_at: item.started_at ?? new Date().toISOString(),
           status: done ? "read" : "reading",
           finished_at: done ? new Date().toISOString() : null,
         },
@@ -364,7 +368,7 @@ function BookPage() {
             </div>
           )}
 
-          {item && (item.status === "reading" || item.current_page > 0) && (
+          {item && canUpdateReading(item) && (
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
               <p className="mb-2 font-display font-semibold">Progresso di lettura</p>
               <ProgressBar
@@ -386,6 +390,7 @@ function BookPage() {
                 <button
                   type="button"
                   onClick={saveProgress}
+                  disabled={update.isPending}
                   className="ml-auto h-9 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
                 >
                   Aggiorna
@@ -394,11 +399,15 @@ function BookPage() {
             </div>
           )}
 
-          {item && (
+          {item && canUpdateReading(item) && (
             <ReadingProgress
               key={`${item.id}:${item.reading_session_id}:${item.progress_updated_at}`}
               item={item}
             />
+          )}
+
+          {item && (
+            <ReadingDates key={`${item.id}:${item.started_at}:${item.finished_at}`} item={item} />
           )}
 
           <h2 className="mt-6 font-display text-lg font-semibold">Descrizione del libro</h2>

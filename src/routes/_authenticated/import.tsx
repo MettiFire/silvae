@@ -29,6 +29,7 @@ function ImportPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [dateOrder, setDateOrder] = useState<'day-first' | 'month-first'>('day-first');
   const [overwrite, setOverwrite] = useState(false);
   const [fileError, setFileError] = useState('');
   const [fileNotices, setFileNotices] = useState<string[]>([]);
@@ -39,7 +40,7 @@ function ImportPage() {
   const cancel = useRef(false);
   const fields = Object.keys(FIELD_LABELS) as ImportField[];
   const preview = csv?.rows.slice(0, 5).map(row => {
-    try { return { value: importRow(row, mapping), error: '' }; }
+    try { return { value: importRow(row, mapping, dateOrder), error: '' }; }
     catch (error) { return { value: null, error: error instanceof Error ? error.message : 'Riga non valida' }; }
   }) ?? [];
 
@@ -72,16 +73,23 @@ function ImportPage() {
     cancel.current = false; setBusy(true); setResults([]); setProgress(0);
     const out: Result[] = [];
     try {
-      const { data: existing, error } = await supabase.from('library_items').select('book_id, books(title,authors)').eq('user_id', user.id);
-      if (error) throw error;
+      // Supabase caps individual responses: duplicate protection must cover the whole library.
+      const existing: { book_id: string; books: { title: string; authors: string[] } | null }[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase.from('library_items').select('book_id, books(title,authors)')
+          .eq('user_id', user.id).order('id').range(offset, offset + 499);
+        if (error) throw error;
+        existing.push(...(data ?? []));
+        if ((data?.length ?? 0) < 500) break;
+      }
       const knownIds = new Set((existing ?? []).map(i => i.book_id));
       const signature = (title: string, author: string) => `${normalize(title)}|${normalize(author)}`;
-      const knownTitles = new Set((existing ?? []).map(i => signature(i.books?.title ?? '', i.books?.authors?.join(', ') ?? '')));
+      const knownTitles = new Map(existing.map(i => [signature(i.books?.title ?? '', i.books?.authors?.join(', ') ?? ''), i.book_id]));
       for (const [index, row] of csv.rows.entries()) {
         if (cancel.current) break;
         let title = row[mapping.title] || `Riga ${index + 2}`;
         try {
-          const item = importRow(row, mapping);
+          const item = importRow(row, mapping, dateOrder);
           title = item.title || item.isbn;
           const sig = signature(item.title, item.author);
           if (!overwrite && item.title && knownTitles.has(sig)) {
@@ -118,6 +126,8 @@ function ImportPage() {
             cover_url: item.cover || (item.isbn ? `https://covers.openlibrary.org/b/isbn/${item.isbn}-L.jpg?default=false` : null),
             page_count: item.pages, published_year: item.year, categories: item.categories, description: descriptionText(item.description) || null,
           };
+          const existingId = item.title ? knownTitles.get(sig) : undefined;
+          if (existingId) book.id = existingId;
           if (!overwrite && knownIds.has(book.id)) {
             out.push({ title: book.title, bookId: book.id, message: 'Già in libreria: dati conservati', kind: 'skipped' });
           } else {
@@ -133,8 +143,8 @@ function ImportPage() {
               ...(item.readCount != null ? { reread_count: Math.max(0, item.readCount - 1), last_reread_at: item.readCount > 1 ? item.finished : null } : {}),
             }, { onConflict: 'user_id,book_id', ignoreDuplicates: !overwrite });
             if (saveError) throw saveError;
-            knownIds.add(book.id); knownTitles.add(sig);
-            out.push({ title: book.title, bookId: book.id, message: found ? 'Importato' : 'Importato dai dati CSV · abbinamento da verificare', kind: 'imported' });
+            knownIds.add(book.id); knownTitles.set(sig, book.id);
+            out.push({ title: book.title, bookId: book.id, message: `${found ? 'Importato' : 'Importato dai dati CSV · abbinamento da verificare'}${done && !item.finished ? ' · data di fine sconosciuta: escluso dalle sfide con limiti temporali' : ''}`, kind: 'imported' });
           }
         } catch (error) {
           out.push({ title, message: error instanceof Error ? error.message : (error as { message?: string })?.message ?? 'Salvataggio non riuscito', kind: 'error' });
@@ -149,6 +159,7 @@ function ImportPage() {
       setBusy(false);
       void qc.invalidateQueries({ queryKey: ['library'] });
       void qc.invalidateQueries({ queryKey: ['library-item'] });
+      void qc.invalidateQueries({ queryKey: ['community-rating'] });
     }
   }
 
@@ -196,12 +207,19 @@ function ImportPage() {
           </select>
         </label>)}
       </div>
+      <label className="flex flex-wrap items-center gap-3 text-sm">Formato delle date numeriche
+        <select className={inputClass} value={dateOrder} disabled={busy || resetBusy} onChange={e => setDateOrder(e.target.value as typeof dateOrder)}>
+          <option value="day-first">Giorno / mese / anno (31/12/2026)</option>
+          <option value="month-first">Mese / giorno / anno (12/31/2026)</option>
+        </select>
+      </label>
+      <p className="text-xs text-muted-foreground">Le date AAAA-MM-GG e quelle con il nome del mese sono riconosciute automaticamente. Controlla le date ambigue nell’anteprima.</p>
       <h2 className="font-display text-lg font-semibold">2. Controlla l’anteprima</h2>
       <div className="overflow-x-auto"><table className="w-full text-left text-sm">
-        <thead><tr>{['Titolo / ISBN', 'Autore', 'Stato', 'Voto'].map(h => <th key={h} className="border-b p-2">{h}</th>)}</tr></thead>
-        <tbody>{preview.map((r, i) => <tr key={i}>{r.error ? <td colSpan={4} className="p-2 text-destructive">Riga {i + 2}: {r.error}</td> : <>
+        <thead><tr>{['Titolo / ISBN', 'Autore', 'Stato', 'Voto', 'Inizio', 'Fine'].map(h => <th key={h} className="border-b p-2">{h}</th>)}</tr></thead>
+        <tbody>{preview.map((r, i) => <tr key={i}>{r.error ? <td colSpan={6} className="p-2 text-destructive">Riga {i + 2}: {r.error}</td> : <>
           <td className="p-2">{r.value?.title || r.value?.isbn}</td><td className="p-2">{r.value?.author}</td>
-          <td className="p-2">{({ to_read: 'Da leggere', read: 'Letto', reading: 'In lettura', abandoned: 'Abbandonato' })[r.value!.status]}</td><td className="p-2">{r.value?.rating ?? '—'}</td>
+          <td className="p-2">{({ to_read: 'Da leggere', read: 'Letto', reading: 'In lettura', abandoned: 'Abbandonato' })[r.value!.status]}</td><td className="p-2">{r.value?.rating ?? '—'}</td><td className="p-2">{r.value?.started?.slice(0, 10) ?? '—'}</td><td className="p-2">{r.value?.finished?.slice(0, 10) ?? '—'}</td>
         </>}</tr>)}</tbody>
       </table></div>
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={overwrite} disabled={busy || resetBusy || resetOpen} onChange={e => setOverwrite(e.target.checked)} />

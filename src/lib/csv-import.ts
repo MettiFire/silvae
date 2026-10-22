@@ -1,3 +1,4 @@
+import { validateReadingDates } from "./reading-dates.ts";
 export const IMPORT_FIELDS = {
   sourceId: ['id', 'book id'],
   source: ['book source', 'source', 'fonte'],
@@ -13,7 +14,7 @@ export const IMPORT_FIELDS = {
   pages: ['number of pages', 'pages', 'pagine', 'page count', 'total pages'],
   currentPage: ['current page', 'pagina attuale', 'pages read', 'pagine lette'],
   started: ['date started', 'start date', 'data inizio', 'started at'],
-  finished: ['date read', 'end date', 'data fine', 'finished at', 'last date read'],
+  finished: ['date read', 'end date', 'data fine', 'finished at', 'last date read', 'date finished', 'finish date', 'read date', 'finished date', 'data completamento'],
   favorite: ['is favorite', 'favorite', 'preferito', 'favourite'],
   description: ['description', 'descrizione', 'sinossi', 'summary', 'synopsis'],
   cover: ['cover', 'cover url', 'copertina', 'image url'],
@@ -85,26 +86,31 @@ export function mapStatus(value: string): ReadingStatus {
   const s = normalize(value);
   if (/abandon|abbandon|did not finish|dnf|unfinished|non finit/.test(s)) return 'abandoned';
   if (/to read|to be read|unread|not yet|not started|want|wish|desider|da leggere|da comprare|tbr/.test(s)) return 'to_read';
-  if (/currently|in lettura|^lettura$|reading|sto leggendo|in corso/.test(s)) return 'reading';
-  if (/finit|terminat|complet|^lett[oi]$|^read$/.test(s)) return 'read';
+  if (/currently|in lettura|^lettura$|reading|sto leggendo|in corso|in progress/.test(s)) return 'reading';
+  if (/finit|finish|terminat|complet|^done$|^lett[oi]$|^read$/.test(s)) return 'read';
   return 'to_read';
 }
-export function parseDate(value: string): string | null {
+export function parseDate(value: string, order: 'day-first' | 'month-first' = 'day-first'): string | null {
+  value = value.trim();
   if (!value.trim()) return null;
   let year: number, month: number, day: number;
   const months: Record<string, number> = { gen: 1, gennaio: 1, jan: 1, january: 1, feb: 2, febbraio: 2, february: 2, mar: 3, marzo: 3, march: 3, apr: 4, aprile: 4, april: 4, mag: 5, maggio: 5, may: 5, giu: 6, giugno: 6, jun: 6, june: 6, lug: 7, luglio: 7, jul: 7, july: 7, ago: 8, agosto: 8, aug: 8, august: 8, set: 9, sett: 9, settembre: 9, sep: 9, sept: 9, september: 9, ott: 10, ottobre: 10, oct: 10, october: 10, nov: 11, novembre: 11, november: 11, dic: 12, dicembre: 12, dec: 12, december: 12 };
   const named = value.trim().toLowerCase().match(/^(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})$/);
-  const iso = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:T.*)?$/);
+  const iso = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/);
   const eu = value.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$/);
   if (named && months[named[2]!]) { day = Number(named[1]); month = months[named[2]!]!; year = Number(named[3]); }
   else if (iso) [, year, month, day] = iso.map(Number) as [number, number, number, number];
-  else if (eu) [, day, month, year] = eu.map(Number) as [number, number, number, number];
+  else if (eu) {
+    const first = Number(eu[1]), second = Number(eu[2]);
+    year = Number(eu[3]);
+    [day, month] = order === 'month-first' ? [second, first] : [first, second];
+  }
   else throw new Error(`Data non valida: ${value}. Usa AAAA-MM-GG, GG/MM/AAAA o 15 ago 2023.`);
   const date = new Date(Date.UTC(year, month - 1, day));
   if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) throw new Error(`Data non valida: ${value}`);
   return date.toISOString();
 }
-export function importRow(row: Record<string, string>, mapping: ColumnMapping) {
+export function importRow(row: Record<string, string>, mapping: ColumnMapping, dateOrder: 'day-first' | 'month-first' = 'day-first') {
   const get = (f: ImportField) => row[mapping[f]]?.trim() ?? '';
   const number = (f: ImportField) => {
     if (!get(f)) return null;
@@ -124,24 +130,28 @@ export function importRow(row: Record<string, string>, mapping: ColumnMapping) {
   }
   if (rawRating != null && rawRating > 5) throw new Error('Il voto deve essere compreso tra 0 e 5.');
   const rating = rawRating ? Math.round(rawRating * 2) / 2 : null;
-  const finished = parseDate(get('finished')), started = parseDate(get('started'));
-  const status = get('status') ? mapStatus(get('status')) : finished || rating ? 'read' : 'to_read';
+  const finished = parseDate(get('finished'), dateOrder), started = parseDate(get('started'), dateOrder);
+  let status: ReadingStatus = finished ? 'read' : get('status') ? mapStatus(get('status')) : 'to_read';
   const pages = number('pages');
   let currentPage = number('currentPage');
   const rawPercent = get('percent');
-  if (rawPercent && currentPage == null && pages) {
-    let percent = Number(rawPercent.replace('%', '').replace(',', '.'));
+  let percent: number | null = null;
+  if (rawPercent) {
+    percent = Number(rawPercent.replace('%', '').replace(',', '.'));
+    if (!Number.isFinite(percent)) throw new Error('Progresso non valido: usa un valore tra 0 e 100.');
     // Bookshelf stores fractions (0.465...), sometimes just over 1 due to a changed page count.
     if (normalize(mapping.percent) === 'percent complete' && !rawPercent.includes('%')) percent = Math.min(percent, 1) * 100;
     if (!Number.isFinite(percent) || percent < 0 || percent > 100) throw new Error('Progresso non valido: usa un valore tra 0 e 100.');
-    currentPage = Math.min(pages, Math.round(pages * percent / 100));
+    if (currentPage == null && pages) currentPage = Math.min(percent < 100 ? Math.max(0, pages - 1) : pages, Math.round(pages * percent / 100));
   }
   const year = number('year'), readCount = number('readCount');
   if (year != null && (!Number.isInteger(year) || year < 1 || year > 9999)) throw new Error('Anno di pubblicazione non valido.');
   if (readCount != null && !Number.isInteger(readCount)) throw new Error('Il numero di letture deve essere intero.');
   if ([pages, currentPage].some(n => n != null && !Number.isInteger(n))) throw new Error('Le pagine devono essere numeri interi.');
   if (pages && currentPage != null && currentPage > pages) throw new Error('La pagina attuale supera le pagine totali.');
-  if (started && finished && started > finished) throw new Error('La data di fine precede quella di inizio.');
+  if (status === 'reading' && (percent === 100 || (pages && currentPage != null && currentPage >= pages))) status = 'read';
+  if (status === 'read' && pages) currentPage = pages;
+  validateReadingDates(started, finished);
   const cover = get('cover');
   if (cover && !/^https:\/\//i.test(cover)) throw new Error('La copertina deve avere un indirizzo HTTPS.');
   return { sourceId: get('sourceId'), source: get('source'), year, categories: get('categories').split(/[,;]/).map(s => s.trim()).filter(Boolean), readCount, title, author: get('author'), isbn, status, rating, pages, currentPage, started, finished,

@@ -147,6 +147,9 @@ test("manual percentages validate decimals and explicit completion without inven
   await saveManualPercent(client, "reader", b.id, "session", 42, true);
   assert.equal(args.p_percentage, 100);
   assert.equal(args.p_finished, true);
+  await saveManualPercent(client, "reader", b.id, "session", 100, false);
+  assert.equal(args.p_percentage, 100);
+  assert.equal(args.p_finished, true);
   client.rpc = async () => ({ data: "stale", error: null });
   await assert.rejects(saveManualPercent(client, "reader", b.id, "session", 42, false), /altrove/);
 });

@@ -52,3 +52,16 @@ test('Auxiliary files and ambiguous archives are not silently imported as books'
   assert.throws(() => prepareImportFile('Ambiguous.zip', zipSync({ 'a.csv':strToU8(books), 'b.csv':strToU8(books) })), /solo/);
   assert.throws(() => prepareImportFile('Broken.zip', strToU8('not a zip')), /ZIP/);
 });
+
+test('Latest reading history owns its date pair; an ongoing reread does not inherit an old finish', () => {
+  const main = 'ID,Title,Author,Reading Status,Start Date,End Date\nvolume123,Libro,Autore,Finito,1 gen 2020,2 feb 2020';
+  const sessions = 'Book ID,Read Number,Status,Start Date,End Date,Percent Complete\nvolume123,1,Finito,1 gen 2020,2 feb 2020,1\nvolume123,2,Lettura,1 gen 2025,,0.5';
+  const result = prepareImportFile('Export.zip', zipSync({
+    'Bookshelf-Books.csv': strToU8(main), 'Bookshelf-Reading_History.csv': strToU8(sessions),
+  }));
+  const row = importRow(result.parsed.rows[0], result.mapping);
+  assert.equal(row.status, 'reading');
+  assert.equal(row.started, '2025-01-01T00:00:00.000Z');
+  assert.equal(row.finished, null);
+  assert.equal(row.readCount, 2);
+});

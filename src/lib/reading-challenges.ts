@@ -1,3 +1,4 @@
+import { readingDay, todayDay } from "./reading-dates.ts";
 import { AWARD_DATA, type AwardFamily, type AwardWinner } from "../data/reading-awards.ts";
 import type { LibraryItem } from "./library";
 
@@ -185,18 +186,11 @@ export function challengeSlots(enrollment: ChallengeEnrollment): ChallengeSlot[]
 }
 export function eligibleReading(item: LibraryItem, enrollment: ChallengeEnrollment): boolean {
   if (item.status !== "read") return false;
-  const finished = item.finished_at ? Date.parse(item.finished_at) : NaN;
-  if (
-    !enrollment.includePast &&
-    (!Number.isFinite(finished) ||
-      item.finished_at!.slice(0, 10) < enrollment.joinedAt.slice(0, 10))
-  )
+  const finished = readingDay(item.finished_at);
+  if (finished && finished > todayDay()) return false;
+  if (!enrollment.includePast && (!finished || finished < enrollment.joinedAt.slice(0, 10)))
     return false;
-  if (
-    enrollment.deadline &&
-    (!Number.isFinite(finished) || item.finished_at!.slice(0, 10) > enrollment.deadline)
-  )
-    return false;
+  if (enrollment.deadline && (!finished || finished > enrollment.deadline)) return false;
   return true;
 }
 function matchesAward(item: LibraryItem, winner: AwardWinner): boolean {

@@ -48,3 +48,41 @@ test('CSV can supply a missing synopsis with quoted multiline text', () => {
   const row = importRow(data.rows[0], detectMapping(data.headers));
   assert.equal(row.description, 'Prima riga\nSeconda riga');
 });
+
+test('A finish date makes a CSV book read even with an unknown or stale shelf', () => {
+  for (const state of ['archivio', 'reading', 'to-read', '']) {
+    const csv = parseCSV(`Title;Status;Date Finished;Pages;Current Page\nLibro;${state};2025-12-31;200;20`);
+    const row = importRow(csv.rows[0], detectMapping(csv.headers));
+    assert.equal(row.status, 'read');
+    assert.equal(row.currentPage, 200);
+    assert.equal(row.finished, '2025-12-31T00:00:00.000Z');
+  }
+});
+test('Rating alone is not evidence of completion, and no completion date is invented', () => {
+  const csv = parseCSV('Title;Rating;Status\nA;4;\nB;5;read');
+  const mapping = detectMapping(csv.headers);
+  assert.equal(importRow(csv.rows[0], mapping).status, 'to_read');
+  assert.equal(importRow(csv.rows[1], mapping).status, 'read');
+  assert.equal(importRow(csv.rows[1], mapping).finished, null);
+});
+test('Numeric date order is explicit, ISO source day stays unchanged across time zones', () => {
+  assert.equal(parseDate('03/04/2025'), '2025-04-03T00:00:00.000Z');
+  assert.equal(parseDate('03/04/2025', 'month-first'), '2025-03-04T00:00:00.000Z');
+  assert.equal(parseDate('12/31/2025', 'month-first'), '2025-12-31T00:00:00.000Z');
+  assert.equal(parseDate('2025-12-31T23:30:00-05:00'), '2025-12-31T00:00:00.000Z');
+  assert.equal(parseDate('2025-12-31 23:30:00'), '2025-12-31T00:00:00.000Z');
+  assert.throws(() => parseDate('2025-12-31Trash'));
+});
+test('Near 100% never accidentally finishes a book through page rounding', () => {
+  const csv = parseCSV('Title;Status;Pages;Progress (%)\nA;reading;100;99.9\nB;reading;;100');
+  const mapping = detectMapping(csv.headers);
+  assert.equal(importRow(csv.rows[0], mapping).status, 'reading');
+  assert.equal(importRow(csv.rows[0], mapping).currentPage, 99);
+  assert.equal(importRow(csv.rows[1], mapping).status, 'read');
+});
+test('Inconsistent or future dates fail rather than silently corrupting challenges', () => {
+  for (const dates of ['2025-12-31;2025-01-01', '2999-01-01;2999-01-02', '2025-02-29;']) {
+    const csv = parseCSV(`Title;Start Date;End Date\nA;${dates}`);
+    assert.throws(() => importRow(csv.rows[0], detectMapping(csv.headers)), /Data|data|date/);
+  }
+});
