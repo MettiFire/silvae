@@ -10,10 +10,113 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      author_follows: {
+        Row: { user_id: string; author_id: string; author_name: string; followed_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+
+      reader_connections: {
+        Row: { id: string; user_id: string; name: string; kind: string; mode: string; created_at: string; last_received_at: string | null; revoked_at: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      reader_documents: {
+        Row: { id: string; connection_id: string; user_id: string; external_id: string; title: string; authors: string[]; book_id: string | null; session_id: string | null; confirmed_manual_at: string | null; progress_payload: Json | null; last_received_at: string; result: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+
+      fragments: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string;
+          kind: string;
+          quote: string;
+          note: string;
+          position: string;
+          tags: string[];
+          favorite: boolean;
+          source: string;
+          source_ref: string | null;
+          dedupe_key: string;
+          highlighted_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          book_id: string;
+          kind?: string;
+          quote: string;
+          note?: string;
+          position?: string;
+          tags?: string[];
+          favorite?: boolean;
+          source?: string;
+          source_ref?: string | null;
+          dedupe_key: string;
+          highlighted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          kind?: string;
+          quote?: string;
+          note?: string;
+          position?: string;
+          tags?: string[];
+          favorite?: boolean;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fragments_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reading_progress_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string;
+          session_id: string;
+          percentage: number;
+          locator: string | null;
+          source: string;
+          external_id: string | null;
+          observed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          book_id: string;
+          session_id: string;
+          percentage: number;
+          locator?: string | null;
+          source: string;
+          external_id?: string | null;
+          observed_at: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+
       activities: {
         Row: {
           book_id: string | null
@@ -176,6 +279,10 @@ export type Database = {
         Row: {
           book_id: string
           created_at: string
+          progress_percent: number | null
+          progress_source: string | null
+          progress_updated_at: string | null
+          reading_session_id: string
           current_page: number
           favorite: boolean
           finished_at: string | null
@@ -193,6 +300,10 @@ export type Database = {
         Insert: {
           book_id: string
           created_at?: string
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
+          reading_session_id?: string
           current_page?: number
           favorite?: boolean
           finished_at?: string | null
@@ -210,6 +321,10 @@ export type Database = {
         Update: {
           book_id?: string
           created_at?: string
+          progress_percent?: number | null
+          progress_source?: string | null
+          progress_updated_at?: string | null
+          reading_session_id?: string
           current_page?: number
           favorite?: boolean
           finished_at?: string | null
@@ -366,8 +481,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
-    }
+      delete_own_account: { Args: { p_expected_user_id: string; p_confirmation: string }; Returns: boolean }
+      book_community_rating: { Args: { p_book_id: string }; Returns: { average_rating: number | null; ratings_count: number }[] }
+
+      create_reader_connection: { Args: { p_name: string; p_kind: string; p_secret: string }; Returns: string }
+      revoke_reader_connection: { Args: { p_connection: string }; Returns: undefined }
+      bind_reader_document: { Args: { p_document: string; p_book: string }; Returns: string }
+      ingest_reader_batch: { Args: { p_connection: string; p_credential: string; p_documents: Json }; Returns: Json }
+      reader_kosync: { Args: { p_connection: string; p_credential: string; p_document?: string }; Returns: Json }
+
+      fragment_books: {
+        Args: Record<string, never>;
+        Returns: { id: string; title: string; authors: string[] }[];
+      };
+      record_reading_progress: {
+        Args: {
+          p_book_id: string;
+          p_percentage: number;
+          p_observed_at: string;
+          p_source: string;
+          p_external_id: string | null;
+          p_session_id: string;
+          p_finished?: boolean;
+          p_locator?: string | null;
+        };
+        Returns: string;
+      };
+      start_reading_session: { Args: { p_book_id: string }; Returns: string };
+    };
     Enums: {
       [_ in never]: never
     }
