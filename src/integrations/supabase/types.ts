@@ -49,6 +49,27 @@ export type Database = {
           },
         ]
       }
+      author_follows: {
+        Row: {
+          author_id: string
+          author_name: string
+          followed_at: string
+          user_id: string
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          followed_at?: string
+          user_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          followed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       book_lists: {
         Row: {
           created_at: string
@@ -652,6 +673,13 @@ export type Database = {
         Args: { p_book: string; p_document: string }
         Returns: string
       }
+      book_community_rating: {
+        Args: { p_book_id: string }
+        Returns: {
+          average_rating: number
+          ratings_count: number
+        }[]
+      }
       check_reader_credential: {
         Args: { p_connection: string; p_credential: string }
         Returns: {
@@ -675,6 +703,10 @@ export type Database = {
         Args: { p_kind: string; p_name: string; p_secret: string }
         Returns: string
       }
+      delete_own_account: {
+        Args: { p_confirmation: string; p_expected_user_id: string }
+        Returns: boolean
+      }
       fragment_books: {
         Args: never
         Returns: {
@@ -686,6 +718,10 @@ export type Database = {
       ingest_reader_batch: {
         Args: { p_connection: string; p_credential: string; p_documents: Json }
         Returns: Json
+      }
+      publish_author_follows: {
+        Args: { p_metadata: Json; p_user: string }
+        Returns: undefined
       }
       reader_kosync: {
         Args: {

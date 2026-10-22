@@ -22,6 +22,13 @@
       "when": 1792675785061,
       "tag": "0002_reader_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792675807352,
+      "tag": "0003_public_author_follows_and_account_deletion",
+      "breakpoints": true
     }
   ]
 }
