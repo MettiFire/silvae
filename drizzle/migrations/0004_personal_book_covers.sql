@@ -1,0 +1,2 @@
+ALTER TABLE public.library_items ADD COLUMN custom_cover_url text CHECK (custom_cover_url IS NULL OR (char_length(custom_cover_url) <= 2000 AND custom_cover_url ~* '^https://'));
+NOTIFY pgrst,'reload schema';

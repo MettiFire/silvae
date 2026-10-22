@@ -386,10 +386,18 @@ export async function coverCandidates(book: Book): Promise<string[]> {
   return Array.from(new Set(urls));
 }
 
-/** Salva una nuova copertina nel catalogo condiviso. */
+/** Salva una copertina personale: visibile solo a chi la sceglie. */
 export async function setBookCover(bookId: string, url: string) {
-  const { error } = await supabase.from("books").update({ cover_url: url }).eq("id", bookId);
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError || !auth.user) throw new Error("Accedi di nuovo.");
+  const { data, error } = await supabase
+    .from("library_items")
+    .update({ custom_cover_url: url })
+    .eq("user_id", auth.user.id)
+    .eq("book_id", bookId)
+    .select("id");
   if (error) throw error;
+  if (!data?.length) throw new Error("Aggiungi prima il libro alla tua libreria.");
 }
 
 /** Carica un'immagine dell'utente e restituisce l'indirizzo pubblico firmato. */

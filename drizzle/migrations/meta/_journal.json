@@ -29,6 +29,13 @@
       "when": 1792675807352,
       "tag": "0003_public_author_follows_and_account_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792675852299,
+      "tag": "0004_personal_book_covers",
+      "breakpoints": true
     }
   ]
 }
