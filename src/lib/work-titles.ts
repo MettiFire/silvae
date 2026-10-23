@@ -27,7 +27,15 @@ export async function localizedWorkTitles(
   try {
     const response = await fetch(
       `https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: "json" })}`,
-      { signal: AbortSignal.timeout(3500), headers: { Accept: "application/sparql-results+json" } },
+      {
+        signal: AbortSignal.timeout(3500),
+        headers: {
+          Accept: "application/sparql-results+json",
+          ...(typeof window === "undefined"
+            ? { "User-Agent": "Silvae/1.0 (https://silvae.lovable.app)" }
+            : {}),
+        },
+      },
     );
     if (!response.ok) return titles;
     const data = (await response.json()) as {
