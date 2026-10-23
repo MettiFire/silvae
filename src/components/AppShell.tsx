@@ -137,7 +137,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="nav-note">Il tuo prossimo capitolo.</span>
         </div>
       </header>
-      <main id="contenuto" tabIndex={-1} className="app-page site-width">
+      <main
+        id="contenuto"
+        tabIndex={-1}
+        className={`app-page site-width${pathname !== "/" ? " has-back" : ""}`}
+      >
         {pathname !== "/" && <BackButton className="mb-5" />}
         {children}
       </main>
