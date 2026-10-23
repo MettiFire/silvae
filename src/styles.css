@@ -1186,3 +1186,10 @@ select:not([multiple]):not([size]) {
 .dark select:not([multiple]):not([size]) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b9b2ac' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
+
+/* Keep app chrome clear of notches and home indicators in installed mode. */
+@media (display-mode: standalone) {
+  .site-header { padding-top: env(safe-area-inset-top); }
+  .app-page { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .mobile-menu { bottom: calc(4rem + env(safe-area-inset-bottom)); }
+}

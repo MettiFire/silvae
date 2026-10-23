@@ -6,6 +6,10 @@ import { Bookmark, Check } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
+import { groupAuthors, authorMatchesQuery } from "@/lib/author-search";
+import { useBookLanguage } from "@/lib/use-book-language";
+import { BOOK_LANGUAGES } from "@/lib/book-language";
+import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { defaultAuthor, findAuthors, getAuthor, getAuthorBooks } from "@/lib/authors";
 import { AUTHORS_FIELD, parseFollowedAuthors, changeFollowedAuthor } from "@/lib/followed-authors";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +36,9 @@ function AuthorPage() {
 }
 function AuthorContent({ name, selectedId }: { name: string; selectedId: string | undefined }) {
   const { user } = useAuth();
+  const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
+  const { language, ready: languageReady } = useBookLanguage(preferences?.language);
+  const [allLanguages, setAllLanguages] = useState(false);
   const { data: library = [] } = useLibrary(user?.id);
   const [chosen, setChosen] = useState<string | null>(selectedId ?? null);
   const [page, setPage] = useState(0);
@@ -39,32 +46,58 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const [busy, setBusy] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const candidates = useQuery({
-    queryKey: ["author-candidates", name],
-    queryFn: () => findAuthors(name),
+    queryKey: ["author-candidates-v2", name, language ?? "any"],
+    queryFn: ({ signal }) => findAuthors(name, language, signal),
     staleTime: 3600000,
-    enabled: !selectedId,
+    enabled: languageReady,
   });
-  const id = chosen ?? defaultAuthor(candidates.data ?? [], name);
+  const groups = groupAuthors(candidates.data ?? []).filter((author) =>
+    authorMatchesQuery(author, name),
+  );
+  const chosenGroup = groups.find(
+    (author) => author.id === chosen || author.ids?.includes(chosen ?? ""),
+  );
+  const id = chosenGroup?.id ?? chosen ?? defaultAuthor(groups, name);
+  const groupIds =
+    chosenGroup?.ids ?? groups.find((author) => author.id === id)?.ids ?? (id ? [id] : []);
   const details = useQuery({
-    queryKey: ["author-details", id],
-    queryFn: () => getAuthor(id!),
+    queryKey: ["author-details", id, language ?? "any", name],
+    queryFn: () => getAuthor(id!, name, language),
     enabled: !!id,
     staleTime: 3600000,
   });
   const catalogue = useQuery({
-    queryKey: ["author-books", id, page, sort],
-    queryFn: () => getAuthorBooks(id!, page, sort),
-    enabled: !!id,
+    queryKey: [
+      "author-books-v2",
+      id,
+      groupIds.join("|"),
+      page,
+      sort,
+      allLanguages ? "any" : (language ?? "any"),
+      details.data?.name,
+    ],
+    queryFn: () =>
+      getAuthorBooks(id!, page, sort, {
+        language: allLanguages ? undefined : language,
+        displayName: details.data?.name,
+        authorIds: groupIds,
+      }),
+    enabled: !!id && languageReady && !!details.data,
     staleTime: 300000,
   });
-  const followed = parseFollowedAuthors(user?.user_metadata[AUTHORS_FIELD]).some(
-    (a) => a.id === id,
+  const followed = parseFollowedAuthors(user?.user_metadata[AUTHORS_FIELD]).some((a) =>
+    groupIds.includes(a.id),
   );
   const toggle = async () => {
     if (!user || !id || !details.data || busy) return;
     setBusy(true);
     try {
-      await changeFollowedAuthor(supabase, user.id, { id, name: details.data.name }, !followed);
+      await changeFollowedAuthor(
+        supabase,
+        user.id,
+        { id, name: details.data.name, ids: groupIds },
+        !followed,
+      );
       toast.success(
         followed ? "Autore rimosso dai seguiti" : "Autore salvato. Lo ritrovi nel profilo.",
       );
@@ -100,7 +133,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           ))
         }
       />
-      {!selectedId && (candidates.data?.length ?? 0) > 1 && (
+      {groups.length > 1 && (
         <label className="mb-6 flex max-w-xl flex-col gap-2 text-sm">
           {id ? "Non è la persona che cercavi?" : "Scegli l’autore: ci possono essere omonimi."}
           <select
@@ -113,7 +146,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             className="rounded-lg border border-border bg-background p-2"
           >
             <option value="">Seleziona un autore</option>
-            {candidates.data?.map((a) => (
+            {groups.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
                 {a.birth ? ` · ${a.birth}` : ""}
@@ -123,12 +156,12 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           </select>
         </label>
       )}
-      {candidates.data?.length === 1 && !id && (
+      {groups.length === 1 && !id && (
         <button
-          onClick={() => setChosen(candidates.data![0]!.id)}
+          onClick={() => setChosen(groups[0]!.id)}
           className="mb-6 rounded-lg border p-3 text-sm"
         >
-          Intendevi {candidates.data[0]!.name}? · {candidates.data[0]!.topWork}
+          Intendevi {groups[0]!.name}? · {groups[0]!.topWork}
         </button>
       )}
       {error && (
@@ -147,7 +180,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
         </p>
       )}
       {candidates.isLoading && !selectedId && <p>Ricerca dell’autore…</p>}
-      {!candidates.isLoading && candidates.data?.length === 0 && (
+      {!candidates.isLoading && groups.length === 0 && !selectedId && (
         <p>
           Nessun autore identificato. Prova a cercare un altro suo libro o una diversa forma del
           nome.
@@ -217,7 +250,24 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               Popolarità basata sulle aggiunte alle librerie su Open Library.
             </p>
           )}
+          {language && (
+            <label className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={allLanguages}
+                onChange={(event) => {
+                  setAllLanguages(event.target.checked);
+                  setPage(0);
+                }}
+              />
+              Mostra anche opere senza edizioni in{" "}
+              {BOOK_LANGUAGES.find((item) => item.code === language)?.label.toLowerCase()}
+            </label>
+          )}
           <p className="mb-5 text-xs text-muted-foreground">
+            {language && !allLanguages
+              ? "Titoli delle edizioni nella lingua scelta nelle impostazioni. "
+              : "Titoli delle edizioni disponibili; alcune opere possono avere solo il titolo originale. "}
             Il catalogo può essere incompleto; date di traduzioni e ristampe possono differire. I
             libri futuri compaiono solo se già catalogati.
           </p>

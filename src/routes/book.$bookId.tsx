@@ -18,6 +18,8 @@ import { BookmarkRating } from "@/components/BookmarkRating";
 import { ProgressBar } from "@/components/ProgressBar";
 import { AddToListMenu } from "@/components/AddToListMenu";
 import { descriptionText } from "@/lib/book-metadata";
+import { useBookLanguage } from "@/lib/use-book-language";
+import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { getBook } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -43,6 +45,8 @@ export const Route = createFileRoute("/book/$bookId")({
 function BookPage() {
   const { bookId } = Route.useParams();
   const { user } = useAuth();
+  const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
+  const { language, ready: languageReady } = useBookLanguage(preferences?.language);
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [pageInput, setPageInput] = useState("");
@@ -54,7 +58,11 @@ function BookPage() {
     isLoading,
     isError,
     refetch,
-  } = useQuery({ queryKey: ["book", bookId], queryFn: () => getBook(bookId) });
+  } = useQuery({
+    queryKey: ["book", bookId, language ?? "any"],
+    queryFn: () => getBook(bookId, language),
+    enabled: languageReady,
+  });
   const { data: item } = useLibraryItem(bookId);
   const save = useSaveToLibrary();
   const update = useUpdateItem();

@@ -1,4 +1,10 @@
-import { bookSuggestions, matchesTitleCompletion, titleCompletionQuery } from "@/lib/search-suggestions";
+import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
+import {
+  bookSuggestions,
+  matchesTitleCompletion,
+  titleCompletionQuery,
+} from "@/lib/search-suggestions";
+import { getAuthor } from "@/lib/authors";
 import { applyBookLanguage } from "@/lib/book-language";
 import { sameBook, coverUrls, descriptionText } from "@/lib/book-metadata";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +54,12 @@ type Volume = {
     averageRating?: number;
     ratingsCount?: number;
     industryIdentifiers?: { type: string; identifier: string }[];
-    imageLinks?: { thumbnail?: string; smallThumbnail?: string; large?: string; extraLarge?: string };
+    imageLinks?: {
+      thumbnail?: string;
+      smallThumbnail?: string;
+      large?: string;
+      extraLarge?: string;
+    };
   };
 };
 
@@ -59,18 +70,23 @@ export function mapVolume(v: Volume): Book {
     id: v.id,
     title: i.title ?? "Senza titolo",
     authors: i.authors ?? [],
-    cover_url: upgradeCover(i.imageLinks?.extraLarge ?? i.imageLinks?.large ?? i.imageLinks?.thumbnail),
+    cover_url: upgradeCover(
+      i.imageLinks?.extraLarge ?? i.imageLinks?.large ?? i.imageLinks?.thumbnail,
+    ),
     published_year: Number.isFinite(year) ? year : null,
     page_count: i.pageCount ?? null,
     categories: i.categories ?? [],
     description: descriptionText(i.description) || null,
-    isbns: (i.industryIdentifiers ?? []).filter(x => /ISBN/.test(x.type)).map(x => x.identifier),
-    cover_candidates: [i.imageLinks?.thumbnail, i.imageLinks?.smallThumbnail].map(upgradeCover).filter((v): v is string => !!v),
+    isbns: (i.industryIdentifiers ?? [])
+      .filter((x) => /ISBN/.test(x.type))
+      .map((x) => x.identifier),
+    cover_candidates: [i.imageLinks?.thumbnail, i.imageLinks?.smallThumbnail]
+      .map(upgradeCover)
+      .filter((v): v is string => !!v),
     average_rating: i.averageRating ?? null,
     ratings_count: i.ratingsCount ?? null,
   };
 }
-
 
 // ---------- Open Library fallback (no key, no daily quota) ----------
 
@@ -85,7 +101,7 @@ type OLDoc = {
   isbn?: string[];
   ratings_average?: number;
   ratings_count?: number;
-  editions?: {docs?: {title?:string;cover_i?:number;isbn?:string[]}[]};
+  editions?: { docs?: { title?: string; cover_i?: number; isbn?: string[] }[] };
 };
 
 function mapOLDoc(d: OLDoc): Book {
@@ -104,10 +120,25 @@ function mapOLDoc(d: OLDoc): Book {
   };
 }
 
-async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance", language?:string, resolveCovers = true): Promise<Book[]> {
-  const params = new URLSearchParams({ limit: String(max), offset: String(startIndex),
-    fields: "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,ratings_average,ratings_count" });
-  if (language) params.set("fields",params.get("fields")+",editions,editions.title,editions.cover_i,editions.isbn");
+async function olSearch(
+  query: string,
+  max: number,
+  startIndex = 0,
+  order: "relevance" | "newest" = "relevance",
+  language?: string,
+  resolveCovers = true,
+): Promise<Book[]> {
+  const params = new URLSearchParams({
+    limit: String(max),
+    offset: String(startIndex),
+    fields:
+      "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,ratings_average,ratings_count",
+  });
+  if (language)
+    params.set(
+      "fields",
+      params.get("fields") + ",editions,editions.title,editions.cover_i,editions.isbn",
+    );
   if (order === "newest") params.set("sort", "new");
   // Preserve ISBN/author/subject semantics rather than turning everything into keywords.
   const isbn = query.match(/^isbn:(.+)$/);
@@ -117,40 +148,52 @@ async function olSearch(query: string, max: number, startIndex = 0, order: "rele
   else if (author) params.set("author", author[1]!.trim());
   else if (subject) params.set("subject", subject[1]!.trim());
   else params.set("q", query.replace(/intitle:/g, "title:").replace(/inauthor:/g, "author:"));
-  applyBookLanguage(params,"openlibrary",language);
-  const res = await fetch(`${OL_API}/search.json?${params}`, { signal: AbortSignal.timeout(12000) });
+  applyBookLanguage(params, "openlibrary", language);
+  const res = await fetch(`${OL_API}/search.json?${params}`, {
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Errore nel recupero dei libri");
   const data = (await res.json()) as { docs?: OLDoc[] };
-  const docs = (data.docs ?? []).map(d=>{
-    const edition=language?d.editions?.docs?.[0]:undefined;
-    if(!edition)return d;
-    const localized:OLDoc={...d};
-    if(edition.title)localized.title=edition.title;
-    if(edition.cover_i)localized.cover_i=edition.cover_i;
-    localized.isbn=edition.isbn??[];
+  const docs = (data.docs ?? []).map((d) => {
+    const edition = language ? d.editions?.docs?.[0] : undefined;
+    if (!edition) return d;
+    const localized: OLDoc = { ...d };
+    if (edition.title) localized.title = edition.title;
+    if (edition.cover_i) localized.cover_i = edition.cover_i;
+    localized.isbn = edition.isbn ?? [];
     return localized;
   });
   if (!resolveCovers) return docs.map(mapOLDoc);
   let covers: Record<string, string> = {};
   try {
-    covers = await gbCovers({ data: { isbns: docs.flatMap(d => (d.isbn ?? []).slice(0, 3)) } });
-  } catch { /* The original Open Library cover remains available as fallback. */ }
-  // Retry additional ISBNs only for books missing in the first batch.
-  const missing = docs.filter(d => !(d.isbn ?? []).slice(0, 3).some(i => covers[i]));
-  const more = missing.flatMap(d => (d.isbn ?? []).slice(3, 10));
-  for (let offset = 0; offset < more.length; offset += 120) {
-    try { Object.assign(covers, await gbCovers({ data: { isbns: more.slice(offset, offset + 120) } })); } catch { /* Keep other providers. */ }
+    covers = await gbCovers({ data: { isbns: docs.flatMap((d) => (d.isbn ?? []).slice(0, 3)) } });
+  } catch {
+    /* The original Open Library cover remains available as fallback. */
   }
-  return docs.map(d => {
+  // Retry additional ISBNs only for books missing in the first batch.
+  const missing = docs.filter((d) => !(d.isbn ?? []).slice(0, 3).some((i) => covers[i]));
+  const more = missing.flatMap((d) => (d.isbn ?? []).slice(3, 10));
+  for (let offset = 0; offset < more.length; offset += 120) {
+    try {
+      Object.assign(covers, await gbCovers({ data: { isbns: more.slice(offset, offset + 120) } }));
+    } catch {
+      /* Keep other providers. */
+    }
+  }
+  return docs.map((d) => {
     const book = mapOLDoc(d);
-    const candidates = [...new Set((d.isbn ?? []).map(i => covers[i]).filter((v): v is string => !!v))];
+    const candidates = [
+      ...new Set((d.isbn ?? []).map((i) => covers[i]).filter((v): v is string => !!v)),
+    ];
     if (book.cover_url) candidates.push(book.cover_url);
     return { ...book, cover_url: candidates[0] ?? null, cover_candidates: candidates };
   });
 }
 
-async function olGetBook(workId: string): Promise<Book> {
-  const res = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}.json`, { signal: AbortSignal.timeout(12000) });
+async function olGetBook(workId: string, language?: string): Promise<Book> {
+  const res = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}.json`, {
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Libro non trovato");
   const w = (await res.json()) as {
     title?: string;
@@ -160,38 +203,73 @@ async function olGetBook(workId: string): Promise<Book> {
     authors?: { author?: { key?: string } }[];
   };
   let catalogue: Book | undefined;
-  try { catalogue = (await olSearch(`key:/works/${workId}`, 1, 0, "relevance", undefined, false))[0]; } catch { /* Work details still render. */ }
-  const authorNames: string[] = [...(catalogue?.authors ?? [])];
-  for (const a of authorNames.length ? [] : (w.authors ?? [])) {
-    const key = a.author?.key;
-    if (!key) continue;
-    try {
-      const ar = await fetch(`${OL_API}${key}.json`, { signal: AbortSignal.timeout(8000) });
-      if (ar.ok) {
-        const ad = (await ar.json()) as { name?: string };
-        if (ad.name) authorNames.push(ad.name);
-      }
-    } catch {
-      /* ignore author lookup failures */
-    }
+  try {
+    catalogue = (await olSearch(`key:/works/${workId}`, 1, 0, "relevance", language, false))[0];
+  } catch {
+    /* Work details still render. */
   }
-  let description = descriptionText(typeof w.description === "string" ? w.description : w.description?.value);
+  const translatedTitles = needsLocalizedTitle(w.title ?? "", language)
+    ? await localizedWorkTitles([workId], language)
+    : new Map<string, string>();
+  const authorNames: string[] = [...(catalogue?.authors ?? [])];
+  const preferLatin = !!language && !["ru", "uk", "ar", "ja", "zh", "ko"].includes(language);
+  const needsNames =
+    !authorNames.length ||
+    (preferLatin &&
+      authorNames.some((name) =>
+        /[\p{Script=Cyrillic}\p{Script=Arabic}\p{Script=Han}]/u.test(name),
+      ));
+  if (needsNames)
+    for (const [index, entry] of (w.authors ?? []).slice(0, 6).entries()) {
+      const id = entry.author?.key?.match(/^\/authors\/(OL\d+A)$/)?.[1];
+      if (!id) continue;
+      try {
+        const author = await getAuthor(id, authorNames[index], language);
+        if (authorNames[index]) authorNames[index] = author.name;
+        else authorNames.push(author.name);
+      } catch {
+        /* Preserve the catalogue name during an outage. */
+      }
+    }
+  let description = descriptionText(
+    typeof w.description === "string" ? w.description : w.description?.value,
+  );
   if (!description) {
     // Work-level records can be empty while a particular edition has a synopsis.
     try {
-      const response = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}/editions.json?limit=10`, { signal: AbortSignal.timeout(8000) });
+      const response = await fetch(
+        `${OL_API}/works/${encodeURIComponent(workId)}/editions.json?limit=10`,
+        { signal: AbortSignal.timeout(8000) },
+      );
       if (response.ok) {
-        const data = await response.json() as { entries?: { description?: string | { value?: string }; languages?: { key: string }[] }[] };
-        const entries = [...(data.entries ?? [])].sort((a, b) => Number(b.languages?.some(l => l.key === '/languages/ita')) - Number(a.languages?.some(l => l.key === '/languages/ita')));
-        description = entries.map(e => descriptionText(typeof e.description === 'string' ? e.description : e.description?.value)).find(Boolean) ?? '';
+        const data = (await response.json()) as {
+          entries?: { description?: string | { value?: string }; languages?: { key: string }[] }[];
+        };
+        const entries = [...(data.entries ?? [])].sort(
+          (a, b) =>
+            Number(b.languages?.some((l) => l.key === "/languages/ita")) -
+            Number(a.languages?.some((l) => l.key === "/languages/ita")),
+        );
+        description =
+          entries
+            .map((e) =>
+              descriptionText(
+                typeof e.description === "string" ? e.description : e.description?.value,
+              ),
+            )
+            .find(Boolean) ?? "";
       }
-    } catch { /* Explicit empty state if no source supplies a description. */ }
+    } catch {
+      /* Explicit empty state if no source supplies a description. */
+    }
   }
   return {
     id: `ol:${workId}`,
-    title: w.title ?? "Senza titolo",
+    title: translatedTitles.get(workId) ?? catalogue?.title ?? w.title ?? "Senza titolo",
     authors: authorNames,
-    cover_url: catalogue?.cover_url ?? (w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null),
+    cover_url:
+      catalogue?.cover_url ??
+      (w.covers?.[0] ? `https://covers.openlibrary.org/b/id/${w.covers[0]}-L.jpg` : null),
     published_year: catalogue?.published_year ?? null,
     page_count: catalogue?.page_count ?? null,
     cover_candidates: catalogue?.cover_candidates ?? [],
@@ -203,7 +281,15 @@ async function olGetBook(workId: string): Promise<Book> {
 
 // ---------- Public API ----------
 
-export async function searchBooks(query: string, opts: { max?: number; orderBy?: "relevance" | "newest"; startIndex?: number; language?: string | undefined } = {}) {
+export async function searchBooks(
+  query: string,
+  opts: {
+    max?: number;
+    orderBy?: "relevance" | "newest";
+    startIndex?: number;
+    language?: string | undefined;
+  } = {},
+) {
   if (!query.trim()) return [];
   const max = Math.max(1, Math.min(40, opts.max ?? 20));
   const params = new URLSearchParams({
@@ -213,7 +299,7 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
     startIndex: String(opts.startIndex ?? 0),
     printType: "books",
   });
-  applyBookLanguage(params,"google",opts.language);
+  applyBookLanguage(params, "google", opts.language);
   try {
     const out = await gbSearch({ data: { params: Object.fromEntries(params) } });
     if (out.status !== 200) {
@@ -231,7 +317,11 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
 }
 
 /** Work-level autocomplete: one request, no serial cover lookups on each keystroke. */
-export async function searchBookSuggestions(query: string, signal?: AbortSignal, language?: string): Promise<Book[]> {
+export async function searchBookSuggestions(
+  query: string,
+  signal?: AbortSignal,
+  language?: string,
+): Promise<Book[]> {
   const clean = query.trim();
   if (clean.length < 2) return [];
   if (/^(?:[\d\s-]{10,})$/.test(clean)) return bookSuggestions(await searchByIsbn(clean));
@@ -242,27 +332,36 @@ export async function searchBookSuggestions(query: string, signal?: AbortSignal,
       q: completion,
       limit: "20",
       ...(language ? { lang: language } : {}),
-      fields: "key,title,author_name,first_publish_year,cover_i,isbn,editions,editions.title,editions.cover_i,editions.isbn",
+      fields:
+        "key,title,author_name,first_publish_year,cover_i,isbn,editions,editions.title,editions.cover_i,editions.isbn",
     });
     const response = await fetch(`${OL_API}/search.json?${params}`, {
-      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(8000)])
+        : AbortSignal.timeout(8000),
     });
     if (!response.ok) throw new Error("Catalogo non disponibile");
-    const { docs = [] } = await response.json() as { docs?: OLDoc[] };
-    const books = docs.map(doc => {
-      const edition = doc.editions?.docs?.[0];
-      const localized: OLDoc = { ...doc };
-      if (edition?.title) localized.title = edition.title;
-      if (edition?.cover_i) localized.cover_i = edition.cover_i;
-      if (edition?.isbn) localized.isbn = edition.isbn;
-      return mapOLDoc(localized);
-    }).filter(book => matchesTitleCompletion(book.title, clean));
+    const { docs = [] } = (await response.json()) as { docs?: OLDoc[] };
+    const books = docs
+      .map((doc) => {
+        const edition = doc.editions?.docs?.[0];
+        const localized: OLDoc = { ...doc };
+        if (edition?.title) localized.title = edition.title;
+        if (edition?.cover_i) localized.cover_i = edition.cover_i;
+        if (edition?.isbn) localized.isbn = edition.isbn;
+        return mapOLDoc(localized);
+      })
+      .filter((book) => matchesTitleCompletion(book.title, clean));
     if (books.length) return bookSuggestions(books);
   } catch (error) {
     if (signal?.aborted) throw error;
   }
   // A second provider remains available during outages or gaps in the work catalogue.
-  return bookSuggestions((await searchBooks(clean, { max: 20, language })).filter(book => matchesTitleCompletion(book.title, clean)));
+  return bookSuggestions(
+    (await searchBooks(clean, { max: 20, language })).filter((book) =>
+      matchesTitleCompletion(book.title, clean),
+    ),
+  );
 }
 
 /** Enrich incomplete stored records while keeping their original ID and chosen cover. */
@@ -272,19 +371,28 @@ export async function enrichBook(book: Book): Promise<Book> {
     if (book.id.startsWith("ol:")) source = await olGetBook(book.id.slice(3));
     else {
       const isbn = book.id.startsWith("csv:isbn:") ? book.id.slice(9) : book.isbns?.[0];
-      const hits = await olSearch(isbn ? `isbn:${isbn}` : `intitle:"${book.title}" inauthor:"${book.authors[0] ?? ''}"`, 5);
-      source = isbn ? hits[0] : hits.find(hit => sameBook(book, hit));
+      const hits = await olSearch(
+        isbn ? `isbn:${isbn}` : `intitle:"${book.title}" inauthor:"${book.authors[0] ?? ""}"`,
+        5,
+      );
+      source = isbn ? hits[0] : hits.find((hit) => sameBook(book, hit));
       if (source?.id.startsWith("ol:")) source = await olGetBook(source.id.slice(3));
       else if (source && !source.description) {
         const detail = await gbVolume({ data: { id: source.id } });
-        if (detail.status === 200 && detail.json) source = mapVolume(JSON.parse(detail.json) as Volume);
+        if (detail.status === 200 && detail.json)
+          source = mapVolume(JSON.parse(detail.json) as Volume);
       }
     }
-  } catch { /* Cached metadata remains usable when providers fail. */ }
+  } catch {
+    /* Cached metadata remains usable when providers fail. */
+  }
   if (!source) return book;
   const candidates = [...new Set([...coverUrls(book), ...coverUrls(source)])];
-  return { ...book, cover_url: book.cover_url || source.cover_url,
-    cover_candidates: candidates, isbns: source.isbns ?? book.isbns ?? [],
+  return {
+    ...book,
+    cover_url: book.cover_url || source.cover_url,
+    cover_candidates: candidates,
+    isbns: source.isbns ?? book.isbns ?? [],
     description: descriptionText(book.description) || source.description,
     page_count: book.page_count ?? source.page_count,
     published_year: book.published_year ?? source.published_year,
@@ -292,10 +400,24 @@ export async function enrichBook(book: Book): Promise<Book> {
   };
 }
 
-export async function getBook(id: string): Promise<Book> {
+export async function getBook(id: string, language?: string): Promise<Book> {
   const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
   if (cached) {
     const book = cached as Book;
+    if (language && id.startsWith("ol:")) {
+      try {
+        const localized = await olGetBook(id.slice(3), language);
+        return {
+          ...book,
+          ...localized,
+          cover_url: book.cover_url || localized.cover_url,
+          description: descriptionText(book.description) || localized.description,
+        };
+      } catch {
+        /* Stored metadata remains available when localization fails. */
+      }
+    }
+
     // Search results often have no synopsis. Do not let that incomplete cache
     // permanently suppress the full work/edition description.
     const enriched = !book.description || !book.cover_url ? await enrichBook(book) : book;
@@ -304,13 +426,23 @@ export async function getBook(id: string): Promise<Book> {
       if (session.session) {
         // Only fill absent fields. Conditional writes protect choices made while
         // the remote lookup was running (for example a newly uploaded cover).
-        if (!book.description && enriched.description) await supabase.from("books").update({ description: enriched.description }).eq("id", id).is("description", null);
-        if (!book.cover_url && enriched.cover_url) await supabase.from("books").update({ cover_url: enriched.cover_url }).eq("id", id).is("cover_url", null);
+        if (!book.description && enriched.description)
+          await supabase
+            .from("books")
+            .update({ description: enriched.description })
+            .eq("id", id)
+            .is("description", null);
+        if (!book.cover_url && enriched.cover_url)
+          await supabase
+            .from("books")
+            .update({ cover_url: enriched.cover_url })
+            .eq("id", id)
+            .is("cover_url", null);
       }
     }
     return enriched;
   }
-  if (id.startsWith("ol:")) return olGetBook(id.slice(3));
+  if (id.startsWith("ol:")) return olGetBook(id.slice(3), language);
   const out = await gbVolume({ data: { id } });
   if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");
   const book = mapVolume(JSON.parse(out.json) as Volume);
@@ -341,7 +473,11 @@ export async function discoverBooks(opts: {
   if (opts.query?.trim()) parts.push(opts.query.trim());
   if (opts.genre && opts.genre !== "all") parts.push(`subject:"${opts.genre}"`);
   if (!parts.length) parts.push("subject:fiction");
-  const books = await searchBooks(parts.join(" "), { max: 30, orderBy: opts.order ?? "relevance", language: opts.language });
+  const books = await searchBooks(parts.join(" "), {
+    max: 30,
+    orderBy: opts.order ?? "relevance",
+    language: opts.language,
+  });
   if (opts.year && opts.year !== "all") {
     const from = Number(opts.year);
     return books.filter((b) => (b.published_year ?? 0) >= from);
@@ -351,7 +487,11 @@ export async function discoverBooks(opts: {
 
 /** Store the book in the shared catalogue so library rows can reference it. */
 export async function cacheBook(book: Book) {
-  const { data: existing } = await supabase.from("books").select("cover_url,description").eq("id", book.id).maybeSingle();
+  const { data: existing } = await supabase
+    .from("books")
+    .select("cover_url,description")
+    .eq("id", book.id)
+    .maybeSingle();
   const { error } = await supabase.from("books").upsert(
     {
       id: book.id,
@@ -414,7 +554,10 @@ export async function coverCandidates(book: Book, includeEditions = false): Prom
   const urls: string[] = [];
   urls.push(...coverUrls(book));
   const [g, o] = await Promise.allSettled([
-    searchBooks(`intitle:"${book.title}"${book.authors[0] ? ` inauthor:"${book.authors[0]}"` : ""}`, { max: 12 }),
+    searchBooks(
+      `intitle:"${book.title}"${book.authors[0] ? ` inauthor:"${book.authors[0]}"` : ""}`,
+      { max: 12 },
+    ),
     olSearch(q, 12),
   ]);
   for (const r of [g, o]) {
@@ -425,7 +568,7 @@ export async function coverCandidates(book: Book, includeEditions = false): Prom
   // the user opens the picker, rather than crowding autocomplete with duplicates.
   let workId = book.id.match(/^ol:(OL\d+W)$/)?.[1];
   if (!workId && o.status === "fulfilled") {
-    workId = o.value.find(candidate => sameBook(book, candidate))?.id.match(/^ol:(OL\d+W)$/)?.[1];
+    workId = o.value.find((candidate) => sameBook(book, candidate))?.id.match(/^ol:(OL\d+W)$/)?.[1];
   }
   if (includeEditions && workId) {
     try {
@@ -433,13 +576,15 @@ export async function coverCandidates(book: Book, includeEditions = false): Prom
         signal: AbortSignal.timeout(8000),
       });
       if (response.ok) {
-        const data = await response.json() as { entries?: { covers?: number[] }[] };
+        const data = (await response.json()) as { entries?: { covers?: number[] }[] };
         for (const edition of data.entries ?? [])
           for (const cover of edition.covers ?? [])
             if (Number.isSafeInteger(cover) && cover > 0)
               urls.push(`https://covers.openlibrary.org/b/id/${cover}-L.jpg`);
       }
-    } catch { /* Existing candidates remain selectable if editions are unavailable. */ }
+    } catch {
+      /* Existing candidates remain selectable if editions are unavailable. */
+    }
   }
   return Array.from(new Set(urls));
 }
@@ -462,9 +607,14 @@ export async function setBookCover(bookId: string, url: string) {
 export async function uploadCover(userId: string, bookId: string, file: File) {
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${userId}/${bookId.replace(/[^A-Za-z0-9_-]/g, "")}-${Date.now()}.${ext || "jpg"}`;
-  const { error } = await supabase.storage.from("covers").upload(path, file, { upsert: true, contentType: file.type });
+  const { error } = await supabase.storage
+    .from("covers")
+    .upload(path, file, { upsert: true, contentType: file.type });
   if (error) throw error;
-  const { data, error: signErr } = await supabase.storage.from("covers").createSignedUrl(path, 60 * 60 * 24 * 3650);
-  if (signErr || !data?.signedUrl) throw signErr ?? new Error("Impossibile creare il link dell'immagine");
+  const { data, error: signErr } = await supabase.storage
+    .from("covers")
+    .createSignedUrl(path, 60 * 60 * 24 * 3650);
+  if (signErr || !data?.signedUrl)
+    throw signErr ?? new Error("Impossibile creare il link dell'immagine");
   return data.signedUrl;
 }

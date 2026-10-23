@@ -36,16 +36,22 @@ export function parseFollowedAuthors(raw: unknown): FollowedAuthor[] {
 export async function changeFollowedAuthor(
   client: SupabaseClient<Database>,
   userId: string,
-  author: { id: string; name: string },
+  author: { id: string; name: string; ids?: string[] },
   follow: boolean,
 ) {
   const { data, error } = await client.auth.getUser();
   if (error) throw error;
   if (data.user?.id !== userId) throw new Error("Accedi di nuovo per salvare l’autore.");
   const previous = parseFollowedAuthors(data.user.user_metadata[AUTHORS_FIELD]);
-  if (follow && previous.some((a) => a.id === author.id)) return previous;
+  const ids = new Set([author.id, ...(author.ids ?? []).filter((id) => /^OL\d+A$/.test(id))]);
+  if (
+    follow &&
+    previous.some((a) => a.id === author.id) &&
+    !previous.some((a) => a.id !== author.id && ids.has(a.id))
+  )
+    return previous;
   if (follow && previous.length >= 80) throw new Error("Puoi seguire fino a 80 autori.");
-  const next = previous.filter((a) => a.id !== author.id);
+  const next = previous.filter((a) => !ids.has(a.id));
   if (follow) {
     const valid = parseFollowedAuthors([{ ...author, followedAt: new Date().toISOString() }]);
     if (!valid.length) throw new Error("Autore non valido.");

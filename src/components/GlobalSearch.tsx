@@ -19,6 +19,8 @@ export function GlobalSearch() {
   const [active, setActive] = useState(-1);
   const [scanning, setScanning] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [resultHeight, setResultHeight] = useState(320);
   const navigate = useNavigate();
   const { user } = useAuth();
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
@@ -50,9 +52,9 @@ export function GlobalSearch() {
   });
 
   const authors = useQuery({
-    queryKey: ["author-candidates", debounced.trim()],
-    enabled: debounced.trim().length >= 2 && !/^[\d\s-]+$/.test(debounced),
-    queryFn: () => findAuthors(debounced.trim()),
+    queryKey: ["author-candidates-v2", debounced.trim(), language ?? "any"],
+    enabled: languageReady && debounced.trim().length >= 3 && !/^[\d\s-]+$/.test(debounced),
+    queryFn: ({ signal }) => findAuthors(debounced.trim(), language, signal),
     staleTime: 3600000,
     retry: false,
   });
@@ -65,6 +67,43 @@ export function GlobalSearch() {
   ];
   const current = debounced.trim().length >= 2 && term.trim() === debounced.trim();
   const visible = open && current;
+  const optionIds = options
+    .map((option) => (option.kind === "author" ? `a:${option.author.id}` : `b:${option.book.id}`))
+    .join("|");
+  useEffect(() => setActive(-1), [optionIds]);
+  useEffect(() => {
+    if (!visible) return;
+    const update = () => {
+      const rect = boxRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const viewport = window.visualViewport;
+      const viewportBottom = (viewport?.height ?? window.innerHeight) + (viewport?.offsetTop ?? 0);
+      const navigation = document
+        .querySelector<HTMLElement>(".mobile-nav")
+        ?.getBoundingClientRect();
+      const bottom =
+        navigation && navigation.height > 0
+          ? Math.min(viewportBottom, navigation.top)
+          : viewportBottom;
+      setResultHeight(Math.max(80, Math.min(440, bottom - rect.bottom - 12)));
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
+    };
+  }, [visible]);
+  useEffect(() => {
+    if (visible && active >= 0)
+      resultsRef.current
+        ?.querySelector<HTMLElement>(`#book-search-option-${active}`)
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [active, visible, resultHeight]);
+
   function choose(index: number) {
     const option = options[index];
     if (!option) return;
@@ -135,6 +174,12 @@ export function GlobalSearch() {
             setActive((i) =>
               i < 0 ? options.length - 1 : (i - 1 + options.length) % options.length,
             );
+          } else if (e.key === "Home" && visible && options.length && active >= 0) {
+            e.preventDefault();
+            setActive(0);
+          } else if (e.key === "End" && visible && options.length && active >= 0) {
+            e.preventDefault();
+            setActive(options.length - 1);
           } else if (e.key === "Enter" && visible && options.length) {
             e.preventDefault();
             choose(Math.max(0, active));
@@ -157,10 +202,12 @@ export function GlobalSearch() {
       )}
       {visible && (
         <div
+          ref={resultsRef}
           role="listbox"
           id="global-search-results"
           aria-label="Risultati libri e autori"
-          className="absolute z-50 mt-2 w-full max-h-[min(70vh,32rem)] overflow-y-auto rounded-xl border border-border bg-popover shadow-paper"
+          style={{ maxHeight: resultHeight, WebkitOverflowScrolling: "touch" }}
+          className="absolute z-50 mt-2 w-full touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover shadow-paper"
         >
           {isError && (
             <p role="alert" className="px-3 py-3 text-sm text-destructive">

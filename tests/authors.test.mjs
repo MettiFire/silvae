@@ -119,3 +119,22 @@ test("author biography is rendered as plain text and invalid photo ids are ignor
   assert.equal(a.bio, "Biography");
   assert.equal(a.photo, null);
 });
+
+test("bibliography selects a translated edition and keeps the author readable in the selected language", async t => {
+  const previous=global.fetch;t.after(()=>global.fetch=previous);
+  global.fetch=async url=>{
+    const params=new URL(url).searchParams;
+    assert.match(params.get('q'),/language:ita/);assert.equal(params.get('lang'),'it');
+    assert.match(params.get('fields'),/editions.title/);
+    return{ok:true,json:async()=>({numFound:1,docs:[{key:'/works/OL1W',title:'Преступление и наказание',author_name:['Фёдор Достоевский'],author_key:['OL22242A'],cover_i:1,isbn:['old'],editions:{docs:[{title:'Delitto e castigo',cover_i:2,isbn:['9781234567890']}]}}]})};
+  };
+  const result=await getAuthorBooks('OL22242A',0,'popular',{language:'it',displayName:'Fiódor Dostoievski'});
+  assert.equal(result.books[0].title,'Delitto e castigo');assert.deepEqual(result.books[0].authors,['Fiódor Dostoievski']);
+  assert.match(result.books[0].cover_url,/2-L.jpg/);assert.deepEqual(result.books[0].isbns,['9781234567890']);
+});
+test("unfollowing a unified author removes previously followed duplicate ids", async () => {
+  const c=client();await changeFollowedAuthor(c,'reader',author,true);
+  await changeFollowedAuthor(c,'reader',{...author,id:'OL123A'},true);
+  await changeFollowedAuthor(c,'reader',{...author,ids:[author.id,'OL123A']},false);
+  assert.equal(c.data[AUTHORS_FIELD].length,0);
+});
