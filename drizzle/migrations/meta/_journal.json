@@ -64,6 +64,13 @@
       "when": 1792762291974,
       "tag": "0008_noop_check",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792762327161,
+      "tag": "0009_book_clubs_regrant",
+      "breakpoints": true
     }
   ]
 }
