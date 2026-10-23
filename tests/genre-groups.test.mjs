@@ -22,3 +22,4 @@ test('ebook ownership survives preference storage and an explicit No hides only 
  assert.equal(showEbookProgress(emptyPreferences()),true);assert.equal(showEbookProgress(null),true);
  assert.deepEqual(parsePreferences({...no,ebookDevices:['kobo','kobo','bad',42]}).ebookDevices,['kobo']);
 });
+test('manga series do not become prose novels solely because the category says graphic novels',()=>{assert.deepEqual(genreGroups(['Manga','Comics & Graphic Novels']),['comics']);});

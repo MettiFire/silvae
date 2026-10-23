@@ -1,3 +1,5 @@
+import { mangaCatalogue } from "./manga.functions";
+import { isMangaId, type MangaDetails } from "./manga-model";
 import { genreQuery } from "./genre-groups.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
 import {
@@ -12,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
 
 export type Book = {
+  manga?: MangaDetails;
   id: string;
   title: string;
   authors: string[];
@@ -403,6 +406,26 @@ export async function enrichBook(book: Book): Promise<Book> {
 
 export async function getBook(id: string, language?: string): Promise<Book> {
   const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
+  if (isMangaId(id)) {
+    try {
+      const manga = (
+        await mangaCatalogue({ data: { id: id.slice(9), ...(language ? { language } : {}) } })
+      )[0];
+      if (manga) return { ...manga, cover_url: cached?.cover_url || manga.cover_url };
+    } catch (error) {
+      if (!cached) throw error;
+    }
+    if (cached)
+      return {
+        ...(cached as Book),
+        manga: {
+          totalVolumes: null,
+          status: "unknown",
+          source: `https://mangadex.org/title/${id.slice(9)}`,
+        },
+      };
+    throw Error("Serie non trovata");
+  }
   if (cached) {
     const book = cached as Book;
     if (language && id.startsWith("ol:")) {

@@ -1,3 +1,5 @@
+import { MangaProgressLabel } from "@/components/MangaTracker";
+import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw } from "lucide-react";
@@ -101,12 +103,16 @@ function Home() {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {item.books?.authors.join(", ")}
                       </p>
-                      <ProgressBar
-                        className="mt-5"
-                        current={item.current_page}
-                        percentage={item.progress_percent}
-                        total={item.total_pages ?? item.books?.page_count ?? 0}
-                      />
+                      {isMangaId(item.book_id) ? (
+                        <MangaProgressLabel bookId={item.book_id} />
+                      ) : (
+                        <ProgressBar
+                          className="mt-5"
+                          current={item.current_page}
+                          percentage={item.progress_percent}
+                          total={item.total_pages ?? item.books?.page_count ?? 0}
+                        />
+                      )}
                     </div>
                     <ArrowRight size={16} className="hidden shrink-0 sm:block" />
                   </Link>

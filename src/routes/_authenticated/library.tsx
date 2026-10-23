@@ -1,3 +1,5 @@
+import { MangaProgressLabel } from "@/components/MangaTracker";
+import { isMangaId } from "@/lib/manga-model";
 import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
@@ -39,6 +41,7 @@ function LibraryPage() {
   const [onlyFav, setOnlyFav] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [genre, setGenre] = useState("all");
+  const [format, setFormat] = useState("all");
   const [year, setYear] = useState("all");
 
   const genres = useMemo(() => {
@@ -58,6 +61,8 @@ function LibraryPage() {
   const filtered = sortLibrary(
     items.filter((i) => {
       if (i.status !== tab) return false;
+      if (format === "manga" && !isMangaId(i.book_id)) return false;
+      if (format === "books" && isMangaId(i.book_id)) return false;
       if (onlyReview && !i.needs_review) return false;
       if (onlyFav && !i.favorite) return false;
       if (minRating && Number(i.rating ?? 0) < minRating) return false;
@@ -106,6 +111,19 @@ function LibraryPage() {
           aria-label="Cerca nella libreria"
           className="h-9 min-w-[200px] flex-1 rounded-lg border border-border bg-card px-3 text-sm"
         />
+        <select
+          aria-label="Formato"
+          value={format}
+          onChange={(e) => {
+            setFormat(e.target.value);
+            setVisible(40);
+          }}
+          className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
+        >
+          <option value="all">Libri e manga</option>
+          <option value="books">Solo libri</option>
+          <option value="manga">Serie manga</option>
+        </select>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} />{" "}
           Preferiti
@@ -230,13 +248,17 @@ function LibraryPage() {
                 {i.needs_review && (
                   <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>
                 )}
-                {i.status === "reading" && (
-                  <ProgressBar
-                    className="mt-2 max-w-sm"
-                    percentage={i.progress_percent}
-                    current={i.current_page}
-                    total={i.total_pages ?? 0}
-                  />
+                {isMangaId(i.book_id) ? (
+                  <MangaProgressLabel bookId={i.book_id} />
+                ) : (
+                  i.status === "reading" && (
+                    <ProgressBar
+                      className="mt-2 max-w-sm"
+                      percentage={i.progress_percent}
+                      current={i.current_page}
+                      total={i.total_pages ?? 0}
+                    />
+                  )
                 )}
               </div>
               <BookmarkRating
@@ -264,14 +286,18 @@ function LibraryPage() {
                     {i.needs_review && (
                       <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>
                     )}
-                    {i.status === "reading" && (
-                      <ProgressBar
-                        className="mt-1"
-                        percentage={i.progress_percent}
-                        current={i.current_page}
-                        total={i.total_pages ?? 0}
-                        showLabel={false}
-                      />
+                    {isMangaId(i.book_id) ? (
+                      <MangaProgressLabel bookId={i.book_id} />
+                    ) : (
+                      i.status === "reading" && (
+                        <ProgressBar
+                          className="mt-1"
+                          percentage={i.progress_percent}
+                          current={i.current_page}
+                          total={i.total_pages ?? 0}
+                          showLabel={false}
+                        />
+                      )
                     )}
                   </>
                 }

@@ -1,3 +1,5 @@
+import { decodeMangaProgress } from "@/lib/manga-account";
+import { MANGA_FIELD, isMangaId, readVolumes } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -33,6 +35,12 @@ function Stats() {
   const { user } = useAuth();
   const { data: items = [], isLoading, isError } = useLibrary(user?.id);
 
+  const mangaState = decodeMangaProgress(user?.user_metadata[MANGA_FIELD]);
+  const mangaItems = items.filter((item) => isMangaId(item.book_id));
+  const mangaVolumes = mangaItems.reduce(
+    (sum, item) => sum + readVolumes(mangaState[item.book_id]).length,
+    0,
+  );
   const [year, setYear] = useState(new Date().getFullYear());
   const stats = useMemo(() => readingStatistics(items, year), [items, year]);
 
@@ -66,6 +74,12 @@ function Stats() {
         <Card label="Pagine dei libri letti" value={stats.totalPages} />
         <Card label="Tempo stimato" value={`${stats.hours} h`} hint="Stima a 40 pagine all’ora" />
         <Card label="Ritmo medio" value={stats.pace == null ? "—" : `${stats.pace} pag/g`} />
+        <Card label="Serie manga in libreria" value={mangaItems.length} />
+        <Card
+          label="Volumi manga letti"
+          value={mangaVolumes}
+          hint="Totale delle serie in libreria; i volumi non sono contati come libri separati"
+        />
         <Card label="Ultimi 7 giorni" value={stats.last7} />
         <Card label="Ultimi 30 giorni" value={stats.last30} />
         <Card label="Ultimi 90 giorni" value={stats.last90} />

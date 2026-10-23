@@ -1,3 +1,5 @@
+import { MangaTracker } from "@/components/MangaTracker";
+import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -150,6 +152,7 @@ function BookPage() {
     );
   }
 
+  const manga = isMangaId(bookId);
   const totalPages = item?.total_pages ?? book.page_count ?? 0;
 
   const setStatus = (status: ReadingStatus) => {
@@ -262,22 +265,34 @@ function BookPage() {
           )}
           {user && (
             <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(STATUS_LABEL) as ReadingStatus[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatus(s)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-                      item?.status === s
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card hover:bg-accent"
-                    }`}
-                  >
-                    {STATUS_LABEL[s]}
-                  </button>
-                ))}
-              </div>
+              {!manga ? (
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(STATUS_LABEL) as ReadingStatus[]).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setStatus(s)}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                        item?.status === s
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card hover:bg-accent"
+                      }`}
+                    >
+                      {STATUS_LABEL[s]}
+                    </button>
+                  ))}
+                </div>
+              ) : !item ? (
+                <button
+                  className="button-ink w-full"
+                  disabled={save.isPending}
+                  onClick={() => setStatus("to_read")}
+                >
+                  {save.isPending ? "Salvataggio…" : "Aggiungi serie alla libreria"}
+                </button>
+              ) : (
+                <p className="text-sm text-primary">Serie · {STATUS_LABEL[item.status]}</p>
+              )}
               <AddToListMenu book={book} />
               {item && (
                 <div className="flex items-center gap-2">
@@ -323,7 +338,7 @@ function BookPage() {
         </div>
 
         <div className="min-w-0">
-          <p className="eyebrow mb-4">Dalla biblioteca</p>
+          <p className="eyebrow mb-4">{manga ? "Serie manga" : "Dalla biblioteca"}</p>
           <h1 className="font-display text-4xl font-normal leading-tight tracking-tight lg:text-5xl">
             {book.title}
           </h1>
@@ -342,7 +357,20 @@ function BookPage() {
             ))}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {[book.published_year, book.page_count ? `${book.page_count} pagine` : null]
+            {[
+              book.published_year,
+              book.page_count ? `${book.page_count} pagine` : null,
+              book.manga?.totalVolumes
+                ? `${book.manga.totalVolumes} volumi (edizione originale)`
+                : null,
+              book.manga
+                ? book.manga.status === "completed"
+                  ? "Serie conclusa"
+                  : book.manga.status === "ongoing"
+                    ? "In corso di pubblicazione"
+                    : "Stato della serie da verificare"
+                : null,
+            ]
               .filter(Boolean)
               .join(" · ")}
           </p>
@@ -397,7 +425,7 @@ function BookPage() {
             </div>
           )}
 
-          {item && canUpdateReading(item) && (
+          {!manga && item && canUpdateReading(item) && (
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
               <p className="mb-2 font-display font-semibold">Progresso di lettura</p>
               <ProgressBar
@@ -432,7 +460,7 @@ function BookPage() {
             </div>
           )}
 
-          {item && canUpdateReading(item) && (
+          {!manga && item && canUpdateReading(item) && (
             <ReadingProgress
               key={`${item.id}:${item.reading_session_id}:${item.progress_updated_at}`}
               item={item}
@@ -443,7 +471,22 @@ function BookPage() {
             <ReadingDates key={`${item.id}:${item.started_at}:${item.finished_at}`} item={item} />
           )}
 
-          <h2 className="mt-6 font-display text-lg font-semibold">Descrizione del libro</h2>
+          {manga && book.manga && (
+            <>
+              <MangaTracker book={book} item={item} />
+              <a
+                className="mt-3 inline-block text-xs text-muted-foreground underline"
+                href={book.manga.source}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Dati della serie da MangaDex
+              </a>
+            </>
+          )}
+          <h2 className="mt-6 font-display text-lg font-semibold">
+            {manga ? "Descrizione della serie" : "Descrizione del libro"}
+          </h2>
           {!book.description && (
             <p className="mt-2 text-sm text-muted-foreground">
               Nessuna descrizione disponibile nei cataloghi consultati per questo libro.
@@ -547,7 +590,7 @@ function BookPage() {
           </section>
         </div>
       </div>
-      <RelatedBooks key={book.id} book={book} />
+      {!manga && <RelatedBooks key={book.id} book={book} />}
     </AppShell>
   );
 }

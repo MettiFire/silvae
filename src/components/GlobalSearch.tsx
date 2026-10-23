@@ -1,7 +1,8 @@
+import { mangaCatalogue } from "@/lib/manga.functions";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ScanBarcode, Search, UserRound } from "lucide-react";
+import { ScanBarcode, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { authorSearchResults } from "@/lib/author-search";
 import { findAuthors } from "@/lib/authors";
@@ -14,6 +15,7 @@ import { BookCover } from "@/components/BookCard";
 
 export function GlobalSearch() {
   const [term, setTerm] = useState("");
+  const [mode, setMode] = useState<"books" | "manga">("books");
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -45,7 +47,7 @@ export function GlobalSearch() {
     isError,
   } = useQuery({
     queryKey: ["global-search-works", debounced, language ?? "any"],
-    enabled: languageReady && debounced.trim().length >= 2,
+    enabled: mode === "books" && languageReady && debounced.trim().length >= 2,
     queryFn: ({ signal }) => searchBookSuggestions(debounced, signal, language),
     staleTime: 5 * 60 * 1000,
     retry: false,
@@ -53,17 +55,33 @@ export function GlobalSearch() {
 
   const authors = useQuery({
     queryKey: ["author-candidates-v2", debounced.trim(), language ?? "any"],
-    enabled: languageReady && debounced.trim().length >= 3 && !/^[\d\s-]+$/.test(debounced),
+    enabled:
+      mode === "books" &&
+      languageReady &&
+      debounced.trim().length >= 3 &&
+      !/^[\d\s-]+$/.test(debounced),
     queryFn: ({ signal }) => findAuthors(debounced.trim(), language, signal),
     staleTime: 3600000,
     retry: false,
   });
-  const authorResults = /^[\d\s-]+$/.test(debounced)
-    ? []
-    : authorSearchResults(authors.data ?? [], 3, debounced);
+  const manga = useQuery({
+    queryKey: ["manga-search", debounced, language ?? "it"],
+    enabled: mode === "manga" && debounced.trim().length >= 2,
+    queryFn: () =>
+      mangaCatalogue({ data: { query: debounced, ...(language ? { language } : {}) } }),
+    staleTime: 3600000,
+    retry: false,
+  });
+  const visibleResults = mode === "manga" ? (manga.data ?? []) : results;
+  const fetching = mode === "manga" ? manga.isFetching : isFetching;
+  const searchError = mode === "manga" ? manga.isError : isError;
+  const authorResults =
+    mode === "manga" || /^[\d\s-]+$/.test(debounced)
+      ? []
+      : authorSearchResults(authors.data ?? [], 3, debounced);
   const options = [
     ...authorResults.map((author) => ({ kind: "author" as const, author })),
-    ...results.map((book) => ({ kind: "book" as const, book })),
+    ...visibleResults.map((book) => ({ kind: "book" as const, book })),
   ];
   const current = debounced.trim().length >= 2 && term.trim() === debounced.trim();
   const visible = open && current;
@@ -140,7 +158,19 @@ export function GlobalSearch() {
 
   return (
     <div ref={boxRef} className="relative w-full max-w-xl">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <select
+        aria-label="Tipo di ricerca"
+        value={mode}
+        onChange={(e) => {
+          setMode(e.target.value as "books" | "manga");
+          setActive(-1);
+          setOpen(true);
+        }}
+        className="absolute left-2 top-1/2 z-10 h-7 w-20 -translate-y-1/2 rounded border-0 bg-card pl-1 text-xs"
+      >
+        <option value="books">Libri</option>
+        <option value="manga">Manga</option>
+      </select>
       <input
         value={term}
         onChange={(e) => {
@@ -150,8 +180,8 @@ export function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)}
-        placeholder="Cerca libri, autori…"
-        aria-label="Cerca libri e autori"
+        placeholder={mode === "manga" ? "Cerca una serie manga…" : "Cerca libri, autori…"}
+        aria-label={mode === "manga" ? "Cerca manga" : "Cerca libri e autori"}
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={visible}
@@ -186,17 +216,19 @@ export function GlobalSearch() {
           }
         }}
 
-        className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+        className="h-10 w-full rounded-xl border border-border bg-card pl-24 pr-11 text-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
       />
-      <button
-        type="button"
-        onClick={() => setScanning(true)}
-        aria-label="Scansiona codice a barre"
-        title="Scansiona codice a barre"
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-primary"
-      >
-        <ScanBarcode className="h-4 w-4" />
-      </button>
+      {mode === "books" && (
+        <button
+          type="button"
+          onClick={() => setScanning(true)}
+          aria-label="Scansiona codice a barre"
+          title="Scansiona codice a barre"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-primary"
+        >
+          <ScanBarcode className="h-4 w-4" />
+        </button>
+      )}
       {scanning && (
         <BarcodeScanner onDetected={(c) => void handleScan(c)} onClose={() => setScanning(false)} />
       )}
@@ -209,18 +241,21 @@ export function GlobalSearch() {
           style={{ maxHeight: resultHeight, WebkitOverflowScrolling: "touch" }}
           className="absolute z-50 mt-2 w-full touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover shadow-paper"
         >
-          {isError && (
+          {searchError && (
             <p role="alert" className="px-3 py-3 text-sm text-destructive">
-              Ricerca libri non disponibile. Riprova tra poco.
+              Ricerca non disponibile. Riprova tra poco.
             </p>
           )}
-          {(isFetching || authors.isFetching) && (
+          {(fetching || (mode === "books" && authors.isFetching)) && (
             <p className="px-3 py-3 text-sm text-muted-foreground">Ricerca in corso…</p>
           )}
-          {!isFetching && !authors.isFetching && !isError && options.length === 0 && (
-            <p className="px-3 py-3 text-sm text-muted-foreground">Nessun risultato</p>
-          )}
-          {authors.isError && (
+          {!fetching &&
+            !(mode === "books" && authors.isFetching) &&
+            !searchError &&
+            options.length === 0 && (
+              <p className="px-3 py-3 text-sm text-muted-foreground">Nessun risultato</p>
+            )}
+          {mode === "books" && authors.isError && (
             <p role="status" className="px-3 py-2 text-xs text-muted-foreground">
               Ricerca autori temporaneamente non disponibile.
             </p>
@@ -247,12 +282,14 @@ export function GlobalSearch() {
               </span>
             </button>
           ))}
-          {results.length > 0 && (
+          {visibleResults.length > 0 && (
             <p className="px-3 py-2 text-[11px] text-muted-foreground">
-              Libri · Le copertine alternative sono nella scheda del libro
+              {mode === "manga"
+                ? "Serie manga · un risultato per serie, non per volume"
+                : "Libri · Le copertine alternative sono nella scheda del libro"}
             </p>
           )}
-          {results.map((b, index) => (
+          {visibleResults.map((b, index) => (
             <button
               key={b.id}
               id={`book-search-option-${index + authorResults.length}`}

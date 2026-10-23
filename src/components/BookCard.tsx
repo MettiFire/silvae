@@ -1,3 +1,4 @@
+import { isMangaId } from "@/lib/manga-model";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
@@ -119,6 +120,11 @@ export function BookCard({
         <div className="cover-wrap relative overflow-hidden">
           <BookCover book={book} />
         </div>
+        {isMangaId(book.id) && (
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
+            Serie manga
+          </p>
+        )}
         <h3
           className={cn(
             "mt-2 line-clamp-2 font-display font-semibold leading-snug",

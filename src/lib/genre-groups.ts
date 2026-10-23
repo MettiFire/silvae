@@ -69,7 +69,7 @@ export function genreGroups(categories: readonly string[]) {
         group.id === "nonfiction"
           ? category.replace(/science fiction|fantascienza/g, "").replace(/historical fiction/g, "")
           : group.id === "fiction"
-            ? category.replace(/non[ -]?fiction/g, "")
+            ? category.replace(/non[ -]?fiction/g, "").replace(/graphic novels?/g, "")
             : category,
       ),
     ),
