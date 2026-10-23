@@ -1,3 +1,4 @@
+import { verifiedAuthorIdentity } from "./verified-author-identities.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
 import { authorCountryKey } from "./author-country-key.ts";
 import {
@@ -87,6 +88,15 @@ export async function findAuthors(
     );
 }
 export function defaultAuthor(candidates: AuthorCandidate[], name: string): string | null {
+  const authority = verifiedAuthorIdentity(name);
+  if (
+    authority &&
+    candidates.some(
+      (candidate) =>
+        candidate.id === authority.openLibrary || candidate.ids?.includes(authority.openLibrary),
+    )
+  )
+    return authority.openLibrary;
   const groups = groupAuthors(candidates);
   const exact = groups.filter((author) =>
     authorAliases(author).some((alias) => authorCountryKey(alias) === authorCountryKey(name)),

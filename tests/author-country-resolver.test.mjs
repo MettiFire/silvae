@@ -22,3 +22,11 @@ test('multiple documented citizenships survive; deprecated claims and unsupporte
   entity:async id=>id==='Q1'?{claims:{P27:[claim({id:'Q2'}),claim({id:'Q3'}),claim({id:'Q4'}),claim({id:'Q5'},'deprecated')]}}:{claims:{P297:[claim(({Q2:'GB',Q3:'US',Q4:'SU',Q5:'IT'})[id])]}}
  });assert.deepEqual(result,['GB','US']);
 });
+test('reviewed Murakami identity resolves Japan despite conflicting catalogue birthdays and reversed names',async()=>{
+ for(const name of ['Haruki Murakami','Murakami, Haruki','村上春樹']){
+  const codes=await catalogueAuthorCountries(name,{
+   search:async()=>{throw Error('Reviewed identifier does not need ambiguous name search');},author:async()=>{throw Error('Reviewed Wikidata identifier already available');},
+   entity:async id=>{assert.ok(['Q134798','Q17'].includes(id));return id==='Q134798'?{claims:{P27:[claim({id:'Q17'})]}}:{claims:{P297:[claim('JP')]}};}
+  });assert.deepEqual(codes,['JP']);
+ }
+});

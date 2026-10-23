@@ -1,3 +1,4 @@
+import { countryFlag, countryReadingGroups } from "@/lib/challenge-country-display";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -99,7 +100,7 @@ export function ChallengeExplorer({
   );
   const countryQueries = useQueries({
     queries: authors.map((name) => ({
-      queryKey: ["author-countries-v2", authorCountryKey(name)],
+      queryKey: ["author-countries-v3", authorCountryKey(name)],
       queryFn: () => resolveAuthorCountries({ data: name }),
       enabled: active === "countries" || enrollments.some((e) => e.id === "countries"),
       staleTime: 5 * 60000,
@@ -302,13 +303,24 @@ export function ChallengeExplorer({
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-x-hidden overflow-y-auto [&>*]:min-w-0">
           {definition && draft && progress && (
             <>
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl">{definition.name}</DialogTitle>
                 <DialogDescription>{definition.description}</DialogDescription>
               </DialogHeader>
+              {draft.id === "nobel" && (
+                <div className="rounded-xl border border-border bg-accent/30 p-4 text-sm leading-relaxed">
+                  <p className="font-medium">Un autore Nobel, una lettura a tua scelta</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Ogni tappa rappresenta un autore premiato, nell’anno in cui ha ricevuto il
+                    Nobel. Basta una sua opera segnata come Letta, anche letta prima
+                    dell’iscrizione. Altri suoi libri non aggiungono tappe: la percentuale indica
+                    quanti autori premiati hai letto, non quanti libri.
+                  </p>
+                </div>
+              )}
               {!enrolled ? (
                 <div className="space-y-5 rounded-xl border border-border bg-card p-4">
                   <h3 className="font-semibold">
@@ -522,7 +534,7 @@ export function ChallengeExplorer({
                   </p>
                 </div>
               )}
-              <div className="mt-3">
+              <div className="mt-3 min-w-0">
                 <h3 className="mb-3 font-display text-lg font-bold">Le tappe del percorso</h3>
                 <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
                   Le corrispondenze sicure avanzano automaticamente dai libri segnati come Letto.
@@ -550,19 +562,61 @@ export function ChallengeExplorer({
                     automaticamente.
                   </p>
                 )}
-                <div className="space-y-3">
-                  {progress.slots.slice(0, slotLimit).map((slot) => (
-                    <SlotRow
-                      key={slot.id}
-                      slot={slot}
-                      enrollment={draft}
-                      library={library}
-                      joined={!!enrolled}
-                      saving={saving}
-                      onAssign={(value) => assign(slot, value)}
-                    />
-                  ))}
-                </div>
+                {definition.kind === "award" && draft.id !== "nobel" ? (
+                  <>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Scorri lungo il filo per attraversare gli anni. Apri i dettagli di una tappa
+                      per trovare o associare il libro.
+                    </p>
+                    <div
+                      className="award-trail"
+                      role="list"
+                      aria-label="Percorso dei libri premiati"
+                      tabIndex={0}
+                    >
+                      {progress.slots.slice(0, slotLimit).map((slot) => (
+                        <div
+                          role="listitem"
+                          key={slot.id}
+                          className={`award-stop ${slot.completed ? "is-complete" : ""}`}
+                        >
+                          <div className="award-stop-rail" aria-hidden="true">
+                            <span>
+                              {slot.completed ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                              )}
+                            </span>
+                          </div>
+                          <SlotRow
+                            trail
+                            slot={slot}
+                            enrollment={draft}
+                            library={library}
+                            joined={!!enrolled}
+                            saving={saving}
+                            onAssign={(value) => assign(slot, value)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    {progress.slots.slice(0, slotLimit).map((slot) => (
+                      <SlotRow
+                        key={slot.id}
+                        slot={slot}
+                        enrollment={draft}
+                        library={library}
+                        joined={!!enrolled}
+                        saving={saving}
+                        onAssign={(value) => assign(slot, value)}
+                      />
+                    ))}
+                  </div>
+                )}
                 {progress.total > slotLimit && (
                   <button
                     className={`${buttonClass} mt-4 w-full`}
@@ -639,7 +693,9 @@ function SlotRow({
   joined,
   saving,
   onAssign,
+  trail = false,
 }: {
+  trail?: boolean;
   slot: ResolvedSlot;
   enrollment: ChallengeEnrollment;
   library: LibraryItem[];
@@ -650,6 +706,7 @@ function SlotRow({
   const [bookId, setBookId] = useState(slot.assignment?.bookId ?? "");
   const [country, setCountry] = useState(slot.country ?? "");
   const [showAssign, setShowAssign] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const fixed = slot.fixedBookId
     ? library.find((item) => item.book_id === slot.fixedBookId)
     : undefined;
@@ -659,15 +716,37 @@ function SlotRow({
     : (fixed?.books?.title ?? (slot.country ? countryName(slot.country) : slot.label));
   return (
     <article
-      className={`rounded-xl border p-4 ${slot.completed ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
+      className={`${trail ? "award-stop-card" : "rounded-xl border p-4"} ${slot.completed ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
     >
       <div className="flex items-start gap-3">
-        <span
-          className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${slot.completed ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
-        >
-          {slot.completed ? <Check className="h-4 w-4" /> : <BookOpen className="h-3.5 w-3.5" />}
-        </span>
-        {winner?.cover && (
+        {!trail && (
+          <span
+            className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${slot.completed ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
+          >
+            {slot.completed ? <Check className="h-4 w-4" /> : <BookOpen className="h-3.5 w-3.5" />}
+          </span>
+        )}
+        {trail && winner && (
+          <BookCover
+            className="h-28 w-20 shrink-0 rounded"
+            fit="contain"
+            book={{
+              id: `award:${winner.id}`,
+              title: winner.title ?? winner.author,
+              authors: [winner.author],
+              cover_url:
+                slot.completed?.books?.custom_cover_url ??
+                slot.completed?.books?.cover_url ??
+                winner.cover ??
+                null,
+              published_year: null,
+              page_count: null,
+              categories: [],
+              description: null,
+            }}
+          />
+        )}
+        {!trail && winner?.cover && (
           <img
             src={winner.cover}
             alt={`Copertina di ${winner.title}`}
@@ -676,7 +755,11 @@ function SlotRow({
             decoding="async"
             referrerPolicy="no-referrer"
             loading="lazy"
-            className="hidden h-20 w-14 shrink-0 rounded-md object-cover sm:block"
+            className={
+              trail
+                ? "h-28 w-20 shrink-0 rounded object-cover"
+                : "hidden h-20 w-14 shrink-0 rounded-md object-cover sm:block"
+            }
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
@@ -687,14 +770,24 @@ function SlotRow({
             {slot.label}
             {slot.options.length > 1 ? " · vincitori ex aequo: scegli un libro" : ""}
           </p>
-          <h4 className="mt-1 font-display font-semibold">{title}</h4>
+          <h4
+            className={`mt-1 font-display font-semibold ${trail ? "line-clamp-3 leading-snug" : ""}`}
+            title={title}
+          >
+            {enrollment.id === "countries" && slot.country && (
+              <span className="country-flag mr-2" aria-hidden="true">
+                {countryFlag(slot.country)}
+              </span>
+            )}
+            {title}
+          </h4>
           {winner?.title && <p className="text-sm text-muted-foreground">{winner.author}</p>}
           {slot.options.slice(1).map((option) => (
             <p key={option.id} className="mt-1 text-sm">
               oppure {option.title} — {option.author}
             </p>
           ))}
-          {slot.completed && (
+          {slot.completed && enrollment.id !== "countries" && (
             <Link
               to="/book/$bookId"
               params={{ bookId: slot.completed.book_id }}
@@ -704,32 +797,7 @@ function SlotRow({
               {slot.country ? ` · ${countryName(slot.country)}` : ""}
             </Link>
           )}
-          {enrollment.id === "countries" && (
-            <div className="mt-2 space-y-1 text-sm">
-              <p className="text-xs text-muted-foreground">
-                {slot.matching.length} libri in libreria ·{" "}
-                {slot.matching.filter((item) => item.status === "read").length} letti.
-              </p>
-              {slot.matching.map((item) => (
-                <Link
-                  key={item.id}
-                  to="/book/$bookId"
-                  params={{ bookId: item.book_id }}
-                  className="block text-primary"
-                >
-                  {item.books?.title} ·{" "}
-                  {item.status === "read"
-                    ? "Letto"
-                    : item.status === "reading"
-                      ? "In lettura"
-                      : "Da leggere"}
-                </Link>
-              ))}
-              {!slot.country && (
-                <p>Paese da assegnare: conferma un’origine e scegli un libro dalla tua libreria.</p>
-              )}
-            </div>
-          )}
+          {enrollment.id === "countries" && <CountryReadings slot={slot} enrollment={enrollment} />}
           {!slot.completed && slot.assignment && enrollment.id !== "countries" && (
             <p className="mt-2 text-xs text-muted-foreground">
               Libro associato:{" "}
@@ -745,121 +813,205 @@ function SlotRow({
           )}
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 pl-10">
-        {winner && (
-          <>
-            <a
-              href={winner.source}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClass}
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Fonte ufficiale
-            </a>
-            <AwardSearch title={winner.title ?? ""} author={winner.author} />
-          </>
-        )}
-        {joined && !slot.fixedBookId && (
-          <button
-            className={buttonClass}
-            onClick={() => {
-              setCountry(slot.country ?? "");
-              setShowAssign((v) => !v);
-            }}
-          >
-            {enrollment.id === "countries"
-              ? "Scegli paese / conferma autore"
-              : slot.assignment
-                ? "Gestisci associazione"
-                : "Associa dalla mia libreria"}
-          </button>
-        )}
-      </div>
-      {showAssign && (
-        <form
-          className="mt-4 space-y-3 rounded-lg bg-accent/40 p-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (bookId || (enrollment.id === "countries" && country))
-              void onAssign({
-                bookId,
-                ...(enrollment.id === "countries" ? { country: country.trim() } : {}),
-              });
-          }}
+      {trail && (
+        <button
+          type="button"
+          aria-expanded={showDetails}
+          onClick={() => setShowDetails((value) => !value)}
+          className="mt-4 w-full border-t border-border pt-3 text-left text-xs font-medium text-primary"
         >
-          {enrollment.id === "countries" && (
-            <label className="block space-y-1 text-sm">
-              Paese di provenienza dell’autore
-              <select
-                required
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Scegli il paese</option>
-                {READING_COUNTRY_CODES.map((code) => ({ code, name: countryName(code) }))
-                  .sort((a, b) => a.name.localeCompare(b.name, "it"))
-                  .map(({ code, name }) => (
-                    <option key={code} value={code}>
-                      {name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          )}
-          <label className="block space-y-1 text-sm">
-            {enrollment.id === "countries"
-              ? "Facoltativo: conferma un libro se manca la nazionalità. Per i libri con un solo autore, la conferma vale anche per le sue altre opere."
-              : winner
-                ? winner.title
-                  ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
-                  : `Confermo che questo libro è un’opera di ${winner.author}`
-                : "Confermo che questo libro soddisfa il requisito della tappa"}
-            <select
-              required={enrollment.id !== "countries"}
-              value={bookId}
-              onChange={(e) => setBookId(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">
-                {enrollment.id === "countries"
-                  ? "Automatico: tutti i libri di questo paese"
-                  : "Scegli un libro dalla tua libreria"}
-              </option>
-              {library.map((item) => (
-                <option key={item.id} value={item.book_id}>
-                  {item.books?.title} — {item.books?.authors.join(", ")}
-                  {eligibleReading(item, enrollment) ? " · Letto" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="submit"
-              disabled={saving || (enrollment.id === "countries" ? !country : !bookId)}
-              className={primaryClass}
-            >
-              Salva associazione
-            </button>
-            {slot.assignment && (
+          {showDetails
+            ? "Chiudi dettagli"
+            : slot.completed
+              ? "Letto · Dettagli"
+              : "Da scoprire · Dettagli"}
+        </button>
+      )}
+      {(!trail || showDetails) && (
+        <>
+          <div className="mt-3 flex flex-wrap gap-2 pl-10">
+            {winner && (
+              <>
+                <a
+                  href={winner.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClass}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Fonte ufficiale
+                </a>
+                <AwardSearch title={winner.title ?? ""} author={winner.author} />
+              </>
+            )}
+            {joined && !slot.fixedBookId && (
               <button
-                type="button"
-                disabled={saving}
-                onClick={() => {
-                  void onAssign(null);
-                  setBookId("");
-                }}
                 className={buttonClass}
+                onClick={() => {
+                  setCountry(slot.country ?? "");
+                  setShowAssign((v) => !v);
+                }}
               >
-                Rimuovi associazione
+                {enrollment.id === "countries"
+                  ? "Scegli paese / conferma autore"
+                  : slot.assignment
+                    ? "Gestisci associazione"
+                    : "Associa dalla mia libreria"}
               </button>
             )}
           </div>
-        </form>
+          {showAssign && (
+            <form
+              className="mt-4 space-y-3 rounded-lg bg-accent/40 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (bookId || (enrollment.id === "countries" && country))
+                  void onAssign({
+                    bookId,
+                    ...(enrollment.id === "countries" ? { country: country.trim() } : {}),
+                  });
+              }}
+            >
+              {enrollment.id === "countries" && (
+                <label className="block space-y-1 text-sm">
+                  Paese di provenienza dell’autore
+                  <select
+                    required
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Scegli il paese</option>
+                    {READING_COUNTRY_CODES.map((code) => ({ code, name: countryName(code) }))
+                      .sort((a, b) => a.name.localeCompare(b.name, "it"))
+                      .map(({ code, name }) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
+              <label className="block space-y-1 text-sm">
+                {enrollment.id === "countries"
+                  ? "Facoltativo: conferma un libro se manca la nazionalità. Per i libri con un solo autore, la conferma vale anche per le sue altre opere."
+                  : winner
+                    ? winner.title
+                      ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
+                      : `Confermo che questo libro è un’opera di ${winner.author}`
+                    : "Confermo che questo libro soddisfa il requisito della tappa"}
+                <select
+                  required={enrollment.id !== "countries"}
+                  value={bookId}
+                  onChange={(e) => setBookId(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {enrollment.id === "countries"
+                      ? "Automatico: tutti i libri di questo paese"
+                      : "Scegli un libro dalla tua libreria"}
+                  </option>
+                  {library.map((item) => (
+                    <option key={item.id} value={item.book_id}>
+                      {item.books?.title} — {item.books?.authors.join(", ")}
+                      {eligibleReading(item, enrollment) ? " · Letto" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={saving || (enrollment.id === "countries" ? !country : !bookId)}
+                  className={primaryClass}
+                >
+                  Salva associazione
+                </button>
+                {slot.assignment && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      void onAssign(null);
+                      setBookId("");
+                    }}
+                    className={buttonClass}
+                  >
+                    Rimuovi associazione
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </>
       )}
     </article>
+  );
+}
+function CountryReadings({
+  slot,
+  enrollment,
+}: {
+  slot: ResolvedSlot;
+  enrollment: ChallengeEnrollment;
+}) {
+  const groups = countryReadingGroups(slot.matching, enrollment, slot.completed?.book_id);
+  const row = (item: LibraryItem) => (
+    <Link
+      key={item.id}
+      to="/book/$bookId"
+      params={{ bookId: item.book_id }}
+      className="block py-1 text-primary"
+    >
+      {item.books?.title}
+    </Link>
+  );
+  return (
+    <div className="mt-3 space-y-3 text-sm">
+      <p className="text-xs text-muted-foreground">
+        {slot.matching.length} libri nella tua libreria{slot.completed ? " · Paese completato" : ""}
+      </p>
+      {groups.valid.length > 0 && (
+        <section aria-label="Letture valide">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            {slot.completed ? "Letture che completano il paese" : "Letture valide"}
+          </p>
+          {groups.valid.map(row)}
+        </section>
+      )}
+      {!slot.completed && groups.pending.length > 0 && (
+        <section aria-label="Libri ancora da leggere">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Da leggere o terminare
+          </p>
+          {groups.pending.map(row)}
+        </section>
+      )}
+      {!!slot.completed && groups.pending.length > 0 && (
+        <details className="rounded-lg border border-border p-3">
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            Altri libri da leggere · {groups.pending.length}
+          </summary>
+          <div className="mt-2">{groups.pending.map(row)}</div>
+        </details>
+      )}
+      {groups.outside.length > 0 && (
+        <details className="rounded-lg border border-border p-3">
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            Altre letture · {groups.outside.length}
+          </summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Letture fuori dalle date della sfida o non disponibili per questa tappa.
+          </p>
+          {groups.outside.map(row)}
+        </details>
+      )}
+      {!slot.country && (
+        <p className="text-xs text-muted-foreground">
+          Paese da assegnare: conferma un’origine e scegli un libro dalla tua libreria.
+        </p>
+      )}
+    </div>
   );
 }
 function AwardSearch({ title, author }: { title: string; author: string }) {

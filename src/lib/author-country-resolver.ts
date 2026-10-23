@@ -1,3 +1,4 @@
+import { verifiedAuthorIdentity } from "./verified-author-identities.ts";
 import { defaultAuthor, type AuthorCandidate } from "./authors.ts";
 import { READING_COUNTRY_CODES } from "./reading-challenges.ts";
 export type CountryEntity = {
@@ -17,10 +18,10 @@ export async function catalogueAuthorCountries(
     entity: (id: string) => Promise<CountryEntity>;
   },
 ): Promise<string[]> {
-  const id = defaultAuthor(await sources.search(name), name);
+  const authority = verifiedAuthorIdentity(name);
+  const id = authority?.openLibrary ?? defaultAuthor(await sources.search(name), name);
   if (!id) return [];
-  const author = await sources.author(id);
-  const wikidata = author.remote_ids?.wikidata;
+  const wikidata = authority?.wikidata ?? (await sources.author(id)).remote_ids?.wikidata;
   if (!wikidata || !/^Q\d+$/.test(wikidata)) return [];
   const countries = values(await sources.entity(wikidata), "P27").flatMap((v) =>
     typeof v === "object" && v && "id" in v && /^Q\d+$/.test(String(v.id)) ? [String(v.id)] : [],

@@ -1196,3 +1196,19 @@ select:not([multiple]):not([size]) {
   .app-page { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
   .mobile-menu { bottom: calc(4rem + env(safe-area-inset-bottom)); }
 }
+
+/* A single connected rail; cards scroll without compressing their covers on small screens. */
+.award-trail { display:flex; align-items:flex-start; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; padding:8px 0 20px; scrollbar-width:thin; }
+.award-stop { position:relative; flex:0 0 270px; min-width:0; scroll-snap-align:start; }
+.award-stop-rail { position:relative; height:30px; display:flex; justify-content:center; align-items:center; }
+.award-stop-rail:before { content:""; position:absolute; left:0; right:0; top:14px; height:1px; background:var(--border); }
+.award-stop:first-child .award-stop-rail:before { left:50%; }
+.award-stop:last-child .award-stop-rail:before { right:50%; }
+.award-stop-rail > span { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; width:22px; height:22px; border:1px solid var(--border); border-radius:50%; color:var(--muted-foreground); background:var(--background); }
+.award-stop.is-complete .award-stop-rail > span { color:var(--primary-foreground); background:var(--primary); border-color:var(--primary); }
+.award-stop-card { margin:10px 8px 0; min-height:230px; padding:16px; border:1px solid var(--border); border-radius:12px; background:var(--card); }
+.award-stop-card .font-display { overflow-wrap:anywhere; }
+.country-flag { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; min-width:2.4rem; height:2rem; border:1px solid var(--border); border-radius:.5rem; background:var(--background); font-family:system-ui,sans-serif; font-size:1.4rem; font-style:normal; line-height:1; }
+@media(max-width:640px) { .award-stop { flex-basis:245px; } }
+.award-stop.is-complete .award-stop-card { border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); background:color-mix(in srgb,var(--primary) 5%,var(--card)); }
+.award-trail { min-width:0; width:100%; max-width:100%; }
