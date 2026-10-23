@@ -334,6 +334,9 @@
   padding-bottom: 5rem;
   min-height: 60vh;
 }
+.app-page.has-back {
+  padding-top: 1.1rem;
+}
 .page-heading {
   display: flex;
   align-items: flex-end;
