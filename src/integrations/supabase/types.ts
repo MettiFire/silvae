@@ -105,6 +105,93 @@ export type Database = {
           },
         ]
       }
+      book_lists: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      books: {
+        Row: {
+          authors: string[]
+          categories: string[]
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          page_count: number | null
+          published_year: number | null
+          title: string
+        }
+        Insert: {
+          authors?: string[]
+          categories?: string[]
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          page_count?: number | null
+          published_year?: number | null
+          title: string
+        }
+        Update: {
+          authors?: string[]
+          categories?: string[]
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          page_count?: number | null
+          published_year?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          goal: number
+          id: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          goal?: number
+          id?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          goal?: number
+          id?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       club_members: {
         Row: {
           club_id: string
@@ -210,93 +297,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      book_lists: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_public: boolean
-          name: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          name: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      books: {
-        Row: {
-          authors: string[]
-          categories: string[]
-          cover_url: string | null
-          created_at: string
-          description: string | null
-          id: string
-          page_count: number | null
-          published_year: number | null
-          title: string
-        }
-        Insert: {
-          authors?: string[]
-          categories?: string[]
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          id: string
-          page_count?: number | null
-          published_year?: number | null
-          title: string
-        }
-        Update: {
-          authors?: string[]
-          categories?: string[]
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          page_count?: number | null
-          published_year?: number | null
-          title?: string
-        }
-        Relationships: []
-      }
-      challenges: {
-        Row: {
-          created_at: string
-          goal: number
-          id: string
-          user_id: string
-          year: number
-        }
-        Insert: {
-          created_at?: string
-          goal?: number
-          id?: string
-          user_id: string
-          year: number
-        }
-        Update: {
-          created_at?: string
-          goal?: number
-          id?: string
-          user_id?: string
-          year?: number
-        }
-        Relationships: []
       }
       dismissed_books: {
         Row: {

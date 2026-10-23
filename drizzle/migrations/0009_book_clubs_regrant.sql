@@ -1,0 +1,11 @@
+GRANT SELECT ON public.book_clubs TO anon,authenticated;
+GRANT SELECT ON public.club_topics,public.club_messages TO authenticated;
+GRANT INSERT(club_id,author_id,book_id,title,body,spoiler) ON public.club_topics TO authenticated;
+GRANT INSERT(topic_id,author_id,body) ON public.club_messages TO authenticated;
+GRANT DELETE ON public.club_topics,public.club_messages,public.book_clubs TO authenticated;
+GRANT INSERT(owner_id,name,description,current_book_id) ON public.book_clubs TO authenticated;
+GRANT UPDATE(name,description,current_book_id) ON public.book_clubs TO authenticated;
+GRANT SELECT,DELETE ON public.club_members TO authenticated;
+GRANT INSERT(club_id,user_id) ON public.club_members TO authenticated;
+GRANT ALL ON public.book_clubs,public.club_members,public.club_topics,public.club_messages TO service_role;
+NOTIFY pgrst,'reload schema';
