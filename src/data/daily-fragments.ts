@@ -4,6 +4,9 @@
 export const DAILY_FRAGMENTS = [
   {
     id: "collodi-pinocchio",
+    theme: "Fiabe e possibilità",
+    heading: "Dare voce alle cose",
+    note: "Prima del burattino, un pezzo di legno: Collodi comincia dal materiale più umile e gli concede una voce. Una porta d’ingresso alla fantasia, anche da adulti.",
     quote: "C’era una volta un pezzo di legno.",
     author: "Carlo Collodi",
     title: "Le avventure di Pinocchio",
@@ -13,6 +16,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "verga-malavoglia",
+    theme: "Famiglia e appartenenza",
+    heading: "I nomi che ci portiamo dietro",
+    note: "Una famiglia raccontata attraverso il suo soprannome e il suo paese. Verga ci invita in un mondo in cui appartenere può significare tanto protezione quanto destino.",
     quote:
       "Un tempo i Malavoglia erano stati numerosi come i sassi della strada vecchia di Trezza;",
     author: "Giovanni Verga",
@@ -23,6 +29,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "pirandello-centomila",
+    theme: "Identità e sguardi",
+    heading: "Chi siamo, agli occhi degli altri?",
+    note: "Una domanda domestica incrina la certezza di conoscersi. Da un gesto minuscolo, Pirandello apre un romanzo sulle persone diverse che diventiamo in ogni sguardo.",
     quote:
       "— Che fai? — mia moglie mi domandò, vedendomi insolitamente indugiare davanti allo specchio.",
     author: "Luigi Pirandello",
@@ -33,6 +42,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "svevo-zeno",
+    theme: "Memoria e autoinganno",
+    heading: "Di chi possiamo fidarci?",
+    note: "A presentarci Zeno è qualcuno che ha già un conto aperto con lui. Prima ancora della storia, Svevo mette in dubbio chi la racconta: leggere diventa anche imparare a sospettare.",
     quote:
       "Io sono il dottore di cui in questa novella si parla talvolta con parole poco lusinghiere.",
     author: "Italo Svevo",
@@ -43,6 +55,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "dante-inferno",
+    theme: "Smarrimento e scoperta",
+    heading: "Cominciare dal perdersi",
+    note: "Il viaggio si apre senza una mappa. In questi versi lo smarrimento è già un’esperienza condivisa: quel «nostra» lascia posto anche a chi legge.",
     quote:
       "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura,\nché la diritta via era smarrita.",
     author: "Dante Alighieri",
@@ -53,6 +68,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "manzoni-promessi",
+    theme: "Luoghi e memoria",
+    heading: "Un paesaggio che diventa storia",
+    note: "Prima dei personaggi arriva un luogo. Lo sguardo segue l’acqua e le montagne, poi si avvicina alle vite: un invito a leggere lentamente, come si osserva un paesaggio.",
     quote:
       "Quel ramo del lago di Como, che volge a mezzogiorno, tra due catene non interrotte di monti,",
     author: "Alessandro Manzoni",
@@ -63,6 +81,9 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "ariosto-orlando",
+    theme: "Desiderio e avventura",
+    heading: "Seguire il filo delle storie",
+    note: "L’elenco iniziale promette un mondo in movimento: incontri, battaglie, amori. Ariosto prepara il lettore a lasciare una storia per inseguirne un’altra.",
     quote: "Le donne, i cavallier, l’arme, gli amori,\nle cortesie, l’audaci imprese io canto,",
     author: "Ludovico Ariosto",
     title: "Orlando furioso",
@@ -72,11 +93,28 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "boccaccio-decameron",
-    quote: "Umana cosa è l’avere compassione degli afflitti,",
+    theme: "Cura e legami",
+    heading: "La letteratura come compagnia",
+    note: "Prima delle cento novelle, Boccaccio sceglie la compassione. Raccontare nasce dal bisogno di alleviare una pena: un buon motivo per cercare compagnia in un libro.",
+    quote:
+      "Ma quantunque cessata sia la pena, non per ciò è la memoria fuggita de’ benefici giá ricevuti, datimi da coloro a’ quali per benivolenza da loro a me portata erano gravi le mie fatiche; né passerá mai, sí come io credo, se non per morte.",
     author: "Giovanni Boccaccio",
     title: "Decameron",
     section: "Proemio",
-    source: "https://it.wikisource.org/wiki/Decameron/Proemio",
+    source: "https://it.wikisource.org/w/index.php?title=Decameron/Proemio&oldid=3798744",
+    license: "3.0",
+  },
+  {
+    id: "leopardi-pensieri-fama",
+    theme: "Libri e reputazione",
+    heading: "Un libro vale il nome che porta?",
+    note: "Leopardi osserva quanto la fama condizioni il nostro giudizio. Un pensiero pungente da portare con sé davanti a una classifica: scegliere un libro è anche concedere una possibilità a un nome sconosciuto.",
+    quote:
+      "Dice il La Bruyère una cosa verissima; che è piú facile ad un libro mediocre di acquistar grido per virtú di una riputazione giá ottenuta dall’autore, che ad un autore di venire in riputazione per mezzo d’un libro eccellente.",
+    author: "Giacomo Leopardi",
+    title: "Pensieri",
+    section: "Pensiero LX · La Bruyère citato da Leopardi",
+    source: "https://it.wikisource.org/w/index.php?title=Pensieri_(Leopardi)/LX&oldid=3737677",
     license: "3.0",
   },
 ] as const;
