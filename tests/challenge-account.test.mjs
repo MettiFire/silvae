@@ -44,9 +44,9 @@ test("Subscriptions persist through authenticated account storage and reload", a
 });
 test("Changing one subscription preserves the other subscriptions and leaving removes only that path", async () => {
   const { client } = mock("reader", [first, second]);
-  await changeReadingChallenge(client, "reader", { save: { ...first, includePast: false } });
+  await changeReadingChallenge(client, "reader", { save: { ...second, includePast: false } });
   const loaded = await loadReadingChallenges(client, "reader");
-  assert.equal(loaded.find((e) => e.id === "strega").includePast, false);
+  assert.equal(loaded.find((e) => e.id === "countries").includePast, false);
   await changeReadingChallenge(client, "reader", { remove: "strega" });
   assert.deepEqual(
     (await loadReadingChallenges(client, "reader")).map((e) => e.id),

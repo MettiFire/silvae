@@ -10,7 +10,7 @@ test('Imported completion updates annual and date-limited challenges, independen
   const item = { status: row.status, finished_at: row.finished };
   assert.equal(countFinishedInYear([item], 2025, '2026-01-10'), 1);
   assert.equal(countFinishedInYear([item], 2026, '2026-01-10'), 0);
-  const enrollment = { ...createEnrollment('strega', '2025-01-01T00:00:00Z'), includePast: false, deadline: '2025-12-31' };
+  const enrollment = { ...createEnrollment('countries', '2025-01-01T00:00:00Z'), includePast: false, deadline: '2025-12-31' };
   assert.equal(eligibleReading(item, enrollment), true);
   assert.equal(eligibleReading({ ...item, finished_at: null }, enrollment), false);
 });

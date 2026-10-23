@@ -70,8 +70,9 @@ test("Award progress matches titles and authors, never a title by the wrong auth
     item("right", "Le otto montagne", "Paolo Cognetti"),
   ]);
   assert.equal(p.done, 1);
-  assert.equal(p.slots[0].completed.book_id, "right");
-  assert.equal(p.complete, true);
+  assert.equal(p.slots.find(s => s.label === "2017").completed.book_id, "right");
+  assert.equal(p.total, AWARD_DATA.strega.length);
+  assert.equal(p.complete, false);
 });
 test("Manual association supports translated editions and disappears when the reading is undone", () => {
   const e = { ...createEnrollment("booker", joined), fromYear: 2019, toYear: 2019 };
@@ -113,7 +114,7 @@ test("Nobel counts any book by the laureate and counts that author only once", (
   );
 });
 test("Historical readings, missing dates, joining day and inclusive deadlines follow the chosen rules", () => {
-  const e = { ...createEnrollment("strega", joined), includePast: false, deadline: "2026-10-22" };
+  const e = { ...createEnrollment("countries", joined), includePast: false, deadline: "2026-10-22" };
   assert.equal(eligibleReading(item("a", "x", "y"), e), true);
   assert.equal(
     eligibleReading(item("a", "x", "y", { finished_at: "2026-10-20T23:59:59Z" }), e),
@@ -181,7 +182,7 @@ test("Backlog freezes a selection rather than taking later additions to the libr
   assert.equal(progress.done, 1);
   assert.match(validateEnrollment({ ...e, backlogIds: ["a"] }, pending), /esattamente/);
 });
-test("Future award additions cannot expand a frozen year range", () => {
+test("Award archive contains only verified winners and exposes its latest catalogued year", () => {
   const e = createEnrollment("booker", joined);
   assert.equal(e.toYear, 2025);
   assert.equal(
@@ -249,4 +250,13 @@ test("A manual author confirmation applies to their other books without inventin
   assert.equal(p.slots[0].completed.book_id, "b");
   assert.equal(p.slots[0].matching.length, 2);
   assert.equal(p.slots.filter((s) => s.country).length, 1);
+});
+
+test("Annual awards always include the full archive and past readings, preserving legacy assignments", () => {
+  const old = {...createEnrollment("strega",joined),fromYear:2017,toYear:2017,includePast:false,deadline:"2026-10-22",assignments:{[AWARD_DATA.strega.find(w=>w.year===2017).id]:{bookId:"translated"}}};
+  const restored=decodeEnrollments([old])[0];
+  assert.equal(restored.fromYear,1947);assert.equal(restored.includePast,true);assert.equal(restored.deadline,null);assert.deepEqual(restored.assignments,old.assignments);
+  const p=challengeProgress(old,[item("translated","The Eight Mountains","Paolo Cognetti",{finished_at:null})]);
+  assert.equal(p.total,AWARD_DATA.strega.length);assert.equal(p.done,1);assert.equal(p.percent,Math.round(100/AWARD_DATA.strega.length));
+  assert.equal(challengeProgress(old,[item("translated","x","y",{status:"reading"})]).done,0);
 });

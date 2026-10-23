@@ -37,6 +37,7 @@ import {
   countryName,
   AWARD_NAMES,
   awardBounds,
+  fullAwardEnrollment,
   createEnrollment,
   challengeSlots,
   challengeProgress,
@@ -86,12 +87,19 @@ export function ChallengeExplorer({
   const enrolled = active ? enrollments.find((entry) => entry.id === active) : undefined;
   const definition = CHALLENGE_CATALOGUE.find((entry) => entry.id === active);
   const authors = useMemo(
-    () => [...new Set(library.flatMap((i) => i.books?.authors ?? []))],
+    () => [
+      ...new Map(
+        library
+          .flatMap((i) => i.books?.authors ?? [])
+          .filter((name) => name.trim())
+          .map((name) => [authorCountryKey(name), name]),
+      ).values(),
+    ],
     [library],
   );
   const countryQueries = useQueries({
     queries: authors.map((name) => ({
-      queryKey: ["author-countries", name],
+      queryKey: ["author-countries-v2", authorCountryKey(name)],
       queryFn: () => resolveAuthorCountries({ data: name }),
       enabled: active === "countries" || enrollments.some((e) => e.id === "countries"),
       staleTime: 5 * 60000,
@@ -107,7 +115,7 @@ export function ChallengeExplorer({
   );
   function open(id: ChallengeId) {
     const existing = enrollments.find((entry) => entry.id === id);
-    const next = existing ?? createEnrollment(id);
+    const next = fullAwardEnrollment(existing ?? createEnrollment(id));
     if (!existing && id === "backlog")
       next.backlogIds = library
         .filter((i) => i.status === "to_read")
@@ -239,7 +247,8 @@ export function ChallengeExplorer({
                 <span className="text-xs font-semibold uppercase tracking-wider">
                   {p?.complete
                     ? "Percorso completato"
-                    : enrollment?.deadline &&
+                    : c.kind !== "award" &&
+                        enrollment?.deadline &&
                         enrollment.deadline < new Date().toISOString().slice(0, 10)
                       ? "Termine scaduto"
                       : enrollment
@@ -259,12 +268,12 @@ export function ChallengeExplorer({
                   <div className="mt-auto mb-4">
                     <div className="mb-2 flex items-center justify-between text-sm">
                       <span>
-                        {p.done} di {p.total} tappe
+                        {p.percent}% · {p.done} di {p.total} tappe
                       </span>
                       {p.complete && <Trophy className="h-4 w-4 text-primary" />}
                     </div>
                     <ProgressBar current={p.done} total={p.total} showLabel={false} />
-                    {enrollment?.deadline && (
+                    {c.kind !== "award" && enrollment?.deadline && (
                       <p className="mt-2 text-xs text-muted-foreground">
                         Entro il{" "}
                         {new Date(enrollment.deadline + "T12:00:00").toLocaleDateString("it-IT")}
@@ -302,7 +311,30 @@ export function ChallengeExplorer({
               </DialogHeader>
               {!enrolled ? (
                 <div className="space-y-5 rounded-xl border border-border bg-card p-4">
-                  <h3 className="font-semibold">Scegli il tuo percorso</h3>
+                  <h3 className="font-semibold">
+                    {definition.kind === "award"
+                      ? "Tutto l’albo, una lettura alla volta"
+                      : "Scegli il tuo percorso"}
+                  </h3>
+                  {definition.kind === "award" && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Tutti i {progress.total} vincitori presenti nell’albo verificato, senza
+                        intervalli o scadenze. Contano anche i libri già letti.
+                      </p>
+                      <p className="font-display text-2xl">
+                        {progress.percent}% completato{" "}
+                        <span className="font-sans text-sm text-muted-foreground">
+                          · {progress.done} di {progress.total}
+                        </span>
+                      </p>
+                      <ProgressBar
+                        current={progress.done}
+                        total={progress.total}
+                        showLabel={false}
+                      />
+                    </div>
+                  )}
                   {draft.id === "birth-year" && (
                     <label className="block space-y-1 text-sm">
                       Premio da seguire
@@ -324,64 +356,8 @@ export function ChallengeExplorer({
                       </select>
                     </label>
                   )}
-                  {(definition.kind === "award" || draft.id === "birth-year") && (
+                  {draft.id === "birth-year" && (
                     <>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          className={buttonClass}
-                          onClick={() => {
-                            const b = awardBounds(draft.family);
-                            setDraft({ ...draft, fromYear: b.min, toYear: b.max });
-                          }}
-                        >
-                          Tutto l’albo
-                        </button>
-                        <button
-                          className={buttonClass}
-                          onClick={() => {
-                            const b = awardBounds(draft.family);
-                            setDraft({
-                              ...draft,
-                              fromYear: Math.max(b.min, b.max - 9),
-                              toYear: b.max,
-                            });
-                          }}
-                        >
-                          Ultimi 10 anni
-                        </button>
-                        {draft.id !== "birth-year" && (
-                          <select
-                            aria-label="Scegli un decennio"
-                            className={`${inputClass} !w-auto`}
-                            defaultValue=""
-                            onChange={(e) => {
-                              if (!e.target.value) return;
-                              const start = Number(e.target.value),
-                                bounds = awardBounds(draft.family);
-                              setDraft({
-                                ...draft,
-                                fromYear: Math.max(bounds.min, start),
-                                toYear: Math.min(bounds.max, start + 9),
-                              });
-                            }}
-                          >
-                            <option value="">Un decennio…</option>
-                            {Array.from(
-                              {
-                                length:
-                                  Math.floor(awardBounds(draft.family).max / 10) -
-                                  Math.floor(awardBounds(draft.family).min / 10) +
-                                  1,
-                              },
-                              (_, i) => (Math.floor(awardBounds(draft.family).max / 10) - i) * 10,
-                            ).map((y) => (
-                              <option key={y} value={y}>
-                                Anni {y}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="space-y-1 text-sm">
                           {draft.id === "birth-year"
@@ -479,7 +455,7 @@ export function ChallengeExplorer({
                       </div>
                     </>
                   )}
-                  {draft.id !== "backlog" && (
+                  {definition.kind !== "award" && draft.id !== "backlog" && (
                     <label className="flex items-start gap-2 text-sm">
                       <input
                         type="checkbox"
@@ -489,16 +465,18 @@ export function ChallengeExplorer({
                       Conta anche i libri già letti prima dell’iscrizione
                     </label>
                   )}
-                  <label className="block space-y-1 text-sm">
-                    Scadenza facoltativa
-                    <input
-                      type="date"
-                      className={inputClass}
-                      min={draft.joinedAt.slice(0, 10)}
-                      value={draft.deadline ?? ""}
-                      onChange={(e) => setDraft({ ...draft, deadline: e.target.value || null })}
-                    />
-                  </label>
+                  {definition.kind !== "award" && (
+                    <label className="block space-y-1 text-sm">
+                      Scadenza facoltativa
+                      <input
+                        type="date"
+                        className={inputClass}
+                        min={draft.joinedAt.slice(0, 10)}
+                        value={draft.deadline ?? ""}
+                        onChange={(e) => setDraft({ ...draft, deadline: e.target.value || null })}
+                      />
+                    </label>
+                  )}
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       disabled={saving || !!validateEnrollment(draft, library)}
@@ -522,7 +500,7 @@ export function ChallengeExplorer({
                 <div className="rounded-xl border border-border bg-accent/40 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="font-semibold">
-                      {progress.done} di {progress.total} tappe completate
+                      {progress.percent}% · {progress.done} di {progress.total} tappe completate
                     </span>
                     {progress.complete && (
                       <span className="inline-flex items-center gap-2 text-sm text-primary">
@@ -539,7 +517,8 @@ export function ChallengeExplorer({
                     {draft.deadline
                       ? ` Scadenza: ${new Date(draft.deadline + "T12:00:00").toLocaleDateString("it-IT")}.`
                       : " Senza scadenza."}{" "}
-                    Per i filtri sulle date è necessaria una data di fine lettura.
+                    {definition.kind !== "award" &&
+                      "Per i filtri sulle date è necessaria una data di fine lettura."}
                   </p>
                 </div>
               )}
@@ -550,6 +529,21 @@ export function ChallengeExplorer({
                   Per traduzioni, edizioni o requisiti tematici, associa il libro corretto dalla tua
                   libreria. Un libro conta una sola volta in ciascuna sfida.
                 </p>
+                {draft.id === "countries" && (
+                  <div className="mb-4 rounded-lg border border-border bg-accent/30 p-4 text-sm leading-relaxed">
+                    <p className="font-medium">Un paese attraverso i suoi autori</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Usiamo la cittadinanza documentata dell’autore, non la lingua dell’edizione o
+                      della traduzione: la lingua originale può essere condivisa da molti paesi. Se
+                      l’autore ha più cittadinanze, puoi scegliere quale rappresentare; ogni libro
+                      conta una sola volta.
+                    </p>
+                    <p className="mt-2 text-muted-foreground">
+                      Dati mancanti, omonimi o stati storici senza corrispondenza certa restano da
+                      confermare. Puoi scegliere un paese e associare un libro dalla tua libreria.
+                    </p>
+                  </div>
+                )}
                 {draft.id === "countries" && countryQueries.some((q) => q.isFetching) && (
                   <p role="status" className="mb-3 text-sm text-muted-foreground">
                     Recupero progressivo dei paesi degli autori… Le tappe si aggiornano
@@ -713,9 +707,8 @@ function SlotRow({
           {enrollment.id === "countries" && (
             <div className="mt-2 space-y-1 text-sm">
               <p className="text-xs text-muted-foreground">
-                {slot.matching.length} libri in libreria · valgono le letture che rispettano le date
-                della sfida. Nazionalità da Open Library e Wikidata; nessuna deduzione dalla lingua
-                del libro.
+                {slot.matching.length} libri in libreria ·{" "}
+                {slot.matching.filter((item) => item.status === "read").length} letti.
               </p>
               {slot.matching.map((item) => (
                 <Link
@@ -733,10 +726,7 @@ function SlotRow({
                 </Link>
               ))}
               {!slot.country && (
-                <p>
-                  Ricerca dei paesi degli autori; puoi anche scegliere un paese e confermare un
-                  libro manualmente.
-                </p>
+                <p>Paese da assegnare: conferma un’origine e scegli un libro dalla tua libreria.</p>
               )}
             </div>
           )}

@@ -18,7 +18,7 @@ export const CHALLENGE_CATALOGUE: ChallengeDefinition[] = [
     name: "Una vita da Strega",
     tagline: "La narrativa italiana, un premio alla volta",
     description:
-      "Percorri i vincitori del Premio Strega dal 1947. Scegli tutto l’albo, gli ultimi dieci anni o il tuo decennio.",
+      "Percorri tutto l’albo dei vincitori del Premio Strega dal 1947 e scopri quanta strada hai già fatto.",
     kind: "award",
     color: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
   },
@@ -132,6 +132,16 @@ export function awardBounds(family: AwardFamily) {
   const years = AWARD_DATA[family].map((row) => row.year);
   return { min: Math.min(...years), max: Math.max(...years) };
 }
+export function isAwardChallenge(id: ChallengeId) {
+  return Object.hasOwn(AWARD_DATA, id);
+}
+/** Award shelves always span the complete verified archive, including existing subscriptions. */
+export function fullAwardEnrollment(enrollment: ChallengeEnrollment): ChallengeEnrollment {
+  if (!isAwardChallenge(enrollment.id)) return enrollment;
+  const family = enrollment.id as AwardFamily;
+  const { min, max } = awardBounds(family);
+  return { ...enrollment, family, fromYear: min, toYear: max, includePast: true, deadline: null };
+}
 export function createEnrollment(
   id: ChallengeId,
   now = new Date().toISOString(),
@@ -143,7 +153,7 @@ export function createEnrollment(
     joinedAt: now,
     includePast: id !== "backlog",
     deadline: null,
-    fromYear: id === "birth-year" ? 1990 : Math.max(min, max - 9),
+    fromYear: id === "birth-year" ? 1990 : min,
     toYear: max,
     family,
     target: 5,
@@ -172,7 +182,8 @@ export function challengeSlots(enrollment: ChallengeEnrollment): ChallengeSlot[]
     }));
   const family = id === "birth-year" ? enrollment.family : (id as AwardFamily);
   const rows = AWARD_DATA[family].filter(
-    (row) => row.year >= enrollment.fromYear && row.year <= enrollment.toYear,
+    (row) =>
+      isAwardChallenge(id) || (row.year >= enrollment.fromYear && row.year <= enrollment.toYear),
   );
   if (id === "birth-year") {
     return [...new Set(rows.map((row) => row.year))]
@@ -189,9 +200,18 @@ export function eligibleReading(item: LibraryItem, enrollment: ChallengeEnrollme
   if (item.status !== "read") return false;
   const finished = readingDay(item.finished_at);
   if (finished && finished > todayDay()) return false;
-  if (!enrollment.includePast && (!finished || finished < enrollment.joinedAt.slice(0, 10)))
+  if (
+    !isAwardChallenge(enrollment.id) &&
+    !enrollment.includePast &&
+    (!finished || finished < enrollment.joinedAt.slice(0, 10))
+  )
     return false;
-  if (enrollment.deadline && (!finished || finished > enrollment.deadline)) return false;
+  if (
+    !isAwardChallenge(enrollment.id) &&
+    enrollment.deadline &&
+    (!finished || finished > enrollment.deadline)
+  )
+    return false;
   return true;
 }
 function matchesAward(item: LibraryItem, winner: AwardWinner): boolean {
@@ -281,7 +301,13 @@ export function challengeProgress(
     return { ...slot, completed, assignment: manual, country, matching };
   });
   const done = slots.filter((slot) => slot.completed).length;
-  return { slots, done, total: slots.length, complete: slots.length > 0 && done === slots.length };
+  return {
+    slots,
+    done,
+    total: slots.length,
+    percent: slots.length ? Math.round((done / slots.length) * 100) : 0,
+    complete: slots.length > 0 && done === slots.length,
+  };
 }
 export function validateEnrollment(
   value: ChallengeEnrollment,
@@ -364,7 +390,7 @@ export function decodeEnrollments(raw: unknown): ChallengeEnrollment[] {
               READING_COUNTRY_CODES.includes(a.country.toUpperCase()))),
       ),
     );
-    found.set(e.id!, { ...e, assignments } as ChallengeEnrollment);
+    found.set(e.id!, fullAwardEnrollment({ ...e, assignments } as ChallengeEnrollment));
   }
   return [...found.values()];
 }
