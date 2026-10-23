@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   CalendarDays,
@@ -19,6 +19,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { useBookDensity } from "@/lib/book-density";
+import { BackButton } from "@/components/BackButton";
 import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
@@ -38,6 +39,7 @@ const NAV = [
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
 ] as const;
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
   const { user, profile } = useAuth();
@@ -136,6 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main id="contenuto" tabIndex={-1} className="app-page site-width">
+        {pathname !== "/" && <BackButton className="mb-5" />}
         {children}
       </main>
       <footer className="site-footer site-width">

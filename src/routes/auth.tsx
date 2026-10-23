@@ -1,3 +1,4 @@
+import { BackButton } from "@/components/BackButton";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -169,9 +170,7 @@ function AuthPage() {
       </aside>
       <div className="auth-form-panel">
         <div className="w-full max-w-sm">
-          <Link to="/" className="mb-8 inline-block text-xs text-muted-foreground">
-            ← Torna a Silvae
-          </Link>
+          <BackButton className="mb-8" />
           <div>
             <h1 className="font-display text-3xl font-normal tracking-tight">{titles[mode]}</h1>
             {error && (

@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { BackButton } from "@/components/BackButton";
 import { Toaster } from "@/components/ui/sonner";
 
 import { pageSeo, hasNotFoundMatch } from "@/lib/site-seo";
@@ -20,6 +21,7 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        <BackButton className="mb-6" fallback="/" />
         <p className="mb-8 font-display text-2xl">Silvae.</p>
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">
@@ -62,6 +64,7 @@ function ErrorComponent({ error, reset }: import("@tanstack/react-router").Error
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        <BackButton className="mb-6" fallback="/" />
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Questa pagina non si è caricata
         </h1>
