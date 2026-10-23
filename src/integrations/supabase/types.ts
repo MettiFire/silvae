@@ -14,6 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
+      book_clubs: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          description: string;
+          current_book_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          name: string;
+          description?: string;
+          current_book_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          name?: string;
+          description?: string;
+          current_book_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "book_clubs_current_book_id_fkey";
+            columns: ["current_book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      club_members: {
+        Row: {
+          club_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          club_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          user_id?: string;
+          joined_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "club_members_club_id_fkey";
+            columns: ["club_id"];
+            isOneToOne: false;
+            referencedRelation: "book_clubs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      club_topics: {
+        Row: {
+          id: string;
+          club_id: string;
+          author_id: string;
+          book_id: string | null;
+          title: string;
+          body: string;
+          spoiler: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          author_id: string;
+          book_id?: string | null;
+          title: string;
+          body: string;
+          spoiler?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          author_id?: string;
+          book_id?: string | null;
+          title?: string;
+          body?: string;
+          spoiler?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "club_topics_club_id_fkey";
+            columns: ["club_id"];
+            isOneToOne: false;
+            referencedRelation: "book_clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "club_topics_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      club_messages: {
+        Row: {
+          id: string;
+          topic_id: string;
+          author_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          topic_id: string;
+          author_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          topic_id?: string;
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "club_messages_topic_id_fkey";
+            columns: ["topic_id"];
+            isOneToOne: false;
+            referencedRelation: "club_topics";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+
       activities: {
         Row: {
           book_id: string | null

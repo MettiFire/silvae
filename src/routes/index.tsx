@@ -5,6 +5,7 @@ import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
+import { DailyFragment } from "@/components/DailyFragment";
 import { ProgressBar } from "@/components/ProgressBar";
 export const Route = createFileRoute("/")({
   head: () =>
@@ -131,13 +132,14 @@ function Home() {
           </div>
         </>
       )}
+      <DailyFragment />
       <section>
         <SectionHeading
           title={user ? "La prossima lettura" : "Una storia chiama l’altra"}
           number={user ? "02" : "01"}
         >
           <div className="flex items-center gap-4">
-            <span className="hidden sm:block">
+            <span className="inline-flex">
               <BookGridSizeControl />
             </span>
             <button

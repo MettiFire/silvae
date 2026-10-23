@@ -14,6 +14,7 @@ import { useAuth, type Profile } from "@/lib/auth";
 import { useLibrary, type LibraryItem } from "@/lib/library";
 import { getProfileMap, profileShelves } from "@/lib/profile-data";
 import { AUTHORS_FIELD, parseFollowedAuthors, type FollowedAuthor } from "@/lib/followed-authors";
+import { isGeneratedProfile, profileLabel } from "@/lib/profile-model";
 import { requireFragmentUser } from "@/lib/fragments";
 import type { Book } from "@/lib/books";
 export type ProfileList = BookList & {
@@ -166,6 +167,18 @@ export function ReaderProfile({ username }: { username: string }) {
         </div>
       ) : (
         <>
+          {own && profile.data && isGeneratedProfile(profile.data) && (
+            <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
+              <p>Scegli il tuo username, raccontati con una bio e aggiungi foto e banner.</p>
+              <Link
+                to="/settings"
+                search={{ section: "profile" }}
+                className="mt-2 inline-block text-primary underline"
+              >
+                Personalizza il tuo profilo →
+              </Link>
+            </div>
+          )}
           <ReaderProfileView
             profile={profile.data}
             own={own}
@@ -277,7 +290,7 @@ export function ReaderProfileView({
   const shelves = profileShelves(items);
   const rows =
     tab === "wishlist" ? shelves.wishlist : tab === "favorites" ? shelves.favorites : shelves.read;
-  const name = profile.display_name || profile.username;
+  const name = profileLabel(profile);
   return (
     <article>
       <div
@@ -288,7 +301,9 @@ export function ReaderProfileView({
             : undefined
         }
       >
-        <p className="eyebrow">La biblioteca personale / @{profile.username}</p>
+        <p className="eyebrow">
+          La biblioteca personale{!isGeneratedProfile(profile) ? ` / @${profile.username}` : ""}
+        </p>
       </div>
       <header className="profile-identity">
         {profile.avatar_url ? (
@@ -308,7 +323,9 @@ export function ReaderProfileView({
         )}
         <div className="min-w-0 flex-1">
           <h1 className="profile-name">{name}</h1>
-          <p className="mt-2 text-xs text-muted-foreground">@{profile.username}</p>
+          {!isGeneratedProfile(profile) && (
+            <p className="mt-2 text-xs text-muted-foreground">@{profile.username}</p>
+          )}
           {profile.bio && (
             <p className="mt-4 max-w-2xl whitespace-pre-line text-sm leading-relaxed">
               {profile.bio}
@@ -719,10 +736,12 @@ function ProfilePeople({
                   onClick={close}
                   className="flex items-center gap-3 border-b py-3"
                 >
-                  <span className="account-initial">{(p.display_name || p.username)[0]}</span>
+                  <span className="account-initial">{profileLabel(p)[0]}</span>
                   <span className="text-sm">
-                    {p.display_name || p.username}
-                    <span className="block text-xs text-muted-foreground">@{p.username}</span>
+                    {profileLabel(p)}
+                    {!isGeneratedProfile(p) && (
+                      <span className="block text-xs text-muted-foreground">@{p.username}</span>
+                    )}
                   </span>
                 </Link>
               ))

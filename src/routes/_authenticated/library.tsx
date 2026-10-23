@@ -2,7 +2,7 @@ import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
-import { Grid2x2, List } from "lucide-react";
+import { List } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
 import { BookmarkRating } from "@/components/BookmarkRating";
@@ -75,7 +75,6 @@ function LibraryPage() {
       <PageHeader
         title="La mia libreria"
         subtitle={`${items.length} libri raccolti, una storia alla volta`}
-        action={<BookGridSizeControl />}
       />
 
       <div className="shelf-tabs" role="tablist" aria-label="Stato di lettura">
@@ -172,23 +171,17 @@ function LibraryPage() {
           </select>
         </label>
         <div className="ml-auto flex gap-1">
-          {(
-            [
-              ["grid", Grid2x2],
-              ["list", List],
-            ] as const
-          ).map(([v, Icon]) => (
-            <button
-              key={v}
-              type="button"
-              aria-label={v === "grid" ? "Vista griglia" : "Vista elenco"}
-              aria-pressed={view === v}
-              onClick={() => setView(v)}
-              className={`rounded-lg border p-2 ${view === v ? "border-primary text-primary" : "border-border"}`}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
+          <BookGridSizeControl active={view === "grid"} onSelect={() => setView("grid")} />
+          <button
+            type="button"
+            title="Vista elenco"
+            aria-label="Vista elenco"
+            aria-pressed={view === "list"}
+            onClick={() => setView("list")}
+            className={`rounded-lg border p-2 ${view === "list" ? "border-primary text-primary" : "border-border"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
         </div>
       </div>
 

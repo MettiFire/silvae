@@ -27,10 +27,10 @@ function Privacy() {
       </p>
       <p>
         Conserviamo le informazioni che inserisci: profilo, libreria, stati e date di lettura, voti,
-        recensioni, liste, sfide, preferenze, autori seguiti e relazioni tra lettori. I frammenti
-        possono contenere citazioni e note personali. I collegamenti ai dispositivi conservano
-        identificativi tecnici e credenziali dedicate alla sincronizzazione; non richiediamo la
-        password Amazon o Kobo in questo sito.
+        recensioni, liste, sfide, preferenze, autori seguiti, iscrizioni ai book club, discussioni e
+        relazioni tra lettori. I frammenti possono contenere citazioni e note personali. I
+        collegamenti ai dispositivi conservano identificativi tecnici e credenziali dedicate alla
+        sincronizzazione; non richiediamo la password Amazon o Kobo in questo sito.
       </p>
       <p>
         Il funzionamento del servizio comporta il trattamento di dati tecnici, come indirizzo IP,
@@ -40,9 +40,11 @@ function Privacy() {
       <h2>3. Cosa è pubblico e cosa è privato</h2>
       <p>
         Il profilo, le recensioni, le liste pubbliche, gli autori seguiti e le relazioni sociali
-        possono essere consultati da altri visitatori. I dettagli della libreria e delle letture
-        sono consultabili dagli altri utenti autenticati del servizio. Evita di inserire
-        informazioni riservate nei campi condivisi.
+        possono essere consultati da altri visitatori. Foto e banner caricati per il profilo sono
+        pubblici. I book club sono pubblici: iscrizioni, discussioni e risposte sono consultabili
+        dagli altri utenti autenticati di Silvae. I dettagli della libreria e delle letture sono
+        consultabili dagli altri utenti autenticati del servizio. Evita di inserire informazioni
+        riservate nei campi condivisi.
       </p>
       <p>
         I frammenti, le note personali, le preferenze salvate nell’account, le liste impostate come

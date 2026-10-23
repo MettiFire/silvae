@@ -45,3 +45,12 @@ test("profile edits normalize public identity and reject invalid usernames, URLs
   ])
     assert.throws(() => validateProfile({ ...valid, ...patch }));
 });
+test("Generated profile handles are recognized without exposing them as display names", async () => {
+  const { isGeneratedProfile, profileLabel } = await import("../src/lib/profile-model.ts");
+  const id = "11111111-1111-4111-8111-111111111111";
+  const generated = { id, username: "lettore_" + id.replaceAll("-", ""), display_name: null };
+  assert.equal(isGeneratedProfile(generated), true);
+  assert.equal(profileLabel(generated), "Lettore");
+  assert.equal(profileLabel({ ...generated, username: "anna.legge" }), "anna.legge");
+  assert.equal(profileLabel({ ...generated, display_name: "Anna" }), "Anna");
+});

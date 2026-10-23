@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { profileLabel } from "@/lib/profile-model";
 import { getProfileMap } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
 export const Route = createFileRoute("/_authenticated/social")({
@@ -101,6 +102,9 @@ function Social() {
   }
   return (
     <AppShell>
+      <Link to="/clubs" className="button-outline mb-5">
+        Leggiamo insieme · Scopri i book club →
+      </Link>
       <PageHeader title="Tra lettori" subtitle="Le storie che ci fanno incontrare." />
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_290px]">
         <section>
@@ -136,7 +140,7 @@ function Social() {
             return (
               <article key={a.id} className="flex items-start gap-4 border-b py-6">
                 <span className="account-initial shrink-0">
-                  {(p?.display_name || p?.username || "?")[0]}
+                  {(p ? profileLabel(p) : "Lettore")[0]}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm leading-relaxed">
@@ -146,7 +150,7 @@ function Social() {
                         params={{ username: p.username }}
                         className="font-medium hover:underline"
                       >
-                        {p.display_name || p.username}
+                        {profileLabel(p)}
                       </Link>
                     ) : (
                       <span>Un lettore</span>

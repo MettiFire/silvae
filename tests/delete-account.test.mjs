@@ -53,3 +53,50 @@ test("Unavailable migration or failed backend never reports successful deletion"
     /Database failure/,
   );
 });
+test("Public profile images are removed only for the verified owner before deleting the account", async () => {
+  const events = [];
+  let listed = false;
+  const client = {
+    ...clientFor("reader", async () => {
+      events.push("delete-account");
+      return { data: true, error: null };
+    }),
+    storage: {
+      from: (bucket) => {
+        assert.equal(bucket, "profile-images");
+        return {
+          list: async (folder) => {
+            assert.equal(folder, "reader");
+            if (listed) return { data: [], error: null };
+            listed = true;
+            return { data: [{ id: "file", name: "avatar.webp" }], error: null };
+          },
+          remove: async (paths) => {
+            assert.deepEqual(paths, ["reader/avatar.webp"]);
+            events.push("remove-images");
+            return { error: null };
+          },
+        };
+      },
+    },
+  };
+  await deleteOwnAccount(client, "reader", "ELIMINA");
+  assert.deepEqual(events, ["remove-images", "delete-account"]);
+});
+test("Profile image removal failure keeps the account; environments without the new bucket still support deletion", async () => {
+  let deleted = false;
+  const client = {
+    ...clientFor("reader", async () => {
+      deleted = true;
+      return { data: true, error: null };
+    }),
+    storage: {
+      from: () => ({ list: async () => ({ error: { message: "Storage unavailable" } }) }),
+    },
+  };
+  await assert.rejects(deleteOwnAccount(client, "reader", "ELIMINA"), /immagini/);
+  assert.equal(deleted, false);
+  client.storage.from = () => ({ list: async () => ({ error: { message: "Bucket not found" } }) });
+  await deleteOwnAccount(client, "reader", "ELIMINA");
+  assert.equal(deleted, true);
+});

@@ -6,9 +6,11 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { DeleteAccount } from "@/components/DeleteAccount";
 import { ReaderConnections } from "@/components/ReaderConnections";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
+import { ProfileImageUpload } from "@/components/ProfileImageUpload";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useAuth, type Profile } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
+import { isGeneratedProfile } from "@/lib/profile-model";
 import { validateProfile } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,17 +146,18 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
   const { user, refreshProfile } = useAuth();
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    username: profile.username,
+    username: isGeneratedProfile(profile) ? "" : profile.username,
     display_name: profile.display_name ?? "",
     bio: profile.bio ?? "",
     avatar_url: profile.avatar_url ?? "",
     banner_url: profile.banner_url ?? "",
   });
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || busy) return;
+    if (!user || busy || uploading) return;
     setBusy(true);
     setError("");
     try {
@@ -170,8 +173,38 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
         if (error.code === "23505") throw Error("Questo username è già usato. Scegline un altro.");
         throw error;
       }
+      const bucket = supabase.storage.from("profile-images");
+      const prefix = bucket.getPublicUrl("").data.publicUrl;
+      const oldImages = [profile.avatar_url, profile.banner_url]
+        .filter(
+          (url): url is string =>
+            !!url &&
+            url.startsWith(prefix) &&
+            url !== values.avatar_url &&
+            url !== values.banner_url,
+        )
+        .flatMap((url) => {
+          try {
+            const path = decodeURIComponent(url.slice(prefix.length).split("?")[0]!);
+            return path.startsWith(`${user.id}/`) && !path.includes("..") ? [path] : [];
+          } catch {
+            return [];
+          }
+        });
+      if (oldImages.length) {
+        const { error: cleanupError } = await bucket.remove([...new Set(oldImages)]);
+        if (cleanupError)
+          toast.warning(
+            "Profilo aggiornato, ma non è stato possibile rimuovere le vecchie immagini dal servizio.",
+          );
+      }
       await refreshProfile();
-      await qc.invalidateQueries({ queryKey: ["public-profile"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["public-profile"] }),
+        qc.invalidateQueries({ queryKey: ["people"] }),
+        qc.invalidateQueries({ queryKey: ["activities"] }),
+        qc.invalidateQueries({ queryKey: ["book-clubs"] }),
+      ]);
       toast.success("Profilo aggiornato");
     } catch (e) {
       setError((e as Error).message);
@@ -187,12 +220,39 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
           Nome, biografia, immagini, letture e autori seguiti compongono il tuo profilo pubblico. Le
           liste private e i frammenti restano personali.
         </p>
+        <label className="mb-6 grid gap-2 text-xs text-muted-foreground">
+          Email dell’account · privata
+          <input
+            readOnly
+            value={user?.email ?? ""}
+            type="email"
+            className="h-11 rounded border bg-muted px-3 text-sm text-foreground"
+          />
+          <span>Non compare sul tuo profilo pubblico.</span>
+        </label>
+        <div className="mb-8 grid gap-6 sm:grid-cols-2">
+          {user &&
+            (["avatar", "banner"] as const).map((kind) => (
+              <ProfileImageUpload
+                key={kind}
+                kind={kind}
+                userId={user.id}
+                value={kind === "avatar" ? form.avatar_url : form.banner_url}
+                disabled={busy || uploading}
+                onBusyChange={setUploading}
+                onChange={(url) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    [kind === "avatar" ? "avatar_url" : "banner_url"]: url,
+                  }))
+                }
+              />
+            ))}
+        </div>
         <div className="grid gap-5 sm:grid-cols-2">
           {[
             ["username", "Username"],
             ["display_name", "Nome visualizzato"],
-            ["avatar_url", "Indirizzo HTTPS della foto"],
-            ["banner_url", "Indirizzo HTTPS dell’immagine di copertina"],
           ].map(([key, label]) => (
             <label key={key} className="grid gap-2 text-xs text-muted-foreground">
               {label}
@@ -225,7 +285,7 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
           {error}
         </p>
       )}
-      <button className="button-ink" disabled={busy}>
+      <button className="button-ink" disabled={busy || uploading}>
         {busy ? "Salvataggio…" : "Salva profilo pubblico"}
       </button>
     </form>

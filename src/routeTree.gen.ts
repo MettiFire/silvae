@@ -17,6 +17,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
+import { Route as AuthenticatedClubsRouteImport } from './routes/_authenticated/clubs'
 import { Route as AuthenticatedDevicesRouteImport } from './routes/_authenticated/devices'
 import { Route as AuthenticatedFragmentsRouteImport } from './routes/_authenticated/fragments'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
@@ -67,6 +68,11 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
 const AuthenticatedChallengesRoute = AuthenticatedChallengesRouteImport.update({
   id: '/challenges',
   path: '/challenges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClubsRoute = AuthenticatedClubsRouteImport.update({
+  id: '/clubs',
+  path: '/clubs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDevicesRoute = AuthenticatedDevicesRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/clubs': typeof AuthenticatedClubsRoute
   '/devices': typeof AuthenticatedDevicesRoute
   '/fragments': typeof AuthenticatedFragmentsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/challenges': typeof AuthenticatedChallengesRoute
+  '/clubs': typeof AuthenticatedClubsRoute
   '/devices': typeof AuthenticatedDevicesRoute
   '/fragments': typeof AuthenticatedFragmentsRoute
   '/import': typeof AuthenticatedImportRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRoute
+  '/_authenticated/clubs': typeof AuthenticatedClubsRoute
   '/_authenticated/devices': typeof AuthenticatedDevicesRoute
   '/_authenticated/fragments': typeof AuthenticatedFragmentsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/calendar'
     | '/challenges'
+    | '/clubs'
     | '/devices'
     | '/fragments'
     | '/import'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/calendar'
     | '/challenges'
+    | '/clubs'
     | '/devices'
     | '/fragments'
     | '/import'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/calendar'
     | '/_authenticated/challenges'
+    | '/_authenticated/clubs'
     | '/_authenticated/devices'
     | '/_authenticated/fragments'
     | '/_authenticated/import'
@@ -331,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/challenges'
       fullPath: '/challenges'
       preLoaderRoute: typeof AuthenticatedChallengesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clubs': {
+      id: '/_authenticated/clubs'
+      path: '/clubs'
+      fullPath: '/clubs'
+      preLoaderRoute: typeof AuthenticatedClubsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/devices': {
@@ -423,6 +442,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRoute
+  AuthenticatedClubsRoute: typeof AuthenticatedClubsRoute
   AuthenticatedDevicesRoute: typeof AuthenticatedDevicesRoute
   AuthenticatedFragmentsRoute: typeof AuthenticatedFragmentsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
@@ -436,6 +456,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedChallengesRoute: AuthenticatedChallengesRoute,
+  AuthenticatedClubsRoute: AuthenticatedClubsRoute,
   AuthenticatedDevicesRoute: AuthenticatedDevicesRoute,
   AuthenticatedFragmentsRoute: AuthenticatedFragmentsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,

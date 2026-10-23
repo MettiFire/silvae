@@ -50,3 +50,20 @@ export function validateProfile(form: {
     banner_url: form.banner_url.trim(),
   };
 }
+
+export function isGeneratedProfile(profile: { id: string; username: string }) {
+  return (
+    profile.username === `lettore_${profile.id.replaceAll("-", "")}` ||
+    profile.username.endsWith(`_${profile.id.slice(0, 4)}`)
+  );
+}
+
+export function profileLabel(profile: {
+  id: string;
+  username: string;
+  display_name?: string | null;
+}) {
+  return (
+    profile.display_name?.trim() || (isGeneratedProfile(profile) ? "Lettore" : profile.username)
+  );
+}

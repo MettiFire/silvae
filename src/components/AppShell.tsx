@@ -32,6 +32,7 @@ const NAV = [
   { to: "/challenges", label: "Sfide", icon: Target },
   { to: "/fragments", label: "Frammenti", icon: Quote },
   { to: "/social", label: "Lettori", icon: Users },
+  { to: "/clubs", label: "Book club", icon: Users },
   { to: "/calendar", label: "Calendario", icon: CalendarDays },
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
 ] as const;
@@ -107,8 +108,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                         .toUpperCase()}
                     </span>
                   )}
-                  <span className="hidden text-xs font-medium lg:inline">
-                    {profile?.display_name || profile?.username || "Il mio profilo"}
+                  <span className="hidden max-w-40 truncate text-xs font-medium lg:inline">
+                    {user.email || profile?.display_name || "Il mio profilo"}
                   </span>
                 </Link>
               </>
