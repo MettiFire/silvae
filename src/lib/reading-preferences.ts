@@ -109,6 +109,7 @@ export const READING_GENRES = [
   },
 ] as const;
 export type ReadingPreferences = {
+  ebookDevices?: string[] | undefined;
   version: 1;
   language: string;
   status: "completed" | "skipped";
@@ -136,6 +137,18 @@ export function parsePreferences(raw: unknown): ReadingPreferences | null {
   const liked = list(r["liked"]);
   if (r["status"] === "completed" && !liked.length) return null;
   return {
+    ...(Array.isArray(r["ebookDevices"])
+      ? {
+          ebookDevices: [
+            ...new Set(
+              (r["ebookDevices"] as unknown[]).filter(
+                (id): id is string =>
+                  typeof id === "string" && ["kindle", "kobo", "other"].includes(id),
+              ),
+            ),
+          ],
+        }
+      : {}),
     version: 1,
     language: parseBookLanguage(r["language"]),
     status: r["status"] as ReadingPreferences["status"],
@@ -346,4 +359,9 @@ export function rankRecommendations(
     result.push(items.shift()!);
   }
   return result;
+}
+
+/** Unanswered legacy profiles retain their controls; an explicit No hides ebook progress. */
+export function showEbookProgress(raw: unknown) {
+  return parsePreferences(raw)?.ebookDevices?.length !== 0;
 }

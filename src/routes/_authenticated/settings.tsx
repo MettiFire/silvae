@@ -1,3 +1,4 @@
+import { EbookDevices } from "@/components/EbookDevices";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 function SettingsPage() {
   const { section = "profile" } = Route.useSearch();
-  const { profile, profileLoading, refreshProfile } = useAuth();
+  const { user, profile, profileLoading, refreshProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   return (
     <AppShell>
@@ -113,6 +114,7 @@ function SettingsPage() {
           {section === "devices" && (
             <>
               <h2 className="mb-4 font-display text-2xl">I tuoi dispositivi</h2>
+              <EbookDevices key={user?.id} />
               <ReaderConnections />
             </>
           )}

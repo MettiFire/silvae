@@ -1,3 +1,4 @@
+import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -40,10 +41,12 @@ function LibraryPage() {
   const [genre, setGenre] = useState("all");
   const [year, setYear] = useState("all");
 
-  const genres = useMemo(
-    () => [...new Set(items.flatMap((i) => i.books?.categories ?? []))].sort(),
-    [items],
-  );
+  const genres = useMemo(() => {
+    const available = new Set(items.flatMap((i) => genreGroups(i.books?.categories ?? [])));
+    return [...GENRE_GROUPS, { id: "other", label: "Altri / non classificati" }].filter((g) =>
+      available.has(g.id),
+    );
+  }, [items]);
   const years = useMemo(
     () =>
       [...new Set(items.map((i) => i.books?.published_year).filter(Boolean))].sort(
@@ -58,7 +61,7 @@ function LibraryPage() {
       if (onlyReview && !i.needs_review) return false;
       if (onlyFav && !i.favorite) return false;
       if (minRating && Number(i.rating ?? 0) < minRating) return false;
-      if (genre !== "all" && !(i.books?.categories ?? []).includes(genre)) return false;
+      if (genre !== "all" && !genreGroups(i.books?.categories ?? []).includes(genre)) return false;
       if (year !== "all" && String(i.books?.published_year ?? "") !== year) return false;
       const term = q.trim().toLowerCase();
       if (!term) return true;
@@ -128,14 +131,17 @@ function LibraryPage() {
         </select>
         <select
           value={genre}
-          onChange={(e) => setGenre(e.target.value)}
+          onChange={(e) => {
+            setGenre(e.target.value);
+            setVisible(40);
+          }}
           aria-label="Genere"
           className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
         >
           <option value="all">Ogni genere</option>
           {genres.map((g) => (
-            <option key={g} value={g}>
-              {g}
+            <option key={g.id} value={g.id}>
+              {g.label}
             </option>
           ))}
         </select>

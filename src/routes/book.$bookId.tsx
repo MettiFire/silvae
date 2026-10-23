@@ -19,7 +19,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { AddToListMenu } from "@/components/AddToListMenu";
 import { descriptionText } from "@/lib/book-metadata";
 import { useBookLanguage } from "@/lib/use-book-language";
-import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
+import { parsePreferences, PREFERENCES_FIELD, showEbookProgress } from "@/lib/reading-preferences";
 import { getBook } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -403,7 +403,11 @@ function BookPage() {
               <ProgressBar
                 current={item.current_page}
                 total={totalPages}
-                percentage={item.progress_percent}
+                percentage={
+                  showEbookProgress(user?.user_metadata[PREFERENCES_FIELD])
+                    ? item.progress_percent
+                    : null
+                }
               />
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sono a pagina</span>

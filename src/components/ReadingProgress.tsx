@@ -1,3 +1,4 @@
+import { showEbookProgress, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -72,7 +73,8 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       setBusy(false);
     }
   };
-  if (!canUpdateReading(item)) return null;
+  if (!canUpdateReading(item) || !showEbookProgress(user?.user_metadata[PREFERENCES_FIELD]))
+    return null;
   return (
     <section className="mt-5 rounded-xl border border-border bg-card p-4">
       <h2 className="font-display font-semibold">Avanzamento percentuale</h2>

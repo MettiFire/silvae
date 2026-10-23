@@ -1,3 +1,4 @@
+import { GENRE_GROUPS } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,27 +7,12 @@ import { RefreshCw, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { BookCard } from "@/components/BookCard";
-import { discoverBooks, GENRES } from "@/lib/books";
+import { discoverBooks } from "@/lib/books";
 import { toast } from "sonner";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 import { supabase } from "@/integrations/supabase/client";
 
-const GENRE_LABELS: Record<string, string> = {
-  Fiction: "Romanzi",
-  Nonfiction: "Saggistica",
-  Fantasy: "Fantasy",
-  "Science Fiction": "Fantascienza",
-  Mystery: "Gialli",
-  Thriller: "Thriller",
-  Romance: "Romance",
-  History: "Storia",
-  Biography: "Biografie e memoir",
-  Philosophy: "Filosofia",
-  Poetry: "Poesia",
-  Science: "Scienza e natura",
-  Business: "Economia e impresa",
-};
 export const Route = createFileRoute("/discover")({
   head: () =>
     pageSeo(
@@ -189,7 +175,7 @@ function Discover() {
           label="Genere"
           options={[
             ["all", "Tutti i generi"],
-            ...GENRES.map((g) => [g, GENRE_LABELS[g] ?? g] as [string, string]),
+            ...GENRE_GROUPS.map((g) => [g.id, g.label] as [string, string]),
           ]}
         />
         <Select

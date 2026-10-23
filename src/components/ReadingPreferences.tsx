@@ -1,3 +1,4 @@
+import { EbookDeviceFields } from "./EbookDevices";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
@@ -30,7 +31,7 @@ export function ReadingPreferencesForm({
 }: {
   initial: ReadingPreferences | null;
   onSave: (value: ReadingPreferences) => void;
-  onSkip?: (() => void) | undefined;
+  onSkip?: ((value: ReadingPreferences) => void) | undefined;
   busy?: boolean;
 }) {
   const [form, setForm] = useState(initial ?? emptyPreferences());
@@ -141,6 +142,11 @@ export function ReadingPreferencesForm({
           qualsiasi lingua.
         </span>
       </label>
+      <EbookDeviceFields
+        value={form.ebookDevices}
+        onChange={(ebookDevices) => setForm({ ...form, ebookDevices })}
+        disabled={busy}
+      />
       <div className="flex flex-wrap items-center gap-3">
         <button
           disabled={busy || !form.liked.length}
@@ -152,7 +158,7 @@ export function ReadingPreferencesForm({
           <button
             type="button"
             disabled={busy}
-            onClick={onSkip}
+            onClick={() => onSkip?.({ ...form, status: "skipped" })}
             className="px-3 py-2 text-sm text-muted-foreground"
           >
             Scelgo più tardi
@@ -186,8 +192,8 @@ function PreferencesDialog({ automatic, close }: { automatic: boolean; close: ()
       setBusy(false);
     }
   };
-  const skip = () => {
-    if (automatic) void save(emptyPreferences());
+  const skip = (value?: ReadingPreferences) => {
+    if (automatic) void save(value ?? emptyPreferences());
     else close();
   };
   return (

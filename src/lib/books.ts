@@ -1,3 +1,4 @@
+import { genreQuery } from "./genre-groups.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
 import {
   bookSuggestions,
@@ -471,7 +472,7 @@ export async function discoverBooks(opts: {
 }) {
   const parts: string[] = [];
   if (opts.query?.trim()) parts.push(opts.query.trim());
-  if (opts.genre && opts.genre !== "all") parts.push(`subject:"${opts.genre}"`);
+  if (opts.genre && opts.genre !== "all") parts.push(genreQuery(opts.genre));
   if (!parts.length) parts.push("subject:fiction");
   const books = await searchBooks(parts.join(" "), {
     max: 30,
