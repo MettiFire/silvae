@@ -12,10 +12,12 @@ export function BookCover({
   book,
   className,
   priority = false,
+  fit = "cover",
 }: {
   book: Book;
   className?: string;
   priority?: boolean;
+  fit?: "cover" | "contain";
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(priority);
@@ -65,7 +67,7 @@ export function BookCover({
             width={300}
             height={450}
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover"
+            className={cn("h-full w-full", fit === "contain" ? "object-contain" : "object-cover")}
             onLoad={(e) => {
               if (e.currentTarget.naturalWidth <= 2)
                 setFailed((previous) => new Set(previous).add(source));

@@ -1,3 +1,4 @@
+import { bookSuggestions, matchesTitleCompletion, titleCompletionQuery } from "@/lib/search-suggestions";
 import { applyBookLanguage } from "@/lib/book-language";
 import { sameBook, coverUrls, descriptionText } from "@/lib/book-metadata";
 import { supabase } from "@/integrations/supabase/client";
@@ -227,6 +228,41 @@ export async function searchBooks(query: string, opts: { max?: number; orderBy?:
   return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance", opts.language);
 }
 
+/** Work-level autocomplete: one request, no serial cover lookups on each keystroke. */
+export async function searchBookSuggestions(query: string, signal?: AbortSignal, language?: string): Promise<Book[]> {
+  const clean = query.trim();
+  if (clean.length < 2) return [];
+  if (/^(?:[\d\s-]{10,})$/.test(clean)) return bookSuggestions(await searchByIsbn(clean));
+  const completion = titleCompletionQuery(clean);
+  if (!completion) return [];
+  try {
+    const params = new URLSearchParams({
+      q: completion,
+      limit: "20",
+      ...(language ? { lang: language } : {}),
+      fields: "key,title,author_name,first_publish_year,cover_i,isbn,editions,editions.title,editions.cover_i,editions.isbn",
+    });
+    const response = await fetch(`${OL_API}/search.json?${params}`, {
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000),
+    });
+    if (!response.ok) throw new Error("Catalogo non disponibile");
+    const { docs = [] } = await response.json() as { docs?: OLDoc[] };
+    const books = docs.map(doc => {
+      const edition = doc.editions?.docs?.[0];
+      const localized: OLDoc = { ...doc };
+      if (edition?.title) localized.title = edition.title;
+      if (edition?.cover_i) localized.cover_i = edition.cover_i;
+      if (edition?.isbn) localized.isbn = edition.isbn;
+      return mapOLDoc(localized);
+    }).filter(book => matchesTitleCompletion(book.title, clean));
+    if (books.length) return bookSuggestions(books);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+  }
+  // A second provider remains available during outages or gaps in the work catalogue.
+  return bookSuggestions((await searchBooks(clean, { max: 20, language })).filter(book => matchesTitleCompletion(book.title, clean)));
+}
+
 /** Enrich incomplete stored records while keeping their original ID and chosen cover. */
 export async function enrichBook(book: Book): Promise<Book> {
   let source: Book | undefined;
@@ -371,7 +407,7 @@ export async function withCover(book: Book, isbn?: string): Promise<Book> {
 }
 
 /** Proposte di copertina alternative (Google Libri + Open Library). */
-export async function coverCandidates(book: Book): Promise<string[]> {
+export async function coverCandidates(book: Book, includeEditions = false): Promise<string[]> {
   const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
   const urls: string[] = [];
   urls.push(...coverUrls(book));
@@ -382,6 +418,26 @@ export async function coverCandidates(book: Book): Promise<string[]> {
   for (const r of [g, o]) {
     if (r.status !== "fulfilled") continue;
     for (const b of r.value) if (b.id === book.id || sameBook(book, b)) urls.push(...coverUrls(b));
+  }
+  // Work search returns one preferred edition. Load its actual editions only when
+  // the user opens the picker, rather than crowding autocomplete with duplicates.
+  let workId = book.id.match(/^ol:(OL\d+W)$/)?.[1];
+  if (!workId && o.status === "fulfilled") {
+    workId = o.value.find(candidate => sameBook(book, candidate))?.id.match(/^ol:(OL\d+W)$/)?.[1];
+  }
+  if (includeEditions && workId) {
+    try {
+      const response = await fetch(`${OL_API}/works/${workId}/editions.json?limit=50`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (response.ok) {
+        const data = await response.json() as { entries?: { covers?: number[] }[] };
+        for (const edition of data.entries ?? [])
+          for (const cover of edition.covers ?? [])
+            if (Number.isSafeInteger(cover) && cover > 0)
+              urls.push(`https://covers.openlibrary.org/b/id/${cover}-L.jpg`);
+      }
+    } catch { /* Existing candidates remain selectable if editions are unavailable. */ }
   }
   return Array.from(new Set(urls));
 }

@@ -6,9 +6,9 @@ import { dailyFragment, fragmentDay } from "@/lib/daily-fragment";
 import { searchBooks } from "@/lib/books";
 import { sameAuthorName, workTitle } from "@/lib/work-identity";
 import { BookCover } from "./BookCard";
+
 export function DailyFragment() {
   const [day, setDay] = useState<string | null>(null);
-  const [discover, setDiscover] = useState(false);
   useEffect(() => {
     const update = () => setDay(fragmentDay());
     update();
@@ -22,113 +22,107 @@ export function DailyFragment() {
   const fragment = day ? dailyFragment(day) : null;
   const books = useQuery({
     queryKey: ["daily-fragment-book", fragment?.id],
-    enabled: !!fragment && discover,
+    enabled: !!fragment,
     queryFn: () =>
       searchBooks(`intitle:"${fragment!.title}" inauthor:"${fragment!.author}"`, { max: 6 }),
     staleTime: 86400000,
+    retry: false,
   });
   const candidates = books.data?.filter(
     (b) =>
       workTitle(b.title) === workTitle(fragment!.title) &&
       b.authors.some((a) => sameAuthorName(a, fragment!.author)),
   );
+  const book = candidates?.find((b) => b.cover_url) ?? candidates?.[0];
+  const cover = book ? (
+    <BookCover book={book} fit="contain" className="!bg-transparent !shadow-none after:!hidden" />
+  ) : (
+    <div className="flex aspect-[2/3] flex-col items-center justify-center border border-border bg-card px-4 text-center">
+      <span className="font-display text-lg">{fragment?.title}</span>
+      <span className="mt-3 text-xs text-muted-foreground">{fragment?.author}</span>
+    </div>
+  );
   return (
     <section
       className="my-10 min-h-80 border-y border-border py-8"
       aria-labelledby="daily-fragment-title"
     >
-      <div className="mb-5 flex items-center gap-3">
+      <div className="mb-6 flex items-center gap-3">
         <Quote className="h-4 w-4 text-primary" aria-hidden="true" />
         <h2 id="daily-fragment-title" className="eyebrow">
           Il frammento del giorno
         </h2>
       </div>
       {fragment ? (
-        <>
-          <figure>
-            <blockquote className="max-w-3xl whitespace-pre-line font-display text-2xl leading-relaxed md:text-3xl">
-              «{fragment.quote}
-              {/[,;]$/.test(fragment.quote) ? " […]" : ""}»
-            </blockquote>
-            <figcaption className="mt-5 text-sm text-muted-foreground">
-              {fragment.author} ·{" "}
-              <cite className="font-medium not-italic text-foreground">{fragment.title}</cite>
-              <span className="block mt-1 text-xs">{fragment.section}</span>
-            </figcaption>
-          </figure>
-          <div className="mt-6 flex flex-wrap items-center gap-5">
-            <button
-              className="inline-flex items-center gap-2 text-sm text-primary"
-              onClick={() => setDiscover((v) => !v)}
-            >
-              {discover ? "Chiudi il catalogo" : "Scopri questo libro"}
-              <ArrowRight size={14} />
-            </button>
-            <a
-              href={fragment.source}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground underline underline-offset-4"
-            >
-              Leggi il brano su Wikisource ↗
-            </a>
-            <a
-              href={`https://creativecommons.org/licenses/by-sa/${fragment.license}/deed.it`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground"
-            >
-              Trascrizione: CC BY-SA {fragment.license}
-            </a>
+        <div className="grid items-center gap-7 sm:grid-cols-[9rem_minmax(0,1fr)] md:grid-cols-[11rem_minmax(0,1fr)] md:gap-10">
+          <div className="mx-auto w-32 sm:w-full">
+            {book ? (
+              <Link
+                to="/book/$bookId"
+                params={{ bookId: book.id }}
+                aria-label={`Scopri ${book.title}`}
+                className="block transition-transform hover:-translate-y-1"
+              >
+                {cover}
+              </Link>
+            ) : (
+              cover
+            )}
           </div>
-          {discover && (
-            <div className="mt-5 space-y-3">
-              {books.isFetching && (
-                <p role="status" className="text-sm">
-                  Cerco il libro nel catalogo…
-                </p>
-              )}
-              {books.isError && (
-                <p role="alert" className="text-sm">
-                  Catalogo non disponibile.{" "}
-                  <button className="underline" onClick={() => void books.refetch()}>
-                    Riprova
-                  </button>
-                </p>
-              )}
-              {books.isSuccess && !candidates?.length && (
-                <p className="text-sm text-muted-foreground">
-                  Questa edizione non è al momento nel catalogo. Puoi leggere il testo su Wikisource
-                  o{" "}
-                  <Link
-                    to="/author/$author"
-                    params={{ author: fragment.author }}
-                    className="underline"
-                  >
-                    scoprire l’autore
-                  </Link>
-                  .
-                </p>
-              )}
-              {candidates?.slice(0, 3).map((book) => (
+          <div>
+            <figure>
+              <blockquote className="max-w-3xl whitespace-pre-line font-display text-2xl leading-relaxed md:text-3xl">
+                «{fragment.quote}
+                {/[,;]$/.test(fragment.quote) ? " […]" : ""}»
+              </blockquote>
+              <figcaption className="mt-5 text-sm text-muted-foreground">
+                {fragment.author} ·{" "}
+                <cite className="font-medium not-italic text-foreground">{fragment.title}</cite>
+                <span className="mt-1 block text-xs">{fragment.section}</span>
+              </figcaption>
+            </figure>
+            <div className="mt-6">
+              {book ? (
                 <Link
-                  key={book.id}
                   to="/book/$bookId"
                   params={{ bookId: book.id }}
-                  className="flex items-center gap-3 rounded border p-3"
+                  className="inline-flex items-center gap-2 text-sm text-primary"
                 >
-                  <div className="w-10 shrink-0">
-                    <BookCover book={book} />
-                  </div>
-                  <span>
-                    <span className="block text-sm font-medium">{book.title}</span>
-                    <span className="text-xs text-muted-foreground">{book.authors.join(", ")}</span>
-                  </span>
+                  Scopri questo libro <ArrowRight size={14} />
                 </Link>
-              ))}
+              ) : books.isFetching ? (
+                <p role="status" className="text-xs text-muted-foreground">
+                  Cerco il libro nel catalogo…
+                </p>
+              ) : (
+                <Link
+                  to="/author/$author"
+                  params={{ author: fragment.author }}
+                  className="inline-flex items-center gap-2 text-sm text-primary"
+                >
+                  Scopri l’autore <ArrowRight size={14} />
+                </Link>
+              )}
             </div>
-          )}
-        </>
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <a
+                href={fragment.source}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4"
+              >
+                Leggi il brano su Wikisource ↗
+              </a>
+              <a
+                href={`https://creativecommons.org/licenses/by-sa/${fragment.license}/deed.it`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Trascrizione: CC BY-SA {fragment.license}
+              </a>
+            </div>
+          </div>
+        </div>
       ) : (
         <p className="font-display text-xl text-muted-foreground" role="status">
           Una pagina da incontrare, ogni giorno.

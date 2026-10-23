@@ -5,8 +5,11 @@ import { ScanBarcode, Search, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { authorSearchResults } from "@/lib/author-search";
 import { findAuthors } from "@/lib/authors";
-import { searchBooks, searchByIsbn } from "@/lib/books";
+import { searchBookSuggestions, searchByIsbn } from "@/lib/books";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { useAuth } from "@/lib/auth";
+import { useBookLanguage } from "@/lib/use-book-language";
+import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { BookCover } from "@/components/BookCard";
 
 export function GlobalSearch() {
@@ -17,6 +20,9 @@ export function GlobalSearch() {
   const [scanning, setScanning] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
+  const { language, ready: languageReady } = useBookLanguage(preferences?.language);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(term), 300);
@@ -36,14 +42,16 @@ export function GlobalSearch() {
     isFetching,
     isError,
   } = useQuery({
-    queryKey: ["global-search", debounced],
-    enabled: debounced.trim().length > 2,
-    queryFn: () => searchBooks(debounced, { max: 6 }),
+    queryKey: ["global-search-works", debounced, language ?? "any"],
+    enabled: languageReady && debounced.trim().length >= 2,
+    queryFn: ({ signal }) => searchBookSuggestions(debounced, signal, language),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const authors = useQuery({
     queryKey: ["author-candidates", debounced.trim()],
-    enabled: debounced.trim().length > 2 && !/^[\d\s-]+$/.test(debounced),
+    enabled: debounced.trim().length >= 2 && !/^[\d\s-]+$/.test(debounced),
     queryFn: () => findAuthors(debounced.trim()),
     staleTime: 3600000,
     retry: false,
@@ -55,7 +63,8 @@ export function GlobalSearch() {
     ...authorResults.map((author) => ({ kind: "author" as const, author })),
     ...results.map((book) => ({ kind: "book" as const, book })),
   ];
-  const visible = open && debounced.trim().length > 2 && term.trim() === debounced.trim();
+  const current = debounced.trim().length >= 2 && term.trim() === debounced.trim();
+  const visible = open && current;
   function choose(index: number) {
     const option = options[index];
     if (!option) return;
@@ -101,6 +110,7 @@ export function GlobalSearch() {
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         placeholder="Cerca libri, autori…"
         aria-label="Cerca libri e autori"
         role="combobox"
@@ -116,7 +126,7 @@ export function GlobalSearch() {
           if (e.key === "Escape") {
             setOpen(false);
             setActive(-1);
-          } else if (e.key === "ArrowDown" && options.length) {
+          } else if (e.key === "ArrowDown" && current && options.length) {
             e.preventDefault();
             setOpen(true);
             setActive((i) => (i + 1) % options.length);
@@ -160,7 +170,7 @@ export function GlobalSearch() {
           {(isFetching || authors.isFetching) && (
             <p className="px-3 py-3 text-sm text-muted-foreground">Ricerca in corso…</p>
           )}
-          {!isFetching && !isError && options.length === 0 && (
+          {!isFetching && !authors.isFetching && !isError && options.length === 0 && (
             <p className="px-3 py-3 text-sm text-muted-foreground">Nessun risultato</p>
           )}
           {authors.isError && (
@@ -190,6 +200,11 @@ export function GlobalSearch() {
               </span>
             </button>
           ))}
+          {results.length > 0 && (
+            <p className="px-3 py-2 text-[11px] text-muted-foreground">
+              Libri · Le copertine alternative sono nella scheda del libro
+            </p>
+          )}
           {results.map((b, index) => (
             <button
               key={b.id}

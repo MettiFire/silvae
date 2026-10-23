@@ -13,7 +13,7 @@ export function CoverPicker({ book }: { book: Book }) {
 
   const { data: options = [], isLoading } = useQuery({
     queryKey: ["cover-options", book.id],
-    queryFn: () => coverCandidates(book),
+    queryFn: () => coverCandidates(book, true),
     enabled: open,
     staleTime: 5 * 60 * 1000,
   });
@@ -90,6 +90,10 @@ export function CoverPicker({ book }: { book: Book }) {
               </button>
             </div>
 
+            <p className="mb-4 text-sm text-muted-foreground">
+              Scegli tra le copertine delle diverse edizioni della stessa opera. La scelta è
+              personale: lettura, voto e frammenti restano associati al libro.
+            </p>
             <label className="mb-5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 text-sm transition hover:border-primary/50">
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -139,7 +143,7 @@ export function CoverPicker({ book }: { book: Book }) {
                     height={225}
                     referrerPolicy="no-referrer"
                     loading="lazy"
-                    className="aspect-[2/3] w-full object-cover"
+                    className="aspect-[2/3] w-full bg-muted/30 object-contain"
                     onError={(e) => {
                       (e.currentTarget.parentElement as HTMLElement).style.display = "none";
                     }}
