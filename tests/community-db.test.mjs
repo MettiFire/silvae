@@ -64,6 +64,17 @@ test("Profile identity, image ownership and public club permissions", async (t) 
       assert.equal(await scalar("SELECT count(*)::int AS value FROM storage.objects"), 1);
     },
   );
+  await t.test("Avatar and banner save on the owner profile, remain public, and cannot be changed by another reader", async () => {
+    await as(one);
+    const avatar = `https://storage.example.test/profile-images/${one}/avatar.webp`;
+    const banner = `https://storage.example.test/profile-images/${one}/banner.webp`;
+    await db.query("UPDATE profiles SET avatar_url=$1,banner_url=$2 WHERE id=$3", [avatar, banner, one]);
+    await as(null);
+    const profile = (await db.query("SELECT avatar_url,banner_url FROM profiles WHERE id=$1", [one])).rows[0];
+    assert.deepEqual(profile, { avatar_url: avatar, banner_url: banner });
+    await as(two);
+    assert.equal((await db.query("UPDATE profiles SET avatar_url=$1 WHERE id=$2 RETURNING id", ["https://example.test/spoof.webp", one])).rows.length, 0);
+  });
   let club, topic;
   await t.test(
     "Club creator joins atomically; nonmembers cannot post or spoof another user",

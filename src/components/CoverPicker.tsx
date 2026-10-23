@@ -3,11 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { coverCandidates, setBookCover, uploadCover, type Book } from "@/lib/books";
+import { resolvedCoverKey, useResolvedBookCover } from "@/lib/book-cover-state";
+import { coverUrls } from "@/lib/book-metadata";
 import { useAuth } from "@/lib/auth";
 
 export function CoverPicker({ book }: { book: Book }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { cover: resolvedCover } = useResolvedBookCover(book.id);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -18,12 +21,16 @@ export function CoverPicker({ book }: { book: Book }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const currentCover = book.custom_cover_url || resolvedCover || book.cover_url;
+  const visibleOptions = coverUrls({ cover_url: currentCover ?? null, cover_candidates: options });
+
   if (!user) return null;
 
   async function apply(url: string) {
     setBusy(true);
     try {
       await setBookCover(book.id, url);
+      qc.setQueryData(resolvedCoverKey(book.id), url);
       await qc.invalidateQueries({ queryKey: ["book", book.id] });
       await qc.invalidateQueries({ queryKey: ["library"] });
       await qc.invalidateQueries({ queryKey: ["library-item"] });
@@ -118,21 +125,21 @@ export function CoverPicker({ book }: { book: Book }) {
             {isLoading && (
               <p className="text-sm text-muted-foreground">Cerco copertine alternative…</p>
             )}
-            {!isLoading && options.length === 0 && (
+            {!isLoading && visibleOptions.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Nessuna copertina alternativa trovata: puoi caricarne una tua.
               </p>
             )}
 
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-              {options.map((url) => (
+              {visibleOptions.map((url) => (
                 <button
                   key={url}
                   type="button"
                   disabled={busy}
                   onClick={() => void apply(url)}
                   className={`overflow-hidden rounded-lg border-2 transition hover:border-primary disabled:opacity-50 ${
-                    url === book.cover_url ? "border-primary" : "border-transparent"
+                    url === currentCover ? "border-primary" : "border-transparent"
                   }`}
                 >
                   <img

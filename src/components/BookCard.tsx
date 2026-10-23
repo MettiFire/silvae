@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
-import { coverUrls } from "@/lib/book-metadata";
+import { useResolvedBookCover } from "@/lib/book-cover-state";
+import { displayCoverUrls } from "@/lib/book-metadata";
 import { BookmarkRating } from "@/components/BookmarkRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
@@ -13,17 +14,20 @@ export function BookCover({
   className,
   priority = false,
   fit = "cover",
+  onCoverLoad,
 }: {
   book: Book;
   className?: string;
   priority?: boolean;
   fit?: "cover" | "contain";
+  onCoverLoad?: (url: string) => void;
 }) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(priority);
   const [loadedUrl, setLoadedUrl] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const initial = coverUrls(book);
+  const { cover: resolvedCover, remember } = useResolvedBookCover(book.id);
+  const initial = displayCoverUrls(book, resolvedCover);
   const exhausted = !initial.some((url) => !failed.has(url));
   const { data: alternatives = [] } = useQuery({
     queryKey: ["cover-fallbacks", book.id, book.cover_url],
@@ -53,6 +57,9 @@ export function BookCover({
     const timer = setTimeout(() => setFailed((previous) => new Set(previous).add(source)), 8000);
     return () => clearTimeout(timer);
   }, [source, visible, loadedUrl]);
+  useEffect(() => {
+    if (loadedUrl && loadedUrl === source) onCoverLoad?.(loadedUrl);
+  }, [loadedUrl, source, onCoverLoad]);
   return (
     <div ref={ref} className={cn("cover-frame relative overflow-hidden", className)}>
       {source ? (
@@ -71,7 +78,10 @@ export function BookCover({
             onLoad={(e) => {
               if (e.currentTarget.naturalWidth <= 2)
                 setFailed((previous) => new Set(previous).add(source));
-              else setLoadedUrl(source);
+              else {
+                setLoadedUrl(source);
+                if (!book.custom_cover_url) remember(source);
+              }
             }}
             onError={() => setFailed((previous) => new Set(previous).add(source))}
           />

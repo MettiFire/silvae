@@ -8,6 +8,7 @@ import { sameAuthorName, workTitle } from "@/lib/work-identity";
 import { BookCover } from "./BookCard";
 
 export function DailyFragment() {
+  const [coverUrl, setCoverUrl] = useState("");
   const [day, setDay] = useState<string | null>(null);
   useEffect(() => {
     const update = () => setDay(fragmentDay());
@@ -34,8 +35,15 @@ export function DailyFragment() {
       b.authors.some((a) => sameAuthorName(a, fragment!.author)),
   );
   const book = candidates?.find((b) => b.cover_url) ?? candidates?.[0];
+  useEffect(() => setCoverUrl(""), [book?.id]);
   const cover = book ? (
-    <BookCover book={book} fit="contain" className="!bg-transparent !shadow-none after:!hidden" />
+    <BookCover
+      key={book.id}
+      book={book}
+      fit="contain"
+      onCoverLoad={setCoverUrl}
+      className="!bg-transparent !shadow-none after:!hidden"
+    />
   ) : (
     <div className="flex aspect-[2/3] flex-col items-center justify-center border border-border bg-card px-4 text-center">
       <span className="font-display text-lg">{fragment?.title}</span>
@@ -44,9 +52,25 @@ export function DailyFragment() {
   );
   return (
     <section
-      className="my-10 min-h-80 border-y border-border py-8"
+      className="relative isolate my-10 min-h-80 overflow-hidden rounded-xl border border-border/60 bg-muted/25 px-5 py-7 sm:px-8 sm:py-8"
       aria-labelledby="daily-fragment-title"
     >
+      {coverUrl && (
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          aria-hidden="true"
+        >
+          <img
+            src={coverUrl}
+            alt=""
+            decoding="async"
+            width={300}
+            height={450}
+            className="absolute -inset-[20%] h-[140%] w-[140%] object-cover opacity-30 blur-3xl saturate-150 dark:opacity-25"
+          />
+          <div className="absolute inset-0 bg-background/45 dark:bg-background/35" />
+        </div>
+      )}
       <div className="mb-6 flex items-center gap-3">
         <Quote className="h-4 w-4 text-primary" aria-hidden="true" />
         <h2 id="daily-fragment-title" className="eyebrow">

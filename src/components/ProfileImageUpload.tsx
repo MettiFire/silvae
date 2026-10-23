@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { requireFragmentUser } from "@/lib/fragments";
+import { prepareProfileImage, uploadProfileImage } from "@/lib/profile-images";
 
 export function ProfileImageUpload({
   kind,
@@ -25,45 +25,9 @@ export function ProfileImageUpload({
     setUploading(true);
     onBusyChange(true);
     try {
-      if (
-        !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-        file.size > 8 * 1024 * 1024
-      )
-        throw Error("Scegli una foto JPG, PNG o WebP fino a 8 MB.");
-      await requireFragmentUser(supabase, userId);
-      const bitmap = await createImageBitmap(file);
-      if (bitmap.width * bitmap.height > 40000000) {
-        bitmap.close();
-        throw Error("Immagine troppo grande. Scegli una versione più piccola.");
-      }
-      const scale = Math.min(
-        1,
-        (kind === "avatar" ? 512 : 1600) / Math.max(bitmap.width, bitmap.height),
-      );
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-      const context = canvas.getContext("2d");
-      if (!context) {
-        bitmap.close();
-        throw Error("Impossibile preparare l’immagine.");
-      }
-      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      bitmap.close();
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(
-          (b) => (b ? resolve(b) : reject(Error("Immagine non leggibile."))),
-          "image/webp",
-          0.85,
-        ),
-      );
-      const extension = blob.type === "image/webp" ? "webp" : "png";
-      const path = `${userId}/${kind}-${crypto.randomUUID()}.${extension}`;
-      const { error: storageError } = await supabase.storage
-        .from("profile-images")
-        .upload(path, blob, { contentType: blob.type, upsert: false });
-      if (storageError) throw Error("Caricamento non riuscito. Riprova tra poco.");
-      onChange(supabase.storage.from("profile-images").getPublicUrl(path).data.publicUrl);
+      const blob = await prepareProfileImage(file, kind);
+      const url = await uploadProfileImage(supabase, userId, kind, blob);
+      onChange(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Caricamento non riuscito.");
     } finally {
@@ -91,6 +55,7 @@ export function ProfileImageUpload({
             width={kind === "avatar" ? 96 : 600}
             height={kind === "avatar" ? 96 : 200}
             decoding="async"
+            onError={() => setError("L’immagine non è raggiungibile. Prova a caricarla di nuovo.")}
             referrerPolicy="no-referrer"
           />
         )}

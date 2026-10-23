@@ -22,7 +22,7 @@ export function lookupTitle(value: string): string {
     .trim();
 }
 export function workTitle(value: string): string {
-  return textKey(lookupTitle(value));
+  return textKey(lookupTitle(value)).replace(/^(?:the|a|an|il|lo|la|i|gli|le|l|un|uno|una)\s+/, "");
 }
 function authorParts(value: string) {
   const reordered = value.includes(",") ? value.split(",").reverse().join(" ") : value;
@@ -66,6 +66,17 @@ export function directWorkIdentity(book: WorkBook): WorkIdentity | undefined {
 function identity(book: WorkBook, identities: WorkIdentities) {
   return identities[book.id] ?? directWorkIdentity(book);
 }
+function attributedTitle(title: string, authors: string[]) {
+  let normalized = workTitle(title);
+  for (const author of authors) {
+    const name = textKey(author.includes(",") ? author.split(",").reverse().join(" ") : author);
+    if (!name) continue;
+    for (const connector of [" by ", " di ", " of ", " de ", " von ", " par "])
+      if (normalized.endsWith(connector + name))
+        normalized = normalized.slice(0, -(connector + name).length);
+  }
+  return normalized;
+}
 export function sameReadingWork(
   a: WorkBook,
   b: WorkBook,
@@ -76,8 +87,12 @@ export function sameReadingWork(
     y = identity(b, identities);
   if (x?.verified && y?.verified && x.workIds.some((id) => y.workIds.includes(id))) return true;
   if (!sharedAuthor(a, b)) return false;
-  const titlesA = [a.title, ...(x?.verified ? x.titles : [])].map(workTitle).filter(Boolean);
-  const titlesB = [b.title, ...(y?.verified ? y.titles : [])].map(workTitle).filter(Boolean);
+  const titlesA = [a.title, ...(x?.verified ? x.titles : [])]
+    .map((title) => attributedTitle(title, a.authors))
+    .filter(Boolean);
+  const titlesB = [b.title, ...(y?.verified ? y.titles : [])]
+    .map((title) => attributedTitle(title, b.authors))
+    .filter(Boolean);
   return titlesA.some((title) => titlesB.includes(title));
 }
 export function canRecommendWork(

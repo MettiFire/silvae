@@ -162,7 +162,10 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
     setError("");
     try {
       await requireFragmentUser(supabase, user.id);
-      const values = validateProfile(form);
+      const values = validateProfile({
+        ...form,
+        username: form.username.trim() || profile.username,
+      });
       const { error } = await supabase
         .from("profiles")
         .update(values)
@@ -202,6 +205,7 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["public-profile"] }),
         qc.invalidateQueries({ queryKey: ["people"] }),
+        qc.invalidateQueries({ queryKey: ["profile-people"] }),
         qc.invalidateQueries({ queryKey: ["activities"] }),
         qc.invalidateQueries({ queryKey: ["book-clubs"] }),
       ]);
@@ -260,7 +264,7 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
                 value={form[key as keyof typeof form]}
                 onChange={(e) => setForm({ ...form, [key!]: e.target.value })}
                 disabled={busy}
-                required={key === "username"}
+                placeholder={key === "username" ? "Scegli uno username (facoltativo)" : undefined}
                 maxLength={key === "username" ? 64 : key === "display_name" ? 80 : 2000}
                 className="h-11 rounded border bg-background px-3 text-sm text-foreground"
               />

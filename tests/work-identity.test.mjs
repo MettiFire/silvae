@@ -152,3 +152,17 @@ test("Different full first names do not become the same author through shared in
   assert.equal(sameAuthorName("John Smith", "James Smith"), false);
   assert.equal(sameAuthorName("John Smith", "J. Smith"), true);
 });
+
+test("catalogue duplicates that add a leading article do not become another unread work", () => {
+  const current=book("ol:OL40567956W","Decameron",["Giovanni Boccaccio"]);
+  const duplicate=book("ol:OL7180368W","The Decameron",["Giovanni Boccaccio"]);
+  assert.equal(sameReadingWork(current,duplicate),true);
+  assert.equal(canRecommendWork(duplicate,[current]),false);
+  assert.equal(sameReadingWork(book("one","La casa",["Author One"]),book("two","Casa",["Author Two"])),false);
+});
+
+test("publisher-added author attribution is not a distinct unread work", () => {
+  const current=book("ol:OL40567956W","Decameron",["Giovanni Boccaccio"]);
+  assert.equal(canRecommendWork(book("ol:OL27738190W","The Decameron of Giovanni Boccaccio",["Giovanni Boccaccio"]),[current]),false);
+  assert.equal(sameReadingWork(book("a","A Portrait of the Artist",["James Joyce"]),book("b","A Portrait",["James Joyce"])),false);
+});

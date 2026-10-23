@@ -10,6 +10,7 @@ import { AppShell } from "@/components/AppShell";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { ReadingDates } from "@/components/ReadingDates";
 import { ReadingProgress } from "@/components/ReadingProgress";
+import { RelatedBooks } from "@/components/RelatedBooks";
 import { Fragments } from "@/components/Fragments";
 import { CoverPicker } from "@/components/CoverPicker";
 import { BookCover } from "@/components/BookCard";
@@ -227,12 +228,28 @@ function BookPage() {
       <div className="book-detail-layout grid gap-8 md:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
         <div>
           <BookCover
-            book={item?.custom_cover_url ? { ...book, cover_url: item.custom_cover_url } : book}
+            book={
+              item?.custom_cover_url
+                ? {
+                    ...book,
+                    cover_url: item.custom_cover_url,
+                    custom_cover_url: item.custom_cover_url,
+                  }
+                : book
+            }
             priority
           />
           {item && (
             <CoverPicker
-              book={item.custom_cover_url ? { ...book, cover_url: item.custom_cover_url } : book}
+              book={
+                item.custom_cover_url
+                  ? {
+                      ...book,
+                      cover_url: item.custom_cover_url,
+                      custom_cover_url: item.custom_cover_url,
+                    }
+                  : book
+              }
             />
           )}
           {user && (
@@ -518,6 +535,7 @@ function BookPage() {
           </section>
         </div>
       </div>
+      <RelatedBooks key={book.id} book={book} />
     </AppShell>
   );
 }

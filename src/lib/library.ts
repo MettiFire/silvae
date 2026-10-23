@@ -48,6 +48,7 @@ function libraryRows(data: unknown[]) {
       ? {
           ...item.books,
           cover_url: item.custom_cover_url || item.books.cover_url,
+          custom_cover_url: item.custom_cover_url ?? null,
           description: item.books.description ?? null,
         }
       : null,

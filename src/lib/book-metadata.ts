@@ -25,3 +25,15 @@ export function descriptionText(value: string | null | undefined): string {
 export function coverUrls(book: { cover_url: string | null; cover_candidates?: string[] | undefined }): string[] {
   return [...new Set([book.cover_url, ...(book.cover_candidates ?? [])].filter((v): v is string => !!v && /^https:\/\//i.test(v)))];
 }
+
+/** Personal choices win; otherwise keep the cover actually seen before opening the detail. */
+export function displayCoverUrls(book: {
+  cover_url: string | null;
+  custom_cover_url?: string | null;
+  cover_candidates?: string[];
+}, resolved?: string): string[] {
+  return coverUrls({
+    cover_url: book.custom_cover_url || resolved || book.cover_url,
+    cover_candidates: [...(book.cover_url ? [book.cover_url] : []), ...(book.cover_candidates ?? [])],
+  });
+}

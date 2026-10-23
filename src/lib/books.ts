@@ -9,6 +9,7 @@ export type Book = {
   title: string;
   authors: string[];
   cover_url: string | null;
+  custom_cover_url?: string | null;
   published_year: number | null;
   page_count: number | null;
   categories: string[];
@@ -103,7 +104,7 @@ function mapOLDoc(d: OLDoc): Book {
   };
 }
 
-async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance", language?:string): Promise<Book[]> {
+async function olSearch(query: string, max: number, startIndex = 0, order: "relevance" | "newest" = "relevance", language?:string, resolveCovers = true): Promise<Book[]> {
   const params = new URLSearchParams({ limit: String(max), offset: String(startIndex),
     fields: "key,title,author_name,first_publish_year,number_of_pages_median,subject,cover_i,isbn,ratings_average,ratings_count" });
   if (language) params.set("fields",params.get("fields")+",editions,editions.title,editions.cover_i,editions.isbn");
@@ -129,6 +130,7 @@ async function olSearch(query: string, max: number, startIndex = 0, order: "rele
     localized.isbn=edition.isbn??[];
     return localized;
   });
+  if (!resolveCovers) return docs.map(mapOLDoc);
   let covers: Record<string, string> = {};
   try {
     covers = await gbCovers({ data: { isbns: docs.flatMap(d => (d.isbn ?? []).slice(0, 3)) } });
@@ -158,7 +160,7 @@ async function olGetBook(workId: string): Promise<Book> {
     authors?: { author?: { key?: string } }[];
   };
   let catalogue: Book | undefined;
-  try { catalogue = (await olSearch(`key:/works/${workId}`, 1))[0]; } catch { /* Work details still render. */ }
+  try { catalogue = (await olSearch(`key:/works/${workId}`, 1, 0, "relevance", undefined, false))[0]; } catch { /* Work details still render. */ }
   const authorNames: string[] = [...(catalogue?.authors ?? [])];
   for (const a of authorNames.length ? [] : (w.authors ?? [])) {
     const key = a.author?.key;
