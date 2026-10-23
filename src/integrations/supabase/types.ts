@@ -863,6 +863,7 @@ export type Database = {
         Args: { p_connection: string; p_credential: string; p_documents: Json }
         Returns: Json
       }
+      is_club_member: { Args: { p_club: string }; Returns: boolean }
       publish_author_follows: {
         Args: { p_metadata: Json; p_user: string }
         Returns: undefined
