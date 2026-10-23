@@ -23,6 +23,7 @@ import { Logo } from "@/components/Logo";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { profileLabel } from "@/lib/profile-model";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 const NAV = [
@@ -40,6 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
   const { user, profile } = useAuth();
+  const accountName = profile ? profileLabel(profile) : "Il mio profilo";
   const navigate = useNavigate();
   const [more, setMore] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -102,14 +104,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                       className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="account-initial">
-                      {(profile?.display_name || profile?.username || "L")
-                        .slice(0, 1)
-                        .toUpperCase()}
-                    </span>
+                    <span className="account-initial">{accountName.slice(0, 1).toUpperCase()}</span>
                   )}
                   <span className="hidden max-w-40 truncate text-xs font-medium lg:inline">
-                    {user.email || profile?.display_name || "Il mio profilo"}
+                    {accountName}
                   </span>
                 </Link>
               </>
