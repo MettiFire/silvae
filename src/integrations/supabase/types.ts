@@ -70,6 +70,41 @@ export type Database = {
         }
         Relationships: []
       }
+      book_clubs: {
+        Row: {
+          created_at: string
+          current_book_id: string | null
+          description: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_book_id?: string | null
+          description?: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          current_book_id?: string | null
+          description?: string
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_clubs_current_book_id_fkey"
+            columns: ["current_book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_lists: {
         Row: {
           created_at: string
@@ -156,6 +191,112 @@ export type Database = {
           year?: number
         }
         Relationships: []
+      }
+      club_members: {
+        Row: {
+          club_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          club_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          club_id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "book_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_messages: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          topic_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          topic_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_messages_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "club_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_topics: {
+        Row: {
+          author_id: string
+          body: string
+          book_id: string | null
+          club_id: string
+          created_at: string
+          id: string
+          spoiler: boolean
+          title: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          book_id?: string | null
+          club_id: string
+          created_at?: string
+          id?: string
+          spoiler?: boolean
+          title: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          book_id?: string | null
+          club_id?: string
+          created_at?: string
+          id?: string
+          spoiler?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_topics_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_topics_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "book_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dismissed_books: {
         Row: {

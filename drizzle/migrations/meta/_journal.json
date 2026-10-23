@@ -57,6 +57,13 @@
       "when": 1792713600007,
       "tag": "0007_public_book_clubs",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792762291974,
+      "tag": "0008_noop_check",
+      "breakpoints": true
     }
   ]
 }
