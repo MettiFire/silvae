@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
-/** Custom half-step rating using a bookmark icon instead of stars. */
-export function BookmarkRating({
+/** Custom half-step rating using a leaf icon. */
+export function LeafRating({
   value,
   onChange,
   size = 20,
@@ -37,9 +37,9 @@ export function BookmarkRating({
         const fill = Math.max(0, Math.min(1, shown - (slot - 1)));
         return (
           <span key={slot} className="relative" style={{ width: size, height: size }}>
-            <Bookmark size={size} className="absolute inset-0 text-muted-foreground/40" />
+            <RatingLeaf size={size} className="absolute inset-0 text-muted-foreground/40" />
             <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-              <Bookmark size={size} filled className="text-primary" />
+              <RatingLeaf size={size} filled className="text-primary" />
             </span>
           </span>
         );
@@ -72,7 +72,7 @@ export function BookmarkRating({
   );
 }
 
-function Bookmark({
+function RatingLeaf({
   size,
   filled,
   className,
@@ -84,10 +84,18 @@ function Bookmark({
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path
-        d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2c0 .6-.7 1-1.2.6L12 16.8l-5.3 4a.75.75 0 0 1-1.2-.6V5A1.5 1.5 0 0 1 7 3.5Z"
+        d="M20.5 3.5C11 2 4 6 4 12.5a7.5 7.5 0 0 0 7.5 7.5C18 20 22 13 20.5 3.5Z"
         fill={filled ? "currentColor" : "none"}
         stroke="currentColor"
         strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 21 15 9M8 16v-4M8 16h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>

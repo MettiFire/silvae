@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
 import { useResolvedBookCover } from "@/lib/book-cover-state";
 import { displayCoverUrls } from "@/lib/book-metadata";
-import { BookmarkRating } from "@/components/BookmarkRating";
+import { LeafRating } from "@/components/LeafRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +135,7 @@ export function BookCard({
         </h3>
         <p className="line-clamp-1 text-xs text-muted-foreground">{book.authors.join(", ")}</p>
       </Link>
-      {rating != null && <BookmarkRating value={rating} readOnly size={14} className="mt-1" />}
+      {rating != null && <LeafRating value={rating} readOnly size={14} className="mt-1" />}
       {onToggleFavorite && (
         <button
           type="button"

@@ -16,7 +16,7 @@ import { RelatedBooks } from "@/components/RelatedBooks";
 import { Fragments } from "@/components/Fragments";
 import { CoverPicker } from "@/components/CoverPicker";
 import { BookCover } from "@/components/BookCard";
-import { BookmarkRating } from "@/components/BookmarkRating";
+import { LeafRating } from "@/components/LeafRating";
 import { ProgressBar } from "@/components/ProgressBar";
 import { AddToListMenu } from "@/components/AddToListMenu";
 import { descriptionText } from "@/lib/book-metadata";
@@ -381,7 +381,7 @@ function BookPage() {
                 Chi l’ha letto {communityRating ? `· ${communityRating.count} voti` : ""}
               </p>
               <div className="flex items-center gap-2">
-                <BookmarkRating value={communityRating?.average ?? null} readOnly size={16} />
+                <LeafRating value={communityRating?.average ?? null} readOnly size={16} />
                 <span className="text-sm">
                   {communityRating
                     ? communityRating.average.toFixed(1)
@@ -396,7 +396,7 @@ function BookPage() {
             {item && (
               <div>
                 <p className="text-xs text-muted-foreground">Il tuo voto</p>
-                <BookmarkRating
+                <LeafRating
                   value={item.rating != null ? Number(item.rating) : null}
                   size={18}
                   onChange={(v) => update.mutate({ id: item.id, patch: { rating: v } })}
@@ -572,7 +572,7 @@ function BookPage() {
                         </p>
                       </div>
                       {r.rating != null && (
-                        <BookmarkRating
+                        <LeafRating
                           value={Number(r.rating)}
                           readOnly
                           size={14}

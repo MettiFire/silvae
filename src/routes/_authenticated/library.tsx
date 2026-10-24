@@ -8,7 +8,7 @@ import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { List } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
-import { BookmarkRating } from "@/components/BookmarkRating";
+import { LeafRating } from "@/components/LeafRating";
 import { ProgressBar } from "@/components/ProgressBar";
 import { useAuth } from "@/lib/auth";
 import { STATUS_LABEL, useLibrary, useUpdateItem, type ReadingStatus } from "@/lib/library";
@@ -261,7 +261,7 @@ function LibraryPage() {
                   )
                 )}
               </div>
-              <BookmarkRating
+              <LeafRating
                 value={i.rating != null ? Number(i.rating) : null}
                 size={16}
                 onChange={(v) => update.mutate({ id: i.id, patch: { rating: v } })}
