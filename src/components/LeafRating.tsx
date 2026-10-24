@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { cn } from "@/lib/utils";
 
 /** Custom half-step rating using a leaf icon. */
@@ -17,7 +18,8 @@ export function LeafRating({
   const shown = value ?? 0;
   const interactive = !readOnly && !!onChange;
   return (
-    <div
+    <UiElement
+      as="div"
       className={cn(
         "relative inline-flex items-center gap-0.5",
         interactive &&
@@ -49,7 +51,8 @@ export function LeafRating({
           <span aria-hidden="true" className="ml-1 text-[9px] text-muted-foreground">
             ⌄
           </span>
-          <select
+          <UiElement
+            as="select"
             aria-label={
               value == null ? "Assegna una valutazione" : `Modifica valutazione: ${value} su 5`
             }
@@ -59,16 +62,18 @@ export function LeafRating({
             }
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           >
-            <option value="">Non valutato</option>
+            <option value="">
+              <UiText text="Non valutato" />
+            </option>
             {Array.from({ length: 11 }, (_, i) => i / 2).map((score) => (
               <option key={score} value={score}>
                 {score} / 5
               </option>
             ))}
-          </select>
+          </UiElement>
         </>
       )}
-    </div>
+    </UiElement>
   );
 }
 

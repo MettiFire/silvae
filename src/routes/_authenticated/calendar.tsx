@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -47,12 +48,12 @@ function CalendarPage() {
       />
       {isLoading && (
         <p role="status" className="editorial-empty">
-          Caricamento delle letture…
+          <UiText text="Caricamento delle letture…" />
         </p>
       )}
       {isError && (
         <p role="alert" className="editorial-empty">
-          Il calendario non è disponibile. Ricarica la pagina per riprovare.
+          <UiText text="Il calendario non è disponibile. Ricarica la pagina per riprovare." />
         </p>
       )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -61,7 +62,9 @@ function CalendarPage() {
           return (
             <div key={m} className="rounded-xl border border-border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display font-semibold">{m}</h2>
+                <h2 className="font-display font-semibold">
+                  <UiText text={m} />
+                </h2>
                 <span className="text-xs text-muted-foreground">{monthBooks.length}</span>
               </div>
               {monthBooks.length === 0 ? (

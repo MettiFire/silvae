@@ -1,3 +1,5 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
+import { SiteLanguageSettings } from "@/components/SiteLanguageSettings";
 import { EbookDevices } from "@/components/EbookDevices";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -15,11 +17,12 @@ import { isGeneratedProfile } from "@/lib/profile-model";
 import { validateProfile } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 const SECTIONS = {
   profile: "Profilo pubblico",
   preferences: "Gusti di lettura",
   appearance: "Aspetto",
+  language: "Lingua",
   devices: "Dispositivi",
   data: "Dati e account",
 } as const;
@@ -51,12 +54,12 @@ function SettingsPage() {
         subtitle="Il tuo spazio personale. Questi controlli sono visibili solo a te."
         action={
           <Link className="button-outline" to="/profile">
-            Torna al profilo ↗
+            <UiText text="Torna al profilo ↗" />
           </Link>
         }
       />
       <div className="settings-layout">
-        <nav className="settings-nav" aria-label="Impostazioni del profilo">
+        <UiElement as="nav" className="settings-nav" aria-label="Impostazioni del profilo">
           {(Object.keys(SECTIONS) as Section[]).map((key) => (
             <Link
               key={key}
@@ -64,46 +67,60 @@ function SettingsPage() {
               search={{ section: key }}
               aria-current={section === key ? "page" : undefined}
             >
-              {SECTIONS[key]}
+              <UiText text={SECTIONS[key]} />
             </Link>
           ))}
-        </nav>
+        </UiElement>
         <div className="min-w-0">
           {section === "profile" &&
             (profile ? (
               <EditPublicProfile key={profile.id} profile={profile} />
             ) : profileLoading ? (
-              <p role="status">Caricamento profilo…</p>
+              <p role="status">
+                <UiText text="Caricamento profilo…" />
+              </p>
             ) : (
               <p role="alert" className="editorial-empty">
-                Il profilo non si è caricato.{" "}
+                <UiText text="Il profilo non si è caricato." />{" "}
                 <button className="underline" onClick={() => void refreshProfile()}>
-                  Riprova
+                  <UiText text="Riprova" />
                 </button>
               </p>
             ))}
           {section === "preferences" && (
             <>
-              <h2 className="mb-4 font-display text-2xl">Una biblioteca a tua misura</h2>
+              <h2 className="mb-4 font-display text-2xl">
+                <UiText text="Una biblioteca a tua misura" />
+              </h2>
               <ReadingPreferences />
             </>
           )}
+          {section === "language" && <SiteLanguageSettings key={user?.id} />}
           {section === "appearance" && (
             <div className="settings-form">
               <fieldset>
-                <legend>Interfaccia</legend>
+                <legend>
+                  <UiText text="Interfaccia" />
+                </legend>
                 <label className="flex items-center justify-between gap-4 text-sm">
-                  Tema dell’interfaccia
-                  <select
+                  <UiText text="Tema dell’interfaccia" />
+                  <UiElement
+                    as="select"
                     aria-label="Tema dell’interfaccia"
                     className="rounded border bg-background p-2"
                     value={theme}
                     onChange={(e) => setTheme(e.target.value as typeof theme)}
                   >
-                    <option value="system">Segui il dispositivo</option>
-                    <option value="light">Carta chiara</option>
-                    <option value="dark">Inchiostro scuro</option>
-                  </select>
+                    <option value="system">
+                      <UiText text="Segui il dispositivo" />
+                    </option>
+                    <option value="light">
+                      <UiText text="Carta chiara" />
+                    </option>
+                    <option value="dark">
+                      <UiText text="Inchiostro scuro" />
+                    </option>
+                  </UiElement>
                 </label>
                 <div className="mt-6">
                   <BookGridSizeControl />
@@ -113,28 +130,32 @@ function SettingsPage() {
           )}
           {section === "devices" && (
             <>
-              <h2 className="mb-4 font-display text-2xl">I tuoi dispositivi</h2>
+              <h2 className="mb-4 font-display text-2xl">
+                <UiText text="I tuoi dispositivi" />
+              </h2>
               <EbookDevices key={user?.id} />
               <ReaderConnections />
             </>
           )}
           {section === "data" && (
             <section className="settings-form border-t pt-6">
-              <h2 className="font-display text-2xl">La tua libreria, senza ricominciare</h2>
+              <h2 className="font-display text-2xl">
+                <UiText text="La tua libreria, senza ricominciare" />
+              </h2>
               <p className="my-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                Importa libri da Goodreads, Bookshelf o altri CSV. Puoi controllare l’anteprima
-                prima di aggiungerli. Anche il ripristino della libreria si trova nella pagina di
-                importazione.
+                <UiText text="Importa libri da Goodreads, Bookshelf o altri CSV. Puoi controllare l’anteprima prima di aggiungerli. Anche il ripristino della libreria si trova nella pagina di importazione." />
               </p>
               <Link to="/import" className="button-ink">
-                Importa e gestisci la libreria →
+                <UiText text="Importa e gestisci la libreria →" />
               </Link>
-              <h3 className="mt-8 font-display text-xl">Sottolineature e note</h3>
+              <h3 className="mt-8 font-display text-xl">
+                <UiText text="Sottolineature e note" />
+              </h3>
               <p className="my-3 text-sm text-muted-foreground">
-                I tuoi frammenti rimangono privati e si gestiscono nell’archivio dedicato.
+                <UiText text="I tuoi frammenti rimangono privati e si gestiscono nell’archivio dedicato." />
               </p>
               <Link to="/fragments" className="button-outline">
-                Apri Frammenti
+                <UiText text="Apri Frammenti" />
               </Link>
               <DeleteAccount />
             </section>
@@ -221,20 +242,23 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
   return (
     <form onSubmit={save} className="settings-form">
       <fieldset>
-        <legend>Come ti vedono gli altri</legend>
+        <legend>
+          <UiText text="Come ti vedono gli altri" />
+        </legend>
         <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-          Nome, biografia, immagini, letture e autori seguiti compongono il tuo profilo pubblico. Le
-          liste private e i frammenti restano personali.
+          <UiText text="Nome, biografia, immagini, letture e autori seguiti compongono il tuo profilo pubblico. Le liste private e i frammenti restano personali." />
         </p>
         <label className="mb-6 grid gap-2 text-xs text-muted-foreground">
-          Email dell’account · privata
+          <UiText text="Email dell’account · privata" />
           <input
             readOnly
             value={user?.email ?? ""}
             type="email"
             className="h-11 rounded border bg-muted px-3 text-sm text-foreground"
           />
-          <span>Non compare sul tuo profilo pubblico.</span>
+          <span>
+            <UiText text="Non compare sul tuo profilo pubblico." />
+          </span>
         </label>
         <div className="mb-8 grid gap-6 sm:grid-cols-2">
           {user &&
@@ -261,8 +285,9 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
             ["display_name", "Nome visualizzato"],
           ].map(([key, label]) => (
             <label key={key} className="grid gap-2 text-xs text-muted-foreground">
-              {label}
-              <input
+              <UiText text={label} />
+              <UiElement
+                as="input"
                 value={form[key as keyof typeof form]}
                 onChange={(e) => setForm({ ...form, [key!]: e.target.value })}
                 disabled={busy}
@@ -273,8 +298,9 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
             </label>
           ))}
           <label className="grid gap-2 text-xs text-muted-foreground sm:col-span-2">
-            Qualcosa di te
-            <textarea
+            <UiText text="Qualcosa di te" />
+            <UiElement
+              as="textarea"
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               disabled={busy}
@@ -292,7 +318,7 @@ export function EditPublicProfile({ profile }: { profile: Profile }) {
         </p>
       )}
       <button className="button-ink" disabled={busy || uploading}>
-        {busy ? "Salvataggio…" : "Salva profilo pubblico"}
+        <UiText text={busy ? "Salvataggio…" : "Salva profilo pubblico"} />
       </button>
     </form>
   );

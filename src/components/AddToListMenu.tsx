@@ -1,7 +1,8 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ListPlus, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { requireFragmentUser } from "@/lib/fragments";
@@ -127,12 +128,14 @@ export function AddToListMenu({ book }: { book: Book }) {
         className="flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium transition hover:bg-accent"
       >
         {inAny ? <Check className="h-4 w-4 text-primary" /> : <ListPlus className="h-4 w-4" />}
-        {inAny ? "Aggiunto" : "Aggiungi a lista"}
+        <UiText text={inAny ? "Aggiunto" : "Aggiungi a lista"} />
       </button>
       {open && (
         <div className="absolute z-50 mt-2 w-64 rounded-xl border border-border bg-popover p-2 shadow-paper">
           {lists.length === 0 && (
-            <p className="px-2 py-2 text-xs text-muted-foreground">Nessuna lista ancora.</p>
+            <p className="px-2 py-2 text-xs text-muted-foreground">
+              <UiText text="Nessuna lista ancora." />
+            </p>
           )}
           {lists.map((l) => (
             <button
@@ -145,14 +148,15 @@ export function AddToListMenu({ book }: { book: Book }) {
               <span className="truncate">
                 {l.name}{" "}
                 <span className="text-xs text-muted-foreground">
-                  {l.is_public ? "· pubblica" : "· privata"}
+                  <UiText text={l.is_public ? "· pubblica" : "· privata"} />
                 </span>
               </span>
               {membership.includes(l.id) && <Check className="h-4 w-4 text-primary" />}
             </button>
           ))}
           <div className="mt-2 flex gap-1 border-t border-border pt-2">
-            <input
+            <UiElement
+              as="input"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nuova lista…"
@@ -160,7 +164,8 @@ export function AddToListMenu({ book }: { book: Book }) {
               maxLength={100}
               className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2 text-sm"
             />
-            <button
+            <UiElement
+              as="button"
               type="button"
               onClick={() => createList.mutate()}
               disabled={createList.isPending || !newName.trim()}
@@ -168,7 +173,7 @@ export function AddToListMenu({ book }: { book: Book }) {
               className="rounded-lg bg-primary px-2 text-primary-foreground"
             >
               <Plus className="h-4 w-4" />
-            </button>
+            </UiElement>
           </div>
         </div>
       )}

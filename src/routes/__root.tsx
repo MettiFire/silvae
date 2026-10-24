@@ -1,3 +1,5 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
+import { UiLanguageProvider } from "@/lib/ui-language-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -23,33 +25,39 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <BackButton className="mb-6" fallback="/" />
-        <p className="mb-8 font-display text-2xl">Silvae.</p>
+        <p className="mb-8 font-display text-2xl">
+          <UiText text="Silvae." />
+        </p>
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">
-          Questa pagina è fuori catalogo.
+          <UiText text="Questa pagina è fuori catalogo." />
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Il collegamento potrebbe essere cambiato. Puoi tornare al diario o cercare la tua prossima
-          lettura nel catalogo.
+          <UiText text="Il collegamento potrebbe essere cambiato. Puoi tornare al diario o cercare la tua prossima lettura nel catalogo." />
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Torna al diario
+            <UiText text="Torna al diario" />
           </Link>
           <Link to="/discover" className="button-outline">
-            Esplora i libri
+            <UiText text="Esplora i libri" />
           </Link>
         </div>
-        <nav
+        <UiElement
+          as="nav"
           aria-label="Documenti legali"
           className="mt-10 flex justify-center gap-5 text-xs text-muted-foreground"
         >
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Termini e condizioni</Link>
-        </nav>
+          <Link to="/privacy">
+            <UiText text="Privacy" />
+          </Link>
+          <Link to="/terms">
+            <UiText text="Termini e condizioni" />
+          </Link>
+        </UiElement>
       </div>
     </div>
   );
@@ -67,10 +75,10 @@ function ErrorComponent({ error, reset }: import("@tanstack/react-router").Error
       <div className="max-w-md text-center">
         <BackButton className="mb-6" fallback="/" />
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Questa pagina non si è caricata
+          <UiText text="Questa pagina non si è caricata" />
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Qualcosa è andato storto. Riprova o torna alla home.
+          <UiText text="Qualcosa è andato storto. Riprova o torna alla home." />
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -80,13 +88,13 @@ function ErrorComponent({ error, reset }: import("@tanstack/react-router").Error
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Riprova
+            <UiText text="Riprova" />
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Home
+            <UiText text="Home" />
           </a>
         </div>
       </div>
@@ -162,9 +170,11 @@ function RootComponent() {
       <ThemeProvider>
         <WebApp />
         <AuthProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <Toaster position="top-right" />
+          <UiLanguageProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <Toaster position="top-right" />
+          </UiLanguageProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

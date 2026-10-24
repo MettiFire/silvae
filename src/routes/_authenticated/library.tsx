@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { MangaProgressLabel } from "@/components/MangaTracker";
 import { isMangaId } from "@/lib/manga-model";
 import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
@@ -85,7 +86,7 @@ function LibraryPage() {
         subtitle={`${items.length} libri raccolti, una storia alla volta`}
       />
 
-      <div className="shelf-tabs" role="tablist" aria-label="Stato di lettura">
+      <UiElement as="div" className="shelf-tabs" role="tablist" aria-label="Stato di lettura">
         {(Object.keys(STATUS_LABEL) as ReadingStatus[]).map((s) => (
           <button
             key={s}
@@ -98,20 +99,22 @@ function LibraryPage() {
               setOrder(s === "read" ? "last-read" : "added");
             }}
           >
-            {STATUS_LABEL[s]} ({items.filter((i) => i.status === s).length})
+            <UiText text={STATUS_LABEL[s]} /> ({items.filter((i) => i.status === s).length})
           </button>
         ))}
-      </div>
+      </UiElement>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <input
+        <UiElement
+          as="input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Cerca per titolo o autore"
           aria-label="Cerca nella libreria"
           className="h-9 min-w-[200px] flex-1 rounded-lg border border-border bg-card px-3 text-sm"
         />
-        <select
+        <UiElement
+          as="select"
           aria-label="Formato"
           value={format}
           onChange={(e) => {
@@ -120,13 +123,19 @@ function LibraryPage() {
           }}
           className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
         >
-          <option value="all">Libri e manga</option>
-          <option value="books">Solo libri</option>
-          <option value="manga">Serie manga</option>
-        </select>
+          <option value="all">
+            <UiText text="Libri e manga" />
+          </option>
+          <option value="books">
+            <UiText text="Solo libri" />
+          </option>
+          <option value="manga">
+            <UiText text="Serie manga" />
+          </option>
+        </UiElement>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} />{" "}
-          Preferiti
+          <UiText text="Preferiti" />
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -134,20 +143,24 @@ function LibraryPage() {
             checked={onlyReview}
             onChange={(e) => setOnlyReview(e.target.checked)}
           />{" "}
-          Da verificare
+          <UiText text="Da verificare" />
         </label>
-        <select
+        <UiElement
+          as="select"
           value={minRating}
           onChange={(e) => setMinRating(Number(e.target.value))}
           aria-label="Voto minimo"
           className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
         >
-          <option value={0}>Ogni voto</option>
+          <option value={0}>
+            <UiText text="Ogni voto" />
+          </option>
           <option value={3}>3+</option>
           <option value={4}>4+</option>
           <option value={4.5}>4.5+</option>
-        </select>
-        <select
+        </UiElement>
+        <UiElement
+          as="select"
           value={genre}
           onChange={(e) => {
             setGenre(e.target.value);
@@ -156,29 +169,35 @@ function LibraryPage() {
           aria-label="Genere"
           className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
         >
-          <option value="all">Ogni genere</option>
+          <option value="all">
+            <UiText text="Ogni genere" />
+          </option>
           {genres.map((g) => (
             <option key={g.id} value={g.id}>
-              {g.label}
+              <UiText text={g.label} />
             </option>
           ))}
-        </select>
-        <select
+        </UiElement>
+        <UiElement
+          as="select"
           value={year}
           onChange={(e) => setYear(e.target.value)}
           aria-label="Anno"
           className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
         >
-          <option value="all">Ogni anno</option>
+          <option value="all">
+            <UiText text="Ogni anno" />
+          </option>
           {years.map((y) => (
             <option key={String(y)} value={String(y)}>
               {String(y)}
             </option>
           ))}
-        </select>
+        </UiElement>
         <label className="flex items-center gap-2 text-sm">
-          Ordina
-          <select
+          <UiText text="Ordina" />
+          <UiElement
+            as="select"
             aria-label="Ordina la libreria"
             value={order}
             onChange={(e) => setOrder(e.target.value as LibraryOrder)}
@@ -186,17 +205,26 @@ function LibraryPage() {
           >
             {tab === "read" && (
               <>
-                <option value="last-read">Ultimi letti</option>
-                <option value="first-read">Primi letti</option>
+                <option value="last-read">
+                  <UiText text="Ultimi letti" />
+                </option>
+                <option value="first-read">
+                  <UiText text="Primi letti" />
+                </option>
               </>
             )}
-            <option value="added">Ultimi aggiunti</option>
-            <option value="title">Titolo A–Z</option>
-          </select>
+            <option value="added">
+              <UiText text="Ultimi aggiunti" />
+            </option>
+            <option value="title">
+              <UiText text="Titolo A–Z" />
+            </option>
+          </UiElement>
         </label>
         <div className="ml-auto flex gap-1">
           <BookGridSizeControl active={view === "grid"} onSelect={() => setView("grid")} />
-          <button
+          <UiElement
+            as="button"
             type="button"
             title="Vista elenco"
             aria-label="Vista elenco"
@@ -205,27 +233,31 @@ function LibraryPage() {
             className={`rounded-lg border p-2 ${view === "list" ? "border-primary text-primary" : "border-border"}`}
           >
             <List className="h-4 w-4" />
-          </button>
+          </UiElement>
         </div>
       </div>
 
       {tab === "read" && (order === "last-read" || order === "first-read") && (
         <p className="mb-4 text-xs text-muted-foreground">
-          Ordine per data di fine lettura o ultima rilettura. I libri senza data sono in fondo.
+          <UiText text="Ordine per data di fine lettura o ultima rilettura. I libri senza data sono in fondo." />
         </p>
       )}
-      {isLoading && <p className="text-sm text-muted-foreground">Caricamento…</p>}
+      {isLoading && (
+        <p className="text-sm text-muted-foreground">
+          <UiText text="Caricamento…" />
+        </p>
+      )}
       {isError && (
         <p role="alert" className="editorial-empty">
-          La libreria non si è caricata.{" "}
+          <UiText text="La libreria non si è caricata." />{" "}
           <button onClick={() => void refetch()} className="underline">
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
       {!isLoading && !isError && filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-          Nessun libro in questa sezione.
+          <UiText text="Nessun libro in questa sezione." />
         </p>
       )}
 
@@ -246,7 +278,9 @@ function LibraryPage() {
                 </Link>
                 <p className="text-xs text-muted-foreground">{i.books?.authors.join(", ")}</p>
                 {i.needs_review && (
-                  <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>
+                  <p className="mt-1 text-xs text-primary">
+                    <UiText text="Dati CSV da verificare" />
+                  </p>
                 )}
                 {isMangaId(i.book_id) ? (
                   <MangaProgressLabel bookId={i.book_id} />
@@ -284,7 +318,9 @@ function LibraryPage() {
                 footer={
                   <>
                     {i.needs_review && (
-                      <p className="mt-1 text-xs text-primary">Dati CSV da verificare</p>
+                      <p className="mt-1 text-xs text-primary">
+                        <UiText text="Dati CSV da verificare" />
+                      </p>
                     )}
                     {isMangaId(i.book_id) ? (
                       <MangaProgressLabel bookId={i.book_id} />
@@ -308,7 +344,7 @@ function LibraryPage() {
       )}
       {filtered.length > visible && (
         <button className="button-outline mt-8" onClick={() => setVisible(visible + 40)}>
-          Mostra altri libri
+          <UiText text="Mostra altri libri" />
         </button>
       )}
     </AppShell>

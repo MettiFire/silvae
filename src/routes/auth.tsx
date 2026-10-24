@@ -1,8 +1,9 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { BackButton } from "@/components/BackButton";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
@@ -149,24 +150,30 @@ function AuthPage() {
     <div className="auth-layout">
       <aside className="auth-editorial">
         <Link to="/" className="wordmark">
-          Silvae.
+          <UiText text="Silvae." />
         </Link>
         <div>
-          <p className="eyebrow">Una vita tra le pagine</p>
+          <p className="eyebrow">
+            <UiText text="Una vita tra le pagine" />
+          </p>
           <h2>
-            Ogni lettura
+            <UiText text="Ogni lettura" />
             <br />
-            lascia un
+            <UiText text="lascia un" />
             <br />
-            <em>segno.</em>
+            <em>
+              <UiText text="segno." />
+            </em>
           </h2>
           <p>
-            Il tuo diario, le tue raccolte.
+            <UiText text="Il tuo diario, le tue raccolte." />
             <br />
-            Le persone con cui condividerle.
+            <UiText text="Le persone con cui condividerle." />
           </p>
         </div>
-        <span className="eyebrow">La prossima storia comincia qui</span>
+        <span className="eyebrow">
+          <UiText text="La prossima storia comincia qui" />
+        </span>
       </aside>
       <div className="auth-form-panel">
         <div className="w-full max-w-sm">
@@ -189,7 +196,9 @@ function AuthPage() {
             <form onSubmit={submit} className="mt-5 space-y-4">
               {mode !== "recovery" && (
                 <label className="block space-y-1 text-sm">
-                  <span>Email</span>
+                  <span>
+                    <UiText text="Email" />
+                  </span>
                   <input
                     type="email"
                     required
@@ -203,7 +212,9 @@ function AuthPage() {
               )}
               {mode !== "forgot" && (
                 <label className="block space-y-1 text-sm">
-                  <span>Password</span>
+                  <span>
+                    <UiText text="Password" />
+                  </span>
                   <input
                     type="password"
                     required
@@ -218,9 +229,13 @@ function AuthPage() {
               )}
               {(mode === "signup" || mode === "recovery") && (
                 <>
-                  <p className="text-xs text-muted-foreground">Usa almeno 8 caratteri.</p>
+                  <p className="text-xs text-muted-foreground">
+                    <UiText text="Usa almeno 8 caratteri." />
+                  </p>
                   <label className="block space-y-1 text-sm">
-                    <span>Conferma password</span>
+                    <span>
+                      <UiText text="Conferma password" />
+                    </span>
                     <input
                       type="password"
                       required
@@ -238,14 +253,18 @@ function AuthPage() {
                 type="submit"
                 className="h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
-                {busy
-                  ? "Attendi…"
-                  : {
-                      login: "Accedi",
-                      signup: "Registrati",
-                      forgot: "Invia link di recupero",
-                      recovery: "Salva nuova password",
-                    }[mode]}
+                <UiText
+                  text={
+                    busy
+                      ? "Attendi…"
+                      : {
+                          login: "Accedi",
+                          signup: "Registrati",
+                          forgot: "Invia link di recupero",
+                          recovery: "Salva nuova password",
+                        }[mode]
+                  }
+                />
               </button>
             </form>
             {mode === "login" && (
@@ -254,14 +273,14 @@ function AuthPage() {
                 onClick={() => switchMode("forgot")}
                 className="mt-3 text-sm text-primary"
               >
-                Password dimenticata?
+                <UiText text="Password dimenticata?" />
               </button>
             )}
             {(mode === "login" || mode === "signup") && (
               <>
                 <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="h-px flex-1 bg-border" />
-                  oppure
+                  <UiText text="oppure" />
                   <span className="h-px flex-1 bg-border" />
                 </div>
                 <button
@@ -270,21 +289,22 @@ function AuthPage() {
                   onClick={() => void google()}
                   className="h-11 w-full rounded-lg border border-border bg-background text-sm font-medium hover:bg-accent disabled:opacity-60"
                 >
-                  Continua con Google
+                  <UiText text="Continua con Google" />
                 </button>
               </>
             )}
-            <nav
+            <UiElement
+              as="nav"
               aria-label="Documenti legali"
               className="mt-6 flex flex-wrap justify-center gap-5 text-xs text-muted-foreground"
             >
               <Link to="/privacy" className="underline underline-offset-4">
-                Privacy
+                <UiText text="Privacy" />
               </Link>
               <Link to="/terms" className="underline underline-offset-4">
-                Termini e condizioni
+                <UiText text="Termini e condizioni" />
               </Link>
-            </nav>
+            </UiElement>
             {mode !== "recovery" && (
               <p className="mt-5 text-center text-sm text-muted-foreground">
                 {mode === "login" ? "Non hai un account? " : "Hai già un account? "}
@@ -293,7 +313,7 @@ function AuthPage() {
                   onClick={() => switchMode(mode === "login" ? "signup" : "login")}
                   className="font-medium text-primary"
                 >
-                  {mode === "login" ? "Registrati" : "Accedi"}
+                  <UiText text={mode === "login" ? "Registrati" : "Accedi"} />
                 </button>
               </p>
             )}

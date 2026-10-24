@@ -1,3 +1,4 @@
+import { UiElement } from "@/lib/ui-language-context";
 import { Grid2X2, Grid3X3, LayoutGrid } from "lucide-react";
 import { useBookDensity, setBookDensity } from "@/lib/book-density";
 export function BookGridSizeControl({
@@ -9,7 +10,8 @@ export function BookGridSizeControl({
 }) {
   const density = useBookDensity();
   return (
-    <div
+    <UiElement
+      as="div"
       className="inline-flex items-center gap-1"
       role="group"
       aria-label="Densità della griglia dei libri"
@@ -21,7 +23,8 @@ export function BookGridSizeControl({
           ["compact", "Griglia compatta", Grid3X3],
         ] as const
       ).map(([value, label, Icon]) => (
-        <button
+        <UiElement
+          as="button"
           key={value}
           type="button"
           title={label}
@@ -34,8 +37,8 @@ export function BookGridSizeControl({
           className={`rounded-lg border p-2 transition hover:bg-accent ${active && density === value ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground"}`}
         >
           <Icon aria-hidden="true" className="h-4 w-4" />
-        </button>
+        </UiElement>
       ))}
-    </div>
+    </UiElement>
   );
 }

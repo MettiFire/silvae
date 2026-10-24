@@ -1,9 +1,10 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { mangaCatalogue } from "@/lib/manga.functions";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ScanBarcode, UserRound } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { authorSearchResults } from "@/lib/author-search";
 import { findAuthors } from "@/lib/authors";
 import { searchBookSuggestions, searchByIsbn } from "@/lib/books";
@@ -66,7 +67,7 @@ export function GlobalSearch() {
   });
   const manga = useQuery({
     queryKey: ["manga-search", debounced, language ?? "it"],
-    enabled: mode === "manga" && debounced.trim().length >= 2,
+    enabled: mode === "manga" && languageReady && debounced.trim().length >= 2,
     queryFn: () =>
       mangaCatalogue({ data: { query: debounced, ...(language ? { language } : {}) } }),
     staleTime: 3600000,
@@ -158,7 +159,8 @@ export function GlobalSearch() {
 
   return (
     <div ref={boxRef} className="relative w-full max-w-xl">
-      <select
+      <UiElement
+        as="select"
         aria-label="Tipo di ricerca"
         value={mode}
         onChange={(e) => {
@@ -168,10 +170,15 @@ export function GlobalSearch() {
         }}
         className="absolute left-2 top-1/2 z-10 h-7 w-20 -translate-y-1/2 rounded border-0 bg-card pl-1 text-xs"
       >
-        <option value="books">Libri</option>
-        <option value="manga">Manga</option>
-      </select>
-      <input
+        <option value="books">
+          <UiText text="Libri" />
+        </option>
+        <option value="manga">
+          <UiText text="Manga" />
+        </option>
+      </UiElement>
+      <UiElement
+        as="input"
         value={term}
         onChange={(e) => {
           setActive(-1);
@@ -219,7 +226,8 @@ export function GlobalSearch() {
         className="h-10 w-full rounded-xl border border-border bg-card pl-24 pr-11 text-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
       />
       {mode === "books" && (
-        <button
+        <UiElement
+          as="button"
           type="button"
           onClick={() => setScanning(true)}
           aria-label="Scansiona codice a barre"
@@ -227,13 +235,14 @@ export function GlobalSearch() {
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-primary"
         >
           <ScanBarcode className="h-4 w-4" />
-        </button>
+        </UiElement>
       )}
       {scanning && (
         <BarcodeScanner onDetected={(c) => void handleScan(c)} onClose={() => setScanning(false)} />
       )}
       {visible && (
-        <div
+        <UiElement
+          as="div"
           ref={resultsRef}
           role="listbox"
           id="global-search-results"
@@ -243,21 +252,25 @@ export function GlobalSearch() {
         >
           {searchError && (
             <p role="alert" className="px-3 py-3 text-sm text-destructive">
-              Ricerca non disponibile. Riprova tra poco.
+              <UiText text="Ricerca non disponibile. Riprova tra poco." />
             </p>
           )}
           {(fetching || (mode === "books" && authors.isFetching)) && (
-            <p className="px-3 py-3 text-sm text-muted-foreground">Ricerca in corso…</p>
+            <p className="px-3 py-3 text-sm text-muted-foreground">
+              <UiText text="Ricerca in corso…" />
+            </p>
           )}
           {!fetching &&
             !(mode === "books" && authors.isFetching) &&
             !searchError &&
             options.length === 0 && (
-              <p className="px-3 py-3 text-sm text-muted-foreground">Nessun risultato</p>
+              <p className="px-3 py-3 text-sm text-muted-foreground">
+                <UiText text="Nessun risultato" />
+              </p>
             )}
           {mode === "books" && authors.isError && (
             <p role="status" className="px-3 py-2 text-xs text-muted-foreground">
-              Ricerca autori temporaneamente non disponibile.
+              <UiText text="Ricerca autori temporaneamente non disponibile." />
             </p>
           )}
           {authorResults.map((author, index) => (
@@ -277,16 +290,21 @@ export function GlobalSearch() {
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">{author.name}</span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  Autore · Vai alla pagina{author.birth ? ` · ${author.birth}` : ""}
+                  <UiText text="Autore · Vai alla pagina" />
+                  {author.birth ? ` · ${author.birth}` : ""}
                 </span>
               </span>
             </button>
           ))}
           {visibleResults.length > 0 && (
             <p className="px-3 py-2 text-[11px] text-muted-foreground">
-              {mode === "manga"
-                ? "Serie manga · un risultato per serie, non per volume"
-                : "Libri · Le copertine alternative sono nella scheda del libro"}
+              <UiText
+                text={
+                  mode === "manga"
+                    ? "Serie manga · un risultato per serie, non per volume"
+                    : "Libri · Le copertine alternative sono nella scheda del libro"
+                }
+              />
             </p>
           )}
           {visibleResults.map((b, index) => (
@@ -312,7 +330,7 @@ export function GlobalSearch() {
               </span>
             </button>
           ))}
-        </div>
+        </UiElement>
       )}
     </div>
   );

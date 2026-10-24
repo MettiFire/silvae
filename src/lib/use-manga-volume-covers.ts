@@ -1,0 +1,28 @@
+import { useQuery } from "@tanstack/react-query";
+import { mangaCovers } from "./manga.functions";
+import { useBookLanguage } from "./use-book-language";
+import { useAuth } from "./auth";
+import { parsePreferences, PREFERENCES_FIELD } from "./reading-preferences";
+import type { Book } from "./books";
+export function useMangaVolumeCovers(book: Book) {
+  const { user } = useAuth();
+  const { language } = useBookLanguage(
+    parsePreferences(user?.user_metadata[PREFERENCES_FIELD])?.language,
+  );
+  const id = book.manga?.mangaDexId ?? (book.id.startsWith("manga:md:") ? book.id.slice(9) : null);
+  const malId =
+    book.manga?.malId ?? (book.id.startsWith("manga:mal:") ? Number(book.id.slice(10)) : null);
+  return useQuery({
+    queryKey: ["manga-volume-covers", id, malId, language],
+    enabled: !!id || !!malId,
+    queryFn: () =>
+      mangaCovers({
+        data: {
+          ...(id ? { id } : { malId: malId!, title: book.title }),
+          ...(language ? { language } : {}),
+        },
+      }),
+    staleTime: 86400000,
+    retry: false,
+  });
+}

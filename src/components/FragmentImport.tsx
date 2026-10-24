@@ -1,6 +1,7 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
@@ -241,21 +242,22 @@ export function FragmentImport({ close }: { close: () => void }) {
   return (
     <section className="mb-8 rounded-2xl border border-border bg-card p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-bold">Importa sottolineature</h2>
+        <h2 className="font-display text-xl font-bold">
+          <UiText text="Importa sottolineature" />
+        </h2>
         <button
           disabled={busy || searching !== null}
           onClick={close}
           className="text-sm text-muted-foreground"
         >
-          Chiudi
+          <UiText text="Chiudi" />
         </button>
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
-        Kindle My Clippings.txt, export Kobo TXT/Markdown/HTML e CSV, oppure lo ZIP Bookshelf con
-        Cards. Riconosco automaticamente i libri nella tua libreria o già collegati ai frammenti;
-        cerco nel catalogo quelli mancanti. Puoi correggere l’associazione prima di importare.
+        <UiText text="Kindle My Clippings.txt, export Kobo TXT/Markdown/HTML e CSV, oppure lo ZIP Bookshelf con Cards. Riconosco automaticamente i libri nella tua libreria o già collegati ai frammenti; cerco nel catalogo quelli mancanti. Puoi correggere l’associazione prima di importare." />
       </p>
-      <input
+      <UiElement
+        as="input"
         aria-label="File delle sottolineature"
         type="file"
         disabled={busy || searching !== null}
@@ -275,7 +277,7 @@ export function FragmentImport({ close }: { close: () => void }) {
           }}
           className="ml-3 text-sm underline"
         >
-          Interrompi riconoscimento
+          <UiText text="Interrompi riconoscimento" />
         </button>
       )}
       {notices.map((n) => (
@@ -291,14 +293,16 @@ export function FragmentImport({ close }: { close: () => void }) {
       {!!rows.length && (
         <>
           <p className="my-4 text-sm">
-            {rows.length} frammenti riconosciuti ·{" "}
-            {rows.filter((r) => r.automatic && r.bookId).length} associati automaticamente ·{" "}
-            {selected.length} da importare · {unmapped} da associare. Nessuna frase viene usata per
-            calcolare il progresso di lettura.
+            {rows.length}
+            <UiText text=" frammenti riconosciuti ·" />{" "}
+            {rows.filter((r) => r.automatic && r.bookId).length}
+            <UiText text=" associati automaticamente ·" /> {selected.length}
+            <UiText text=" da importare · " />
+            {unmapped}
+            <UiText text=" da associare. Nessuna frase viene usata per calcolare il progresso di lettura." />
           </p>
           <p className="mb-4 text-xs text-muted-foreground">
-            I libri trovati nel catalogo vengono collegati ai frammenti al momento
-            dell’importazione, senza modificare la tua libreria o segnarli come letti.
+            <UiText text="I libri trovati nel catalogo vengono collegati ai frammenti al momento dell’importazione, senza modificare la tua libreria o segnarli come letti." />
           </p>
           <div className="space-y-4">
             {rows.slice(page * 10, page * 10 + 10).map((row, offset) => {
@@ -312,10 +316,11 @@ export function FragmentImport({ close }: { close: () => void }) {
                       checked={!row.skip}
                       onChange={(e) => change(i, { skip: !e.target.checked })}
                     />
-                    {row.entry.kind === "note" ? "Nota" : "Citazione"} ·{" "}
+                    <UiText text={row.entry.kind === "note" ? "Nota" : "Citazione"} /> ·{" "}
                     {row.entry.title || "Titolo da associare"}
                   </label>
-                  <textarea
+                  <UiElement
+                    as="textarea"
                     aria-label={`Testo importato ${i + 1}`}
                     disabled={busy}
                     value={row.entry.quote}
@@ -329,9 +334,12 @@ export function FragmentImport({ close }: { close: () => void }) {
                     {row.entry.position ? ` · ${row.entry.position}` : ""}
                   </p>
                   {row.automatic && row.bookId && (
-                    <p className="mt-2 text-xs text-primary">Libro associato automaticamente</p>
+                    <p className="mt-2 text-xs text-primary">
+                      <UiText text="Libro associato automaticamente" />
+                    </p>
                   )}
-                  <select
+                  <UiElement
+                    as="select"
                     disabled={busy}
                     aria-label={`Libro per il frammento ${i + 1}`}
                     value={row.bookId}
@@ -339,17 +347,18 @@ export function FragmentImport({ close }: { close: () => void }) {
                     className="mt-2 w-full rounded-lg border bg-background p-2 text-sm"
                   >
                     <option value="">
-                      Associa a un libro — nessun salvataggio finché non lo scegli
+                      <UiText text="Associa a un libro — nessun salvataggio finché non lo scegli" />
                     </option>
                     {books.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.title} · {b.authors.join(", ")}
                       </option>
                     ))}
-                  </select>
+                  </UiElement>
                   {!row.bookId && (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <input
+                      <UiElement
+                        as="input"
                         aria-label={`Cerca libro per il frammento ${i + 1}`}
                         placeholder="Cerca titolo, autore o ISBN"
                         value={bookSearch[fragmentBookGroup(row.entry)] ?? ""}
@@ -368,13 +377,12 @@ export function FragmentImport({ close }: { close: () => void }) {
                         onClick={() => void findBook(i)}
                         className="rounded border px-3 py-2 text-sm"
                       >
-                        {searching === i ? "Ricerca…" : "Cerca nel catalogo"}
+                        <UiText text={searching === i ? "Ricerca…" : "Cerca nel catalogo"} />
                       </button>
                     </div>
                   )}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    La scelta vale anche per gli altri frammenti con lo stesso titolo e autore nel
-                    file.
+                    <UiText text="La scelta vale anche per gli altri frammenti con lo stesso titolo e autore nel file." />
                   </p>
                 </div>
               );
@@ -386,7 +394,7 @@ export function FragmentImport({ close }: { close: () => void }) {
               onClick={() => setPage((p) => p - 1)}
               className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
             >
-              Precedenti
+              <UiText text="Precedenti" />
             </button>
             <span className="text-sm">
               {page + 1} / {Math.ceil(rows.length / 10)}
@@ -396,12 +404,12 @@ export function FragmentImport({ close }: { close: () => void }) {
               onClick={() => setPage((p) => p + 1)}
               className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
             >
-              Successivi
+              <UiText text="Successivi" />
             </button>
           </div>
           {!!unmapped && (
             <p className="mb-3 text-xs text-muted-foreground">
-              I frammenti non associati saranno esclusi da questa importazione.
+              <UiText text="I frammenti non associati saranno esclusi da questa importazione." />
             </p>
           )}
           <button
@@ -409,7 +417,7 @@ export function FragmentImport({ close }: { close: () => void }) {
             onClick={() => void run()}
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
           >
-            {busy ? "Importazione…" : `Importa ${selected.length} frammenti`}
+            <UiText text={busy ? "Importazione…" : `Importa ${selected.length} frammenti`} />
           </button>
         </>
       )}

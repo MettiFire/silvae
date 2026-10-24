@@ -1,8 +1,9 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { ArrowUpRight, Plus, Settings, Lock, Globe, Check, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { AppShell, SectionHeading } from "./AppShell";
 import { BookGridSizeControl } from "./BookGridSizeControl";
 import { BookCard, BookCover } from "./BookCard";
@@ -152,30 +153,36 @@ export function ReaderProfile({ username }: { username: string }) {
         <ProfileLoading />
       ) : profile.isError ? (
         <p role="alert" className="editorial-empty">
-          Il profilo non si è caricato.{" "}
+          <UiText text="Il profilo non si è caricato." />{" "}
           <button onClick={() => void profile.refetch()} className="underline">
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       ) : !profile.data ? (
         <div className="editorial-empty">
-          <h1 className="font-display text-3xl">Questo lettore non c’è ancora.</h1>
-          <p className="mt-3">Controlla lo username o cerca un altro lettore.</p>
+          <h1 className="font-display text-3xl">
+            <UiText text="Questo lettore non c’è ancora." />
+          </h1>
+          <p className="mt-3">
+            <UiText text="Controlla lo username o cerca un altro lettore." />
+          </p>
           <Link to="/social" className="mt-4 inline-block underline">
-            Cerca lettori
+            <UiText text="Cerca lettori" />
           </Link>
         </div>
       ) : (
         <>
           {own && profile.data && isGeneratedProfile(profile.data) && (
             <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
-              <p>Scegli il tuo username, raccontati con una bio e aggiungi foto e banner.</p>
+              <p>
+                <UiText text="Scegli il tuo username, raccontati con una bio e aggiungi foto e banner." />
+              </p>
               <Link
                 to="/settings"
                 search={{ section: "profile" }}
                 className="mt-2 inline-block text-primary underline"
               >
-                Personalizza il tuo profilo →
+                <UiText text="Personalizza il tuo profilo →" />
               </Link>
             </div>
           )}
@@ -198,7 +205,7 @@ export function ReaderProfile({ username }: { username: string }) {
               own ? (
                 <Link to="/settings" search={{ section: "profile" }} className="button-outline">
                   <Settings size={14} />
-                  Modifica profilo
+                  <UiText text="Modifica profilo" />
                 </Link>
               ) : user ? (
                 <button
@@ -209,7 +216,7 @@ export function ReaderProfile({ username }: { username: string }) {
                   {following.data ? (
                     <>
                       <Check size={14} />
-                      Segui già
+                      <UiText text="Segui già" />
                     </>
                   ) : (
                     "Segui questo lettore"
@@ -217,15 +224,14 @@ export function ReaderProfile({ username }: { username: string }) {
                 </button>
               ) : (
                 <Link to="/auth" className="button-ink">
-                  Accedi per seguire
+                  <UiText text="Accedi per seguire" />
                 </Link>
               )
             }
           />
           {authors.data?.localOnly && (
             <p className="mt-4 text-xs text-muted-foreground">
-              Gli autori sono ancora visibili solo a te: la pubblicazione sul profilo richiede
-              l’aggiornamento del database.
+              <UiText text="Gli autori sono ancora visibili solo a te: la pubblicazione sul profilo richiede l’aggiornamento del database." />
             </p>
           )}
           {editor && (
@@ -245,11 +251,11 @@ export function ReaderProfile({ username }: { username: string }) {
 }
 export function ProfileLoading() {
   return (
-    <div role="status" aria-label="Caricamento profilo" className="animate-pulse">
+    <UiElement as="div" role="status" aria-label="Caricamento profilo" className="animate-pulse">
       <div className="h-40 bg-muted" />
       <div className="my-8 h-12 w-1/2 bg-muted" />
       <div className="h-6 w-1/3 bg-muted" />
-    </div>
+    </UiElement>
   );
 }
 export function ReaderProfileView({
@@ -302,12 +308,14 @@ export function ReaderProfileView({
         }
       >
         <p className="eyebrow">
-          La biblioteca personale{!isGeneratedProfile(profile) ? ` / @${profile.username}` : ""}
+          <UiText text="La biblioteca personale" />
+          {!isGeneratedProfile(profile) ? ` / @${profile.username}` : ""}
         </p>
       </div>
       <header className="profile-identity">
         {profile.avatar_url ? (
-          <img
+          <UiElement
+            as="img"
             className="profile-avatar"
             src={profile.avatar_url}
             alt={`Foto di ${name}`}
@@ -333,19 +341,23 @@ export function ReaderProfileView({
           )}
           <div className="profile-stats">
             <span>
-              <strong>{loading || libraryError ? "—" : shelves.read.length}</strong> libri letti
+              <strong>{loading || libraryError ? "—" : shelves.read.length}</strong>
+              <UiText text=" libri letti" />
             </span>
             <button onClick={() => onPeople("followers")}>
-              <strong>{counts?.followers ?? "—"}</strong> follower
+              <strong>{counts?.followers ?? "—"}</strong>
+              <UiText text=" follower" />
             </button>
             <button onClick={() => onPeople("following")}>
-              <strong>{counts?.following ?? "—"}</strong> lettori seguiti
+              <strong>{counts?.following ?? "—"}</strong>
+              <UiText text=" lettori seguiti" />
             </button>
           </div>
         </div>
         <div className="self-start sm:ml-auto">{followAction}</div>
       </header>
-      <div
+      <UiElement
+        as="div"
         className="profile-tabs"
         role="tablist"
         aria-label="Raccolte del profilo"
@@ -384,7 +396,7 @@ export function ReaderProfileView({
               setVisible(20);
             }}
           >
-            {label}
+            <UiText text={label} />
             <span>
               {(key === "authors" && authorsError) ||
               (key === "lists" && listsError) ||
@@ -394,7 +406,7 @@ export function ReaderProfileView({
             </span>
           </button>
         ))}
-      </div>
+      </UiElement>
       <div className="profile-columns">
         <div
           className="min-w-0"
@@ -408,13 +420,13 @@ export function ReaderProfileView({
                 {own && (
                   <button onClick={onNewList} className="inline-flex items-center gap-2">
                     <Plus size={14} />
-                    Nuova lista
+                    <UiText text="Nuova lista" />
                   </button>
                 )}
               </SectionHeading>
               {listsError ? (
                 <p role="alert" className="editorial-empty">
-                  Le liste non sono disponibili. Ricarica la pagina per riprovare.
+                  <UiText text="Le liste non sono disponibili. Ricarica la pagina per riprovare." />
                 </p>
               ) : (
                 <ProfileLists lists={lists} own={own} onEdit={onEditList} />
@@ -431,7 +443,7 @@ export function ReaderProfileView({
               <SectionHeading title="Autori seguiti" number="01" />
               {authorsError ? (
                 <p role="alert" className="editorial-empty">
-                  Gli autori seguiti non sono disponibili in questo momento.
+                  <UiText text="Gli autori seguiti non sono disponibili in questo momento." />
                 </p>
               ) : (
                 <AuthorCollection authors={authors} />
@@ -451,20 +463,25 @@ export function ReaderProfileView({
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="hidden text-[11px] text-muted-foreground sm:inline">
-                    {tab === "read" ? "Dal più recente" : ""}
+                    <UiText text={tab === "read" ? "Dal più recente" : ""} />
                   </span>
                   <BookGridSizeControl />
                 </div>
               </SectionHeading>
               {loading ? (
-                <div className="profile-shelf" role="status" aria-label="Caricamento libri">
+                <UiElement
+                  as="div"
+                  className="profile-shelf"
+                  role="status"
+                  aria-label="Caricamento libri"
+                >
                   {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="aspect-[2/3] animate-pulse bg-muted" />
                   ))}
-                </div>
+                </UiElement>
               ) : libraryError ? (
                 <p role="alert" className="editorial-empty">
-                  Le letture non sono disponibili. Ricarica la pagina per riprovare.
+                  <UiText text="Le letture non sono disponibili. Ricarica la pagina per riprovare." />
                 </p>
               ) : rows.length ? (
                 <>
@@ -486,15 +503,20 @@ export function ReaderProfileView({
                       className="button-outline mt-8"
                       onClick={() => setVisible(visible + 20)}
                     >
-                      Mostra altri libri <ArrowRight size={13} />
+                      <UiText text="Mostra altri libri " />
+                      <ArrowRight size={13} />
                     </button>
                   )}
                 </>
               ) : (
                 <p className="editorial-empty">
-                  {own
-                    ? "Questo scaffale è ancora da riempire. Aggiungi un libro dalla sua scheda."
-                    : "Non ci sono ancora libri in questo scaffale."}
+                  <UiText
+                    text={
+                      own
+                        ? "Questo scaffale è ancora da riempire. Aggiungi un libro dalla sua scheda."
+                        : "Non ci sono ancora libri in questo scaffale."
+                    }
+                  />
                 </p>
               )}
               {tab === "read" && (
@@ -504,12 +526,14 @@ export function ReaderProfileView({
                       onClick={() => setTab("lists")}
                       className="inline-flex items-center gap-2"
                     >
-                      {own ? "Gestisci liste" : "Tutte le liste"}
+                      <UiText text={own ? "Gestisci liste" : "Tutte le liste"} />
                       <ArrowUpRight size={13} />
                     </button>
                   </SectionHeading>
                   {listsError ? (
-                    <p className="editorial-empty">Liste non disponibili.</p>
+                    <p className="editorial-empty">
+                      <UiText text="Liste non disponibili." />
+                    </p>
                   ) : (
                     <ProfileLists lists={lists.slice(0, 3)} own={own} onEdit={onEditList} />
                   )}{" "}
@@ -519,7 +543,7 @@ export function ReaderProfileView({
                       className="mt-5 inline-flex items-center gap-2 text-xs text-primary"
                     >
                       <Plus size={14} />
-                      Crea una lista di libri
+                      <UiText text="Crea una lista di libri" />
                     </button>
                   )}
                 </div>
@@ -528,8 +552,12 @@ export function ReaderProfileView({
           )}
         </div>
         <aside className="profile-aside">
-          <p className="eyebrow">In questo momento</p>
-          <h2 className="mt-3 font-display text-xl">In lettura</h2>
+          <p className="eyebrow">
+            <UiText text="In questo momento" />
+          </p>
+          <h2 className="mt-3 font-display text-xl">
+            <UiText text="In lettura" />
+          </h2>
           {shelves.reading.length ? (
             <div className="mt-5 space-y-5">
               {shelves.reading.slice(0, 3).map((i) =>
@@ -548,7 +576,9 @@ export function ReaderProfileView({
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         {i.books.authors.join(", ")}
                       </p>
-                      <p className="mt-2 text-[10px] text-primary">In lettura</p>
+                      <p className="mt-2 text-[10px] text-primary">
+                        <UiText text="In lettura" />
+                      </p>
                     </div>
                   </Link>
                 ) : null,
@@ -556,17 +586,19 @@ export function ReaderProfileView({
             </div>
           ) : (
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              Nessuna lettura in corso condivisa.
+              <UiText text="Nessuna lettura in corso condivisa." />
             </p>
           )}
           <div className="mt-10">
-            <p className="eyebrow">Autori seguiti</p>
+            <p className="eyebrow">
+              <UiText text="Autori seguiti" />
+            </p>
             {authors.slice(0, 5).map((a) => (
               <AuthorRow key={a.id} author={a} />
             ))}
             {!authors.length && (
               <p className="mt-4 text-xs text-muted-foreground">
-                {authorsError ? "Elenco non disponibile." : "Ancora nessun autore."}
+                <UiText text={authorsError ? "Elenco non disponibile." : "Ancora nessun autore."} />
               </p>
             )}
             {authors.length > 0 && (
@@ -574,12 +606,13 @@ export function ReaderProfileView({
                 className="mt-4 inline-flex items-center gap-2 text-xs text-primary"
                 onClick={() => setTab("authors")}
               >
-                Tutti gli autori <ArrowRight size={12} />
+                <UiText text="Tutti gli autori " />
+                <ArrowRight size={12} />
               </button>
             )}
           </div>
           <p className="mt-10 border-t pt-5 font-display text-sm italic leading-relaxed text-muted-foreground">
-            Sfoglia i libri, scopri gli autori, segui le tue curiosità.
+            <UiText text="Sfoglia i libri, scopri gli autori, segui le tue curiosità." />
           </p>
         </aside>
       </div>
@@ -611,7 +644,7 @@ export function ProfileLists({
                 )
               ) : (
                 <span className="self-center pb-3 font-display text-lg italic text-muted-foreground">
-                  Una storia da comporre.
+                  <UiText text="Una storia da comporre." />
                 </span>
               )}
             </div>
@@ -625,12 +658,12 @@ export function ProfileLists({
           <div className="mt-3 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               {l.is_public ? <Globe size={10} /> : <Lock size={10} />}{" "}
-              {l.is_public ? "Pubblica" : "Privata · solo tu"}
+              <UiText text={l.is_public ? "Pubblica" : "Privata · solo tu"} />
               {l.totals?.[0] && ` · ${l.totals[0].count} libri`}
             </span>
             {own && (
               <button onClick={() => onEdit(l)} className="underline">
-                Modifica
+                <UiText text="Modifica" />
               </button>
             )}
           </div>
@@ -639,9 +672,13 @@ export function ProfileLists({
     </div>
   ) : (
     <p className="editorial-empty">
-      {own
-        ? "Crea una raccolta per un viaggio, un argomento o un autore."
-        : "Questo lettore non ha ancora condiviso liste."}
+      <UiText
+        text={
+          own
+            ? "Crea una raccolta per un viaggio, un argomento o un autore."
+            : "Questo lettore non ha ancora condiviso liste."
+        }
+      />
     </p>
   );
 }
@@ -675,7 +712,7 @@ function AuthorCollection({ authors }: { authors: FollowedAuthor[] }) {
     </div>
   ) : (
     <p className="editorial-empty">
-      Gli autori seguiti appariranno qui. Puoi seguirli dalle loro pagine.
+      <UiText text="Gli autori seguiti appariranno qui. Puoi seguirli dalle loro pagine." />
     </p>
   );
 }
@@ -716,14 +753,23 @@ function ProfilePeople({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{type === "followers" ? "Follower" : "Lettori seguiti"}</DialogTitle>
-          <DialogDescription>Le persone con cui condividere la prossima lettura.</DialogDescription>
+          <DialogTitle>
+            <UiText text={type === "followers" ? "Follower" : "Lettori seguiti"} />
+          </DialogTitle>
+          <DialogDescription>
+            <UiText text="Le persone con cui condividere la prossima lettura." />
+          </DialogDescription>
         </DialogHeader>
         {people.isPending ? (
-          <p role="status">Caricamento…</p>
+          <p role="status">
+            <UiText text="Caricamento…" />
+          </p>
         ) : people.isError ? (
           <p role="alert">
-            Elenco non disponibile. <button onClick={() => void people.refetch()}>Riprova</button>
+            <UiText text="Elenco non disponibile. " />
+            <button onClick={() => void people.refetch()}>
+              <UiText text="Riprova" />
+            </button>
           </p>
         ) : (
           <div className="max-h-[55vh] overflow-y-auto">
@@ -746,16 +792,18 @@ function ProfilePeople({
                 </Link>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">Ancora nessun lettore qui.</p>
+              <p className="text-sm text-muted-foreground">
+                <UiText text="Ancora nessun lettore qui." />
+              </p>
             )}
           </div>
         )}
         <div className="flex justify-between text-xs">
           <button disabled={page === 0} onClick={() => setPage(page - 1)}>
-            Precedenti
+            <UiText text="Precedenti" />
           </button>
           <button disabled={!people.data?.more} onClick={() => setPage(page + 1)}>
-            Successivi
+            <UiText text="Successivi" />
           </button>
         </div>
       </DialogContent>

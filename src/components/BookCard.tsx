@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { isMangaId } from "@/lib/manga-model";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -65,7 +66,8 @@ export function BookCover({
     <div ref={ref} className={cn("cover-frame relative overflow-hidden", className)}>
       {source ? (
         (visible || priority) && (
-          <img
+          <UiElement
+            as="img"
             key={source}
             src={source}
             alt={`Copertina di ${book.title}`}
@@ -90,7 +92,9 @@ export function BookCover({
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
           <span className="font-display text-xs text-muted-foreground">{book.title}</span>
-          <span className="text-[10px] text-muted-foreground">Copertina non disponibile</span>
+          <span className="text-[10px] text-muted-foreground">
+            <UiText text="Copertina non disponibile" />
+          </span>
         </div>
       )}
     </div>
@@ -122,7 +126,7 @@ export function BookCard({
         </div>
         {isMangaId(book.id) && (
           <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
-            Serie manga
+            <UiText text="Serie manga" />
           </p>
         )}
         <h3
@@ -137,7 +141,8 @@ export function BookCard({
       </Link>
       {rating != null && <LeafRating value={rating} readOnly size={14} className="mt-1" />}
       {onToggleFavorite && (
-        <button
+        <UiElement
+          as="button"
           type="button"
           onClick={onToggleFavorite}
           aria-label={favorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
@@ -151,7 +156,7 @@ export function BookCard({
               favorite ? "fill-primary text-primary" : "text-muted-foreground",
             )}
           />
-        </button>
+        </UiElement>
       )}
       {footer}
     </div>

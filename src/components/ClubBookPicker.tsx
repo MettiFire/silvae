@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchBooks, type Book } from "@/lib/books";
@@ -26,7 +27,8 @@ export function ClubBookPicker({
           setQuery(term.trim());
         }}
       >
-        <input
+        <UiElement
+          as="input"
           aria-label="Libro da leggere nel club"
           placeholder="Cerca il libro del club"
           value={term}
@@ -34,21 +36,23 @@ export function ClubBookPicker({
           className="min-w-0 flex-1 rounded border bg-background px-3 py-2 text-sm"
         />
         <button disabled={disabled || term.trim().length < 3} className="button-outline">
-          Cerca
+          <UiText text="Cerca" />
         </button>
       </form>
       {books.isFetching && (
         <p role="status" className="text-sm">
-          Ricerca…
+          <UiText text="Ricerca…" />
         </p>
       )}
       {books.isError && (
         <p role="alert" className="text-sm text-destructive">
-          Catalogo non disponibile. Riprova.
+          <UiText text="Catalogo non disponibile. Riprova." />
         </p>
       )}
       {books.isSuccess && query && !books.data.length && (
-        <p className="text-sm">Nessun libro trovato.</p>
+        <p className="text-sm">
+          <UiText text="Nessun libro trovato." />
+        </p>
       )}
       <div className="max-h-72 space-y-1 overflow-y-auto">
         {books.data?.map((book) => (

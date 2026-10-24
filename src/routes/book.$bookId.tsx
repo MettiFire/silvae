@@ -1,3 +1,5 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { BookExternalRatings } from "@/components/BookExternalRatings";
 import { MangaTracker } from "@/components/MangaTracker";
 import { isMangaId } from "@/lib/manga-model";
@@ -8,7 +10,7 @@ import { useEffect, useState } from "react";
 import { requireFragmentUser } from "@/lib/fragments";
 import { getProfileMap } from "@/lib/profile-data";
 import { Heart, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { AppShell } from "@/components/AppShell";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { ReadingDates } from "@/components/ReadingDates";
@@ -63,6 +65,7 @@ function BookPage() {
     refetch,
   } = useQuery({
     queryKey: ["book", bookId, language ?? "any"],
+    staleTime: 5 * 60000,
     queryFn: () => getBook(bookId, language),
     enabled: languageReady,
   });
@@ -138,9 +141,9 @@ function BookPage() {
     return (
       <AppShell>
         <p role="alert">
-          Impossibile caricare il libro.{" "}
+          <UiText text="Impossibile caricare il libro." />{" "}
           <button onClick={() => void refetch()} className="text-primary">
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       </AppShell>
@@ -148,7 +151,9 @@ function BookPage() {
   if (isLoading || !book) {
     return (
       <AppShell>
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
+        <p className="text-sm text-muted-foreground">
+          <UiText text="Caricamento…" />
+        </p>
       </AppShell>
     );
   }
@@ -226,14 +231,13 @@ function BookPage() {
     <AppShell>
       {item?.needs_review && (
         <div className="mb-5 rounded-xl border border-border bg-accent p-4 text-sm">
-          Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa
-          nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto.
+          <UiText text="Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto." />
           <button
             disabled={update.isPending}
             className="ml-2 font-medium text-primary"
             onClick={() => update.mutate({ id: item.id, patch: { needs_review: false } }, {})}
           >
-            Conferma dati corretti
+            <UiText text="Conferma dati corretti" />
           </button>
         </div>
       )}
@@ -279,7 +283,7 @@ function BookPage() {
                           : "border-border bg-card hover:bg-accent"
                       }`}
                     >
-                      {STATUS_LABEL[s]}
+                      <UiText text={STATUS_LABEL[s]} />
                     </button>
                   ))}
                 </div>
@@ -289,10 +293,13 @@ function BookPage() {
                   disabled={save.isPending}
                   onClick={() => setStatus("to_read")}
                 >
-                  {save.isPending ? "Salvataggio…" : "Aggiungi serie alla libreria"}
+                  <UiText text={save.isPending ? "Salvataggio…" : "Aggiungi serie alla libreria"} />
                 </button>
               ) : (
-                <p className="text-sm text-primary">Serie · {STATUS_LABEL[item.status]}</p>
+                <p className="text-sm text-primary">
+                  <UiText text="Serie · " />
+                  <UiText text={STATUS_LABEL[item.status]} />
+                </p>
               )}
               <AddToListMenu book={book} />
               {item && (
@@ -308,7 +315,7 @@ function BookPage() {
                     <Heart
                       className={`h-4 w-4 ${item.favorite ? "fill-primary text-primary" : ""}`}
                     />
-                    Preferito
+                    <UiText text="Preferito" />
                   </button>
                   <button
                     type="button"
@@ -330,7 +337,9 @@ function BookPage() {
                     }
                     className="flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm"
                   >
-                    <RotateCcw className="h-4 w-4" /> Riletto ({item.reread_count})
+                    <RotateCcw className="h-4 w-4" />
+                    <UiText text=" Riletto (" />
+                    {item.reread_count})
                   </button>
                 </div>
               )}
@@ -339,7 +348,9 @@ function BookPage() {
         </div>
 
         <div className="min-w-0">
-          <p className="eyebrow mb-4">{manga ? "Serie manga" : "Dalla biblioteca"}</p>
+          <p className="eyebrow mb-4">
+            <UiText text={manga ? "Serie manga" : "Dalla biblioteca"} />
+          </p>
           <h1 className="font-display text-4xl font-normal leading-tight tracking-tight lg:text-5xl">
             {book.title}
           </h1>
@@ -358,44 +369,53 @@ function BookPage() {
             ))}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {[
-              book.published_year,
-              book.page_count ? `${book.page_count} pagine` : null,
-              book.manga?.totalVolumes
-                ? `${book.manga.totalVolumes} volumi (edizione originale)`
-                : null,
-              book.manga
-                ? book.manga.status === "completed"
-                  ? "Serie conclusa"
-                  : book.manga.status === "ongoing"
-                    ? "In corso di pubblicazione"
-                    : "Stato della serie da verificare"
-                : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+            <UiText
+              text={[
+                book.published_year,
+                book.page_count ? `${book.page_count} pagine` : null,
+                book.manga?.totalVolumes
+                  ? `${book.manga.totalVolumes} volumi (edizione originale)`
+                  : null,
+                book.manga
+                  ? book.manga.status === "completed"
+                    ? "Serie conclusa"
+                    : book.manga.status === "ongoing"
+                      ? "In corso di pubblicazione"
+                      : "Stato della serie da verificare"
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            />
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <div>
               <p className="text-xs text-muted-foreground">
-                Lettori Silvae {communityRating ? `· ${communityRating.count} voti` : ""}
+                <UiText text="Lettori Silvae " />
+                {communityRating ? `· ${communityRating.count} voti` : ""}
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-sm">
-                  {communityRating
-                    ? `${communityRating.average.toFixed(1)} / 5`
-                    : ratingError
-                      ? "Valutazioni non disponibili"
-                      : ratingLoading
-                        ? "Caricamento voti…"
-                        : "Ancora nessun voto"}
+                  <UiText
+                    text={
+                      communityRating
+                        ? `${communityRating.average.toFixed(1)} / 5`
+                        : ratingError
+                          ? "Valutazioni non disponibili"
+                          : ratingLoading
+                            ? "Caricamento voti…"
+                            : "Ancora nessun voto"
+                    }
+                  />
                 </span>
               </div>
             </div>
             {item && (
               <div>
-                <p className="text-xs text-muted-foreground">Il tuo voto</p>
+                <p className="text-xs text-muted-foreground">
+                  <UiText text="Il tuo voto" />
+                </p>
                 <LeafRating
                   value={item.rating != null ? Number(item.rating) : null}
                   size={18}
@@ -422,7 +442,9 @@ function BookPage() {
 
           {!manga && item && canUpdateReading(item) && (
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
-              <p className="mb-2 font-display font-semibold">Progresso di lettura</p>
+              <p className="mb-2 font-display font-semibold">
+                <UiText text="Progresso di lettura" />
+              </p>
               <ProgressBar
                 current={item.current_page}
                 total={totalPages}
@@ -433,8 +455,11 @@ function BookPage() {
                 }
               />
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Sono a pagina</span>
-                <input
+                <span className="text-sm text-muted-foreground">
+                  <UiText text="Sono a pagina" />
+                </span>
+                <UiElement
+                  as="input"
                   type="number"
                   min={0}
                   value={pageInput}
@@ -442,14 +467,17 @@ function BookPage() {
                   aria-label="Pagina attuale"
                   className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm"
                 />
-                <span className="text-sm text-muted-foreground">di {totalPages || "?"}</span>
+                <span className="text-sm text-muted-foreground">
+                  <UiText text="di " />
+                  {totalPages || "?"}
+                </span>
                 <button
                   type="button"
                   onClick={saveProgress}
                   disabled={update.isPending}
                   className="ml-auto h-9 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
                 >
-                  Aggiorna
+                  <UiText text="Aggiorna" />
                 </button>
               </div>
             </div>
@@ -475,16 +503,22 @@ function BookPage() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Dati della serie da MangaDex
+                <UiText
+                  text={
+                    book.id.startsWith("manga:mal:")
+                      ? "Dati della serie da MyAnimeList · Jikan"
+                      : "Dati della serie da MangaDex"
+                  }
+                />
               </a>
             </>
           )}
           <h2 className="mt-6 font-display text-lg font-semibold">
-            {manga ? "Descrizione della serie" : "Descrizione del libro"}
+            <UiText text={manga ? "Descrizione della serie" : "Descrizione del libro"} />
           </h2>
           {!book.description && (
             <p className="mt-2 text-sm text-muted-foreground">
-              Nessuna descrizione disponibile nei cataloghi consultati per questo libro.
+              <UiText text="Nessuna descrizione disponibile nei cataloghi consultati per questo libro." />
             </p>
           )}
           {book.description && (
@@ -499,7 +533,7 @@ function BookPage() {
                 onClick={() => setExpanded((v) => !v)}
                 className="mt-2 text-sm font-medium text-primary"
               >
-                {expanded ? "Mostra meno" : "Mostra altro"}
+                <UiText text={expanded ? "Mostra meno" : "Mostra altro"} />
               </button>
             </div>
           )}
@@ -507,10 +541,13 @@ function BookPage() {
           <Fragments book={book} />
 
           <section className="mt-10">
-            <h2 className="font-display text-xl font-bold">Recensioni recenti</h2>
+            <h2 className="font-display text-xl font-bold">
+              <UiText text="Recensioni recenti" />
+            </h2>
             {user && (
               <div className="mt-3">
-                <textarea
+                <UiElement
+                  as="textarea"
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={3}
@@ -526,23 +563,25 @@ function BookPage() {
                   disabled={reviewBusy || !reviewText.trim()}
                   className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
-                  {reviewBusy ? "Pubblicazione…" : "Pubblica"}
+                  <UiText text={reviewBusy ? "Pubblicazione…" : "Pubblica recensione"} />
                 </button>
               </div>
             )}
             <div className="mt-5 space-y-4">
               {reviewsError && (
                 <p role="alert" className="text-sm text-destructive">
-                  Le recensioni non sono disponibili. Riprova più tardi.
+                  <UiText text="Le recensioni non sono disponibili. Riprova più tardi." />
                 </p>
               )}
               {reviewsLoading && (
                 <p role="status" className="text-sm text-muted-foreground">
-                  Caricamento recensioni…
+                  <UiText text="Caricamento recensioni…" />
                 </p>
               )}
               {!reviewsLoading && !reviewsError && reviews.length === 0 && (
-                <p className="text-sm text-muted-foreground">Ancora nessuna recensione.</p>
+                <p className="text-sm text-muted-foreground">
+                  <UiText text="Ancora nessuna recensione." />
+                </p>
               )}
               {reviews.map((r) => {
                 const p = r.profiles as unknown as {
@@ -563,7 +602,7 @@ function BookPage() {
                           {p?.display_name ?? p?.username}
                         </Link>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(r.created_at as string).toLocaleDateString("it-IT")}
+                          <UiDate value={new Date(r.created_at as string)} />
                         </p>
                       </div>
                       {r.rating != null && (
@@ -601,7 +640,8 @@ export function Avatar({
 }) {
   if (url)
     return (
-      <img
+      <UiElement
+        as="img"
         src={url}
         alt={`Foto di ${name}`}
         loading="lazy"

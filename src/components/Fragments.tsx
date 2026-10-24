@@ -1,8 +1,10 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, Pencil, Trash2, Quote, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Book } from "@/lib/books";
@@ -48,12 +50,13 @@ export function FragmentCard({
           </Link>
           <p className="text-xs text-muted-foreground">{f.books?.authors.join(", ")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {f.kind === "note" ? "Nota personale" : "Citazione"} ·{" "}
+            <UiText text={f.kind === "note" ? "Nota personale" : "Citazione"} /> ·{" "}
             {FRAGMENT_SOURCES[f.source as FragmentSource] ?? f.source}
             {f.position ? ` · ${f.position}` : ""}
           </p>
         </div>
-        <button
+        <UiElement
+          as="button"
           disabled={busy || !!f.deleted_at}
           aria-label={
             f.favorite ? "Rimuovi frammento dai preferiti" : "Aggiungi frammento ai preferiti"
@@ -63,7 +66,7 @@ export function FragmentCard({
           className="rounded-lg p-1 text-primary disabled:opacity-40"
         >
           <Heart className={`h-4 w-4 ${f.favorite ? "fill-current" : ""}`} />
-        </button>
+        </UiElement>
       </div>
       <blockquote className="whitespace-pre-wrap break-words border-l-2 border-primary/40 pl-4 font-display text-base leading-relaxed">
         {f.quote}
@@ -84,7 +87,7 @@ export function FragmentCard({
       )}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <time className="text-xs text-muted-foreground" dateTime={f.highlighted_at ?? f.created_at}>
-          {new Date(f.highlighted_at ?? f.created_at).toLocaleDateString("it-IT")}
+          <UiDate value={new Date(f.highlighted_at ?? f.created_at)} />
         </time>
         <div className="flex gap-3">
           {!f.deleted_at && (
@@ -94,7 +97,7 @@ export function FragmentCard({
               className="inline-flex items-center gap-1 text-xs"
             >
               <Pencil className="h-3 w-3" />
-              Modifica
+              <UiText text="Modifica" />
             </button>
           )}
           <button
@@ -105,12 +108,12 @@ export function FragmentCard({
             {f.deleted_at ? (
               <>
                 <RotateCcw className="h-3 w-3" />
-                Ripristina
+                <UiText text="Ripristina" />
               </>
             ) : (
               <>
                 <Trash2 className="h-3 w-3" />
-                Sposta nel cestino
+                <UiText text="Sposta nel cestino" />
               </>
             )}
           </button>
@@ -218,12 +221,14 @@ export function Fragments({ book }: { book?: Book | undefined }) {
   if (!user)
     return (
       <section className="mt-10">
-        <h2 className="font-display text-xl font-bold">Frammenti</h2>
+        <h2 className="font-display text-xl font-bold">
+          <UiText text="Frammenti" />
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           <Link to="/auth" className="text-primary">
-            Accedi
+            <UiText text="Accedi" />
           </Link>{" "}
-          per conservare le tue frasi e note da questo libro.
+          <UiText text="per conservare le tue frasi e note da questo libro." />
         </p>
       </section>
     );
@@ -233,10 +238,10 @@ export function Fragments({ book }: { book?: Book | undefined }) {
         <div>
           <h2 className="flex items-center gap-2 font-display text-xl font-bold">
             <Quote className="h-5 w-5 text-primary" />
-            {book ? "I tuoi frammenti" : "Le parole che vuoi ritrovare"}
+            <UiText text={book ? "I tuoi frammenti" : "Le parole che vuoi ritrovare"} />
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Citazioni, sottolineature e note personali. Visibili solo a te.
+            <UiText text="Citazioni, sottolineature e note personali. Visibili solo a te." />
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -244,26 +249,27 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             onClick={() => setEditor(null)}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
           >
-            Aggiungi frase
+            <UiText text="Aggiungi frase" />
           </button>
           {!book && (
             <button
               onClick={() => setImporting((v) => !v)}
               className="rounded-lg border px-3 py-2 text-sm"
             >
-              Importa sottolineature
+              <UiText text="Importa sottolineature" />
             </button>
           )}
           {book && (
             <Link to="/fragments" className="rounded-lg border px-3 py-2 text-sm">
-              Tutti i frammenti
+              <UiText text="Tutti i frammenti" />
             </Link>
           )}
         </div>
       </div>
       {importing && <FragmentImport close={() => setImporting(false)} />}
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <input
+        <UiElement
+          as="input"
           aria-label="Cerca nei frammenti"
           placeholder="Cerca nel testo delle frasi…"
           value={search}
@@ -271,34 +277,41 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           className="min-w-0 flex-1 rounded-lg border bg-background p-2 text-sm"
         />
         {!book && (
-          <select
+          <UiElement
+            as="select"
             aria-label="Filtra frammenti per libro"
             value={bookId}
             onChange={(e) => filter(() => setBookId(e.target.value))}
             className="max-w-full rounded-lg border bg-background p-2 text-sm"
           >
-            <option value="">Tutti i libri</option>
+            <option value="">
+              <UiText text="Tutti i libri" />
+            </option>
             {bookChoices.data?.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.title} · {b.authors.join(", ")}
               </option>
             ))}
-          </select>
+          </UiElement>
         )}
-        <select
+        <UiElement
+          as="select"
           aria-label="Origine dei frammenti"
           value={source}
           onChange={(e) => filter(() => setSource(e.target.value))}
           className="rounded-lg border bg-background p-2 text-sm"
         >
-          <option value="">Tutte le origini</option>
+          <option value="">
+            <UiText text="Tutte le origini" />
+          </option>
           {Object.entries(FRAGMENT_SOURCES).map(([id, name]) => (
             <option key={id} value={id}>
               {name}
             </option>
           ))}
-        </select>
-        <input
+        </UiElement>
+        <UiElement
+          as="input"
           aria-label="Filtra per tag"
           placeholder="Tag esatto"
           value={tag}
@@ -311,7 +324,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             checked={favorite}
             onChange={(e) => filter(() => setFavorite(e.target.checked))}
           />
-          Preferiti
+          <UiText text="Preferiti" />
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -319,28 +332,33 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             checked={trash}
             onChange={(e) => filter(() => setTrash(e.target.checked))}
           />
-          Cestino
+          <UiText text="Cestino" />
         </label>
-        <select
+        <UiElement
+          as="select"
           aria-label="Ordina frammenti"
           value={order}
           onChange={(e) => filter(() => setOrder(e.target.value))}
           className="rounded-lg border bg-background p-2 text-sm"
         >
-          <option value="new">Più recenti</option>
-          <option value="old">Meno recenti</option>
-        </select>
+          <option value="new">
+            <UiText text="Più recenti" />
+          </option>
+          <option value="old">
+            <UiText text="Meno recenti" />
+          </option>
+        </UiElement>
       </div>
       {list.isFetching && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">
-          Caricamento dei frammenti…
+          <UiText text="Caricamento dei frammenti…" />
         </p>
       )}
       {list.isError && (
         <p role="alert" className="mb-4 text-sm">
           {fragmentError(list.error)}{" "}
           <button onClick={() => void list.refetch()} className="text-primary">
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
@@ -348,12 +366,18 @@ export function Fragments({ book }: { book?: Book | undefined }) {
         <div className="rounded-2xl border border-dashed p-8 text-center">
           <Quote className="mx-auto mb-3 h-7 w-7 text-primary" />
           <p className="font-display text-lg">
-            {trash ? "Il cestino è vuoto" : "Qui troverai le frasi che ti restano dentro"}
+            <UiText
+              text={trash ? "Il cestino è vuoto" : "Qui troverai le frasi che ti restano dentro"}
+            />
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {search || bookId || source || tag || favorite
-              ? "Prova a cambiare i filtri."
-              : "Aggiungi una citazione dalla scheda di un libro oppure importa le tue sottolineature."}
+            <UiText
+              text={
+                search || bookId || source || tag || favorite
+                  ? "Prova a cambiare i filtri."
+                  : "Aggiungi una citazione dalla scheda di un libro oppure importa le tue sottolineature."
+              }
+            />
           </p>
         </div>
       )}
@@ -376,17 +400,21 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             onClick={() => setPage((p) => p - 1)}
             className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
           >
-            Precedenti
+            <UiText text="Precedenti" />
           </button>
           <span className="text-sm">
-            Pagina {page + 1} di {Math.ceil(list.data.count / 24)} · {list.data.count} frammenti
+            <UiText text="Pagina " />
+            {page + 1}
+            <UiText text=" di " />
+            {Math.ceil(list.data.count / 24)} · {list.data.count}
+            <UiText text=" frammenti" />
           </span>
           <button
             disabled={list.isFetching || (page + 1) * 24 >= list.data.count}
             onClick={() => setPage((p) => p + 1)}
             className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
           >
-            Successivi
+            <UiText text="Successivi" />
           </button>
         </div>
       )}

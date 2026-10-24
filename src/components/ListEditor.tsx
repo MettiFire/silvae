@@ -1,6 +1,7 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import {
   Dialog,
   DialogContent,
@@ -85,16 +86,18 @@ export function ListEditor({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{list ? "Modifica la lista" : "Una nuova lista"}</DialogTitle>
+          <DialogTitle>
+            <UiText text={list ? "Modifica la lista" : "Una nuova lista"} />
+          </DialogTitle>
           <DialogDescription>
-            Raccogli libri intorno a un’idea. Potrai aggiungerli dalla pagina della lista o dalla
-            scheda di ogni libro.
+            <UiText text="Raccogli libri intorno a un’idea. Potrai aggiungerli dalla pagina della lista o dalla scheda di ogni libro." />
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={save} className="space-y-5">
           <label className="block text-sm">
-            Nome della lista
-            <input
+            <UiText text="Nome della lista" />
+            <UiElement
+              as="input"
               required
               maxLength={100}
               className="mt-2 w-full rounded border bg-background p-3"
@@ -105,7 +108,7 @@ export function ListEditor({
             />
           </label>
           <label className="block text-sm">
-            Una breve descrizione
+            <UiText text="Una breve descrizione" />
             <textarea
               maxLength={2000}
               rows={3}
@@ -124,11 +127,15 @@ export function ListEditor({
               className="mt-1"
             />
             <span>
-              Mostra sul profilo pubblico
+              <UiText text="Mostra sul profilo pubblico" />
               <span className="mt-1 block text-xs text-muted-foreground">
-                {isPublic
-                  ? "Gli altri lettori potranno aprire e salvare la lista."
-                  : "La lista sarà visibile solo a te."}
+                <UiText
+                  text={
+                    isPublic
+                      ? "Gli altri lettori potranno aprire e salvare la lista."
+                      : "La lista sarà visibile solo a te."
+                  }
+                />
               </span>
             </span>
           </label>
@@ -138,7 +145,7 @@ export function ListEditor({
             </p>
           )}
           <button disabled={busy || !name.trim()} className="button-ink">
-            {busy ? "Salvataggio…" : list ? "Salva modifiche" : "Crea lista"}
+            <UiText text={busy ? "Salvataggio…" : list ? "Salva modifiche" : "Crea lista"} />
           </button>
         </form>
       </DialogContent>

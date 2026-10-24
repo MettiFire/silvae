@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { requireFragmentUser } from "./fragments.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

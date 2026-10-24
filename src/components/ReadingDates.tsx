@@ -1,5 +1,6 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { type LibraryItem, useUpdateItem } from "@/lib/library";
 import { parseDate } from "@/lib/csv-import";
 import { readingDay, todayDay, validateReadingDates } from "@/lib/reading-dates";
@@ -12,11 +13,17 @@ export function ReadingDates({ item }: { item: LibraryItem }) {
   const isRead = item.status === "read";
   return (
     <details className="mt-5 border-t border-border pt-4">
-      <summary className="cursor-pointer text-sm font-medium">Date di lettura</summary>
+      <summary className="cursor-pointer text-sm font-medium">
+        <UiText text="Date di lettura" />
+      </summary>
       <p className="mt-2 text-xs text-muted-foreground">
-        {isRead && !item.finished_at
-          ? "Libro letto, data di fine sconosciuta: aggiungila per conteggiarlo nell’anno e nelle sfide con limiti temporali."
-          : "Le sfide si aggiornano dalle date salvate. Lascia vuote quelle che non conosci."}
+        <UiText
+          text={
+            isRead && !item.finished_at
+              ? "Libro letto, data di fine sconosciuta: aggiungila per conteggiarlo nell’anno e nelle sfide con limiti temporali."
+              : "Le sfide si aggiornano dalle date salvate. Lascia vuote quelle che non conosci."
+          }
+        />
       </p>
       <form
         className="mt-3 flex flex-wrap items-end gap-3"
@@ -39,8 +46,9 @@ export function ReadingDates({ item }: { item: LibraryItem }) {
         }}
       >
         <label className="flex flex-col gap-1 text-sm">
-          Inizio
-          <input
+          <UiText text="Inizio" />
+          <UiElement
+            as="input"
             type="date"
             aria-label="Data inizio lettura"
             max={todayDay()}
@@ -52,8 +60,9 @@ export function ReadingDates({ item }: { item: LibraryItem }) {
         </label>
         {isRead && (
           <label className="flex flex-col gap-1 text-sm">
-            Fine
-            <input
+            <UiText text="Fine" />
+            <UiElement
+              as="input"
               type="date"
               aria-label="Data fine lettura"
               max={todayDay()}
@@ -69,7 +78,7 @@ export function ReadingDates({ item }: { item: LibraryItem }) {
           disabled={update.isPending}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
         >
-          {update.isPending ? "Salvataggio…" : "Salva date"}
+          <UiText text={update.isPending ? "Salvataggio…" : "Salva date"} />
         </button>
         {error && (
           <p role="alert" className="w-full text-sm text-destructive">

@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +48,8 @@ export function ProfileImageUpload({
         }
       >
         {value && (
-          <img
+          <UiElement
+            as="img"
             key={value}
             src={value}
             alt={`Anteprima ${name.toLowerCase()}`}
@@ -65,8 +67,9 @@ export function ProfileImageUpload({
           className={`button-outline cursor-pointer ${disabled || uploading ? "pointer-events-none opacity-50" : ""}`}
         >
           <Upload size={14} />
-          {uploading ? "Caricamento…" : `Carica ${name.toLowerCase()}`}
-          <input
+          <UiText text={uploading ? "Caricamento…" : `Carica ${name.toLowerCase()}`} />
+          <UiElement
+            as="input"
             type="file"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
@@ -87,12 +90,12 @@ export function ProfileImageUpload({
             className="button-outline"
           >
             <X size={14} />
-            Rimuovi
+            <UiText text="Rimuovi" />
           </button>
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        Immagine pubblica. JPG, PNG o WebP, massimo 8 MB. Salva il profilo per applicarla.
+        <UiText text="Immagine pubblica. JPG, PNG o WebP, massimo 8 MB. Salva il profilo per applicarla." />
       </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">

@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -29,20 +30,21 @@ function Challenges() {
       />
       {user && <AnnualReadingGoal userId={user.id} library={library.data ?? []} />}
       <div className="mb-5">
-        <h2 className="font-display text-2xl font-bold">Ogni sfida, una storia da cominciare</h2>
+        <h2 className="font-display text-2xl font-bold">
+          <UiText text="Ogni sfida, una storia da cominciare" />
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Nove percorsi da esplorare. Puoi seguirne più di uno: i progressi si aggiornano dalla tua
-          libreria.
+          <UiText text="Nove percorsi da esplorare. Puoi seguirne più di uno: i progressi si aggiornano dalla tua libreria." />
         </p>
       </div>
       {(library.isPending || challenges.isPending) && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">
-          Caricamento delle tue letture e iscrizioni…
+          <UiText text="Caricamento delle tue letture e iscrizioni…" />
         </p>
       )}
       {(library.isError || challenges.isError) && (
         <p role="alert" className="mb-4 rounded-xl border border-border p-4 text-sm">
-          Non è stato possibile caricare tutti i tuoi dati.{" "}
+          <UiText text="Non è stato possibile caricare tutti i tuoi dati." />{" "}
           <button
             className="text-primary"
             onClick={() => {
@@ -50,7 +52,7 @@ function Challenges() {
               void challenges.refetch();
             }}
           >
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}

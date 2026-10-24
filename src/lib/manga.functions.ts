@@ -1,16 +1,70 @@
 import { createServerFn } from "@tanstack/react-start";
-import { mapManga, type MangaDexRecord } from "./manga-model";
+import {
+  mapManga,
+  mangaSearchTitle,
+  mapJikanManga,
+  mergeMangaResults,
+  mangaVolumeCovers,
+  type MangaDexRecord,
+  type JikanManga,
+  type MangaDexCover,
+  type MangaVolumeCover,
+} from "./manga-model";
 import type { Book } from "./books";
 const cache = new Map<string, { until: number; books: Book[] }>();
 const pending = new Map<string, Promise<Book[]>>();
-let queue: Promise<unknown> = Promise.resolve();
+let mdQueue: Promise<unknown> = Promise.resolve();
+let malQueue: Promise<unknown> = Promise.resolve();
+async function request<T>(url: string, mal = false): Promise<T> {
+  const slot = (mal ? malQueue : mdQueue)
+    .catch(() => undefined)
+    .then(() => new Promise<void>((resolve) => setTimeout(resolve, mal ? 1050 : 250)));
+  if (mal) malQueue = slot;
+  else mdQueue = slot;
+  return slot.then(async () => {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(mal ? 4000 : 7000),
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) throw Error("Catalogo manga non disponibile. Riprova.");
+    return (await response.json()) as T;
+  });
+}
+
+async function mdSearch(query: string, language: string) {
+  const params = new URLSearchParams({ title: query, limit: "32", "order[relevance]": "desc" });
+  for (const include of ["cover_art", "author", "artist"]) params.append("includes[]", include);
+  // Verified MangaDex tag IDs: exclude derivatives before pagination, not after.
+  for (const tag of [
+    "b13b2a48-c720-44a9-9c77-39c9979373fb",
+    "7b2ce280-79ef-4c09-9b58-12b7c23a9b78",
+    "320831a8-4026-470b-94f6-8353740e6f04",
+  ])
+    params.append("excludedTags[]", tag);
+  for (const rating of ["safe", "suggestive"]) params.append("contentRating[]", rating);
+  const raw = await request<{ data: MangaDexRecord[] }>(`https://api.mangadex.org/manga?${params}`);
+  return (raw.data as MangaDexRecord[])
+    .filter(
+      (r) =>
+        !(r.attributes.tags ?? []).some((t) =>
+          ["Doujinshi", "Fan Colored", "Official Colored"].includes(t.attributes.name["en"] ?? ""),
+        ),
+    )
+    .map((r) => mapManga(r, language));
+}
 export const mangaCatalogue = createServerFn({ method: "GET" })
-  .validator((input: { query?: string; id?: string; language?: string }) => {
+  .validator((input: { query?: string; id?: string; malId?: number; language?: string }) => {
     if (input.id && !/^[0-9a-f-]{36}$/.test(input.id)) throw Error("Serie non valida");
+    if (
+      input.malId !== undefined &&
+      (!Number.isInteger(input.malId) || input.malId < 1 || input.malId > 99999999)
+    )
+      throw Error("Serie non valida");
     const query = (input.query ?? "").trim().slice(0, 120);
-    if (!input.id && query.length < 2) throw Error("Scrivi almeno due caratteri");
+    if (!input.id && !input.malId && query.length < 2) throw Error("Scrivi almeno due caratteri");
     return {
       id: input.id,
+      malId: input.malId,
       query,
       language: /^[a-z]{2}$/.test(input.language ?? "") ? input.language! : "it",
     };
@@ -20,50 +74,118 @@ export const mangaCatalogue = createServerFn({ method: "GET" })
     const hit = cache.get(key);
     if (hit && hit.until > Date.now()) return hit.books;
     if (pending.has(key)) return pending.get(key)!;
-    const task = queue
-      .catch(() => undefined)
-      .then(async () => {
-        const params = new URLSearchParams({ "includes[]": "cover_art" });
-        params.append("includes[]", "author");
-        params.append("includes[]", "artist");
-        if (!data.id) {
-          params.set("title", data.query);
-          params.set("limit", "12");
-          params.set("order[relevance]", "desc");
-          params.append("contentRating[]", "safe");
-          params.append("contentRating[]", "suggestive");
-        }
-        const response = await fetch(
-          `https://api.mangadex.org/manga${data.id ? `/${data.id}` : ""}?${params}`,
-          { signal: AbortSignal.timeout(10000), headers: { Accept: "application/json" } },
+    const task = (async () => {
+      if (data.id) {
+        const raw = await request<{ data: MangaDexRecord }>(
+          `https://api.mangadex.org/manga/${data.id}?includes[]=cover_art&includes[]=author&includes[]=artist`,
         );
-        if (!response.ok)
-          throw Error(
-            response.status === 429
-              ? "Catalogo manga occupato, riprova tra poco."
-              : "Catalogo manga non disponibile. Riprova.",
-          );
-        const raw = (await response.json()) as { data: MangaDexRecord | MangaDexRecord[] };
-        const rows = Array.isArray(raw.data) ? raw.data : [raw.data];
-        const books = rows
-          .filter(Boolean)
-          .filter(
-            (row) =>
-              !!data.id ||
-              !(row.attributes.tags ?? []).some((tag) => tag.attributes.name["en"] === "Doujinshi"),
-          )
-          .slice(0, 6)
-          .map((row) => mapManga(row, data.language));
+        return [mapManga(raw.data, data.language)];
+      }
+      if (data.malId) {
+        const raw = await request<{ data: JikanManga }>(
+          `https://api.jikan.moe/v4/manga/${data.malId}`,
+          true,
+        );
+        return [mapJikanManga(raw.data)];
+      }
+      const alias = mangaSearchTitle(data.query);
+      let primary: Book[] = [];
+      let primaryError = false;
+      try {
+        primary = await mdSearch(alias ?? data.query, data.language);
+      } catch {
+        primaryError = true;
+      }
+      // Do not make a healthy, broad MangaDex search wait for the fallback provider.
+      const queryKey = alias.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+      if (
+        primary.length >= 8 ||
+        primary.some((b) =>
+          [b.title, b.manga?.canonicalTitle ?? ""].some(
+            (title) => title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "") === queryKey,
+          ),
+        )
+      )
+        return mergeMangaResults(primary, []);
+      try {
+        const raw = await request<{ data: JikanManga[] }>(
+          `https://api.jikan.moe/v4/manga?${new URLSearchParams({ q: alias ?? data.query, limit: "15", sfw: "true" })}`,
+          true,
+        );
+        return mergeMangaResults(
+          primary,
+          raw.data
+            .filter((r) => ["Manga", "Manhwa", "Manhua", "One-shot"].includes(r.type ?? ""))
+            .map(mapJikanManga),
+        );
+      } catch {
+        if (primaryError) throw Error("I cataloghi manga non rispondono. Riprova.");
+        return primary;
+      }
+    })()
+      .then((books) => {
         cache.set(key, { books, until: Date.now() + 3600000 });
         while (cache.size > 300) cache.delete(cache.keys().next().value!);
-        await new Promise((resolve) => setTimeout(resolve, 300));
         return books;
-      });
+      })
+      .finally(() => pending.delete(key));
     pending.set(key, task);
-    queue = task;
-    try {
-      return await task;
-    } finally {
-      pending.delete(key);
-    }
+    return task;
+  });
+const coversCache = new Map<string, { until: number; covers: MangaVolumeCover[] }>();
+const coversPending = new Map<string, Promise<MangaVolumeCover[]>>();
+export const mangaCovers = createServerFn({ method: "GET" })
+  .validator((input: { id?: string; malId?: number; title?: string; language?: string }) => {
+    if (input.id && !/^[0-9a-f-]{36}$/.test(input.id)) throw Error("Serie non valida");
+    if (
+      !input.id &&
+      (!Number.isInteger(input.malId) ||
+        !input.malId ||
+        input.malId < 1 ||
+        input.malId > 99999999 ||
+        !input.title?.trim())
+    )
+      throw Error("Serie non valida");
+    return {
+      id: input.id,
+      malId: input.malId,
+      title: (input.title ?? "").trim().slice(0, 160),
+      language: /^[a-z]{2}$/.test(input.language ?? "") ? input.language! : "it",
+    };
+  })
+  .handler(async ({ data }) => {
+    const key = JSON.stringify(data);
+    const hit = coversCache.get(key);
+    if (hit && hit.until > Date.now()) return hit.covers;
+    if (coversPending.has(key)) return coversPending.get(key)!;
+    const task = (async () => {
+      const id =
+        data.id ??
+        (await mdSearch(data.title, data.language)).find((b) => b.manga?.malId === data.malId)
+          ?.manga?.mangaDexId;
+      if (!id) return [];
+      const records: MangaDexCover[] = [];
+      for (let offset = 0; offset < 400; offset += 100) {
+        const params = new URLSearchParams({
+          "manga[]": id,
+          limit: "100",
+          offset: String(offset),
+          "order[volume]": "asc",
+        });
+        const raw = await request<{ data: MangaDexCover[]; total: number }>(
+          `https://api.mangadex.org/cover?${params}`,
+        );
+        records.push(...raw.data);
+        if (records.length >= raw.total || raw.data.length < 100) break;
+      }
+      return mangaVolumeCovers(records, id, data.language);
+    })()
+      .then((covers) => {
+        coversCache.set(key, { covers, until: Date.now() + 86400000 });
+        while (coversCache.size > 100) coversCache.delete(coversCache.keys().next().value!);
+        return covers;
+      })
+      .finally(() => coversPending.delete(key));
+    coversPending.set(key, task);
+    return task;
   });

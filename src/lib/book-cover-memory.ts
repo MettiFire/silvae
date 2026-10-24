@@ -11,9 +11,12 @@ export function isPublicCatalogueCover(value: unknown): value is string {
       url.protocol === "https:" &&
       !url.username &&
       !url.password &&
-      (["books.google.com", "books.googleusercontent.com", "covers.openlibrary.org"].includes(
-        url.hostname,
-      ) ||
+      ([
+        "books.google.com",
+        "books.googleusercontent.com",
+        "covers.openlibrary.org",
+        "cdn.myanimelist.net",
+      ].includes(url.hostname) ||
         (url.hostname === "uploads.mangadex.org" &&
           url.pathname.startsWith("/covers/") &&
           !url.search))

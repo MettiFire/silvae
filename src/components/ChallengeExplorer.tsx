@@ -1,3 +1,5 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { countryFlag, countryReadingGroups } from "@/lib/challenge-country-display";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -17,7 +19,7 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import {
   Dialog,
   DialogContent,
@@ -183,7 +185,8 @@ export function ChallengeExplorer({
   return (
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div
+        <UiElement
+          as="div"
           className="flex rounded-xl border border-border bg-card p-1"
           aria-label="Sezioni sfide"
         >
@@ -193,7 +196,7 @@ export function ChallengeExplorer({
             className={`${buttonClass} border-0 ${tab === "explore" ? "bg-accent text-primary" : ""}`}
           >
             <Compass className="h-4 w-4" />
-            Esplora le sfide
+            <UiText text="Esplora le sfide" />
           </button>
           <button
             onClick={() => setTab("mine")}
@@ -201,31 +204,41 @@ export function ChallengeExplorer({
             className={`${buttonClass} border-0 ${tab === "mine" ? "bg-accent text-primary" : ""}`}
           >
             <Target className="h-4 w-4" />
-            Le mie sfide ({enrollments.length})
+            <UiText text="Le mie sfide (" />
+            {enrollments.length})
           </button>
-        </div>
+        </UiElement>
         {tab === "explore" && (
-          <select
+          <UiElement
+            as="select"
             aria-label="Tipo di sfida"
             value={filter}
             onChange={(e) => setFilter(e.target.value as typeof filter)}
             className={`${inputClass} !w-auto`}
           >
-            <option value="all">Tutti i percorsi</option>
-            <option value="award">Premi letterari</option>
-            <option value="thematic">Sfide tematiche</option>
-          </select>
+            <option value="all">
+              <UiText text="Tutti i percorsi" />
+            </option>
+            <option value="award">
+              <UiText text="Premi letterari" />
+            </option>
+            <option value="thematic">
+              <UiText text="Sfide tematiche" />
+            </option>
+          </UiElement>
         )}
       </div>
       {tab === "mine" && !enrollments.length && (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center">
           <BookOpen className="mx-auto mb-3 h-8 w-8 text-primary" />
-          <h2 className="font-display text-xl font-bold">La prossima avventura comincia qui</h2>
+          <h2 className="font-display text-xl font-bold">
+            <UiText text="La prossima avventura comincia qui" />
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Scegli un percorso e ritrova qui i tuoi progressi.
+            <UiText text="Scegli un percorso e ritrova qui i tuoi progressi." />
           </p>
           <button onClick={() => setTab("explore")} className={`${primaryClass} mt-5`}>
-            Esplora le sfide
+            <UiText text="Esplora le sfide" />
           </button>
         </div>
       )}
@@ -246,17 +259,21 @@ export function ChallengeExplorer({
               <div className={`flex items-center justify-between px-5 py-4 ${c.color}`}>
                 <Icon className="h-7 w-7" />
                 <span className="text-xs font-semibold uppercase tracking-wider">
-                  {p?.complete
-                    ? "Percorso completato"
-                    : c.kind !== "award" &&
-                        enrollment?.deadline &&
-                        enrollment.deadline < new Date().toISOString().slice(0, 10)
-                      ? "Termine scaduto"
-                      : enrollment
-                        ? "In corso"
-                        : c.kind === "award"
-                          ? "Premi letterari"
-                          : "Sfida tematica"}
+                  <UiText
+                    text={
+                      p?.complete
+                        ? "Percorso completato"
+                        : c.kind !== "award" &&
+                            enrollment?.deadline &&
+                            enrollment.deadline < new Date().toISOString().slice(0, 10)
+                          ? "Termine scaduto"
+                          : enrollment
+                            ? "In corso"
+                            : c.kind === "award"
+                              ? "Premi letterari"
+                              : "Sfida tematica"
+                    }
+                  />
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
@@ -269,15 +286,18 @@ export function ChallengeExplorer({
                   <div className="mt-auto mb-4">
                     <div className="mb-2 flex items-center justify-between text-sm">
                       <span>
-                        {p.percent}% · {p.done} di {p.total} tappe
+                        {p.percent}% · {p.done}
+                        <UiText text=" di " />
+                        {p.total}
+                        <UiText text=" tappe" />
                       </span>
                       {p.complete && <Trophy className="h-4 w-4 text-primary" />}
                     </div>
                     <ProgressBar current={p.done} total={p.total} showLabel={false} />
                     {c.kind !== "award" && enrollment?.deadline && (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Entro il{" "}
-                        {new Date(enrollment.deadline + "T12:00:00").toLocaleDateString("it-IT")}
+                        <UiText text="Entro il" />{" "}
+                        <UiDate value={new Date(enrollment.deadline + "T12:00:00")} />
                       </p>
                     )}
                   </div>
@@ -286,7 +306,7 @@ export function ChallengeExplorer({
                   onClick={() => open(c.id)}
                   className={`${enrollment ? buttonClass : primaryClass} mt-auto w-full`}
                 >
-                  {enrollment ? "Apri il percorso" : "Scopri e iscriviti"}
+                  <UiText text={enrollment ? "Apri il percorso" : "Scopri e iscriviti"} />
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -312,32 +332,39 @@ export function ChallengeExplorer({
               </DialogHeader>
               {draft.id === "nobel" && (
                 <div className="rounded-xl border border-border bg-accent/30 p-4 text-sm leading-relaxed">
-                  <p className="font-medium">Un autore Nobel, una lettura a tua scelta</p>
+                  <p className="font-medium">
+                    <UiText text="Un autore Nobel, una lettura a tua scelta" />
+                  </p>
                   <p className="mt-1 text-muted-foreground">
-                    Ogni tappa rappresenta un autore premiato, nell’anno in cui ha ricevuto il
-                    Nobel. Basta una sua opera segnata come Letta, anche letta prima
-                    dell’iscrizione. Altri suoi libri non aggiungono tappe: la percentuale indica
-                    quanti autori premiati hai letto, non quanti libri.
+                    <UiText text="Ogni tappa rappresenta un autore premiato, nell’anno in cui ha ricevuto il Nobel. Basta una sua opera segnata come Letta, anche letta prima dell’iscrizione. Altri suoi libri non aggiungono tappe: la percentuale indica quanti autori premiati hai letto, non quanti libri." />
                   </p>
                 </div>
               )}
               {!enrolled ? (
                 <div className="space-y-5 rounded-xl border border-border bg-card p-4">
                   <h3 className="font-semibold">
-                    {definition.kind === "award"
-                      ? "Tutto l’albo, una lettura alla volta"
-                      : "Scegli il tuo percorso"}
+                    <UiText
+                      text={
+                        definition.kind === "award"
+                          ? "Tutto l’albo, una lettura alla volta"
+                          : "Scegli il tuo percorso"
+                      }
+                    />
                   </h3>
                   {definition.kind === "award" && (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        Tutti i {progress.total} vincitori presenti nell’albo verificato, senza
-                        intervalli o scadenze. Contano anche i libri già letti.
+                        <UiText text="Tutti i " />
+                        {progress.total}
+                        <UiText text=" vincitori presenti nell’albo verificato, senza intervalli o scadenze. Contano anche i libri già letti." />
                       </p>
                       <p className="font-display text-2xl">
-                        {progress.percent}% completato{" "}
+                        {progress.percent}
+                        <UiText text="% completato" />{" "}
                         <span className="font-sans text-sm text-muted-foreground">
-                          · {progress.done} di {progress.total}
+                          · {progress.done}
+                          <UiText text=" di " />
+                          {progress.total}
                         </span>
                       </p>
                       <ProgressBar
@@ -349,7 +376,7 @@ export function ChallengeExplorer({
                   )}
                   {draft.id === "birth-year" && (
                     <label className="block space-y-1 text-sm">
-                      Premio da seguire
+                      <UiText text="Premio da seguire" />
                       <select
                         className={inputClass}
                         value={draft.family}
@@ -372,9 +399,13 @@ export function ChallengeExplorer({
                     <>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="space-y-1 text-sm">
-                          {draft.id === "birth-year"
-                            ? "Il tuo anno di nascita"
-                            : "Dall’anno del premio"}
+                          <UiText
+                            text={
+                              draft.id === "birth-year"
+                                ? "Il tuo anno di nascita"
+                                : "Dall’anno del premio"
+                            }
+                          />
                           <input
                             type="number"
                             min={1900}
@@ -387,7 +418,7 @@ export function ChallengeExplorer({
                           />
                         </label>
                         <label className="space-y-1 text-sm">
-                          Fino all’anno del premio
+                          <UiText text="Fino all’anno del premio" />
                           <input
                             type="number"
                             min={draft.fromYear}
@@ -399,16 +430,15 @@ export function ChallengeExplorer({
                         </label>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {progress.total} tappe disponibili. Gli anni senza un premio assegnato non
-                        creano tappe. Sono inclusi soltanto premi già assegnati alla data di
-                        verifica.
+                        {progress.total}
+                        <UiText text=" tappe disponibili. Gli anni senza un premio assegnato non creano tappe. Sono inclusi soltanto premi già assegnati alla data di verifica." />
                       </p>
                     </>
                   )}
                   {draft.id === "backlog" && (
                     <>
                       <label className="block space-y-1 text-sm">
-                        Quanti libri?
+                        <UiText text="Quanti libri?" />
                         <select
                           value={draft.target}
                           className={inputClass}
@@ -426,13 +456,18 @@ export function ChallengeExplorer({
                         >
                           {[5, 10, 20].map((n) => (
                             <option key={n} value={n}>
-                              {n} libri
+                              {n}
+                              <UiText text=" libri" />
                             </option>
                           ))}
                         </select>
                       </label>
                       <p className="text-sm">
-                        Scegli {draft.target} libri: {draft.backlogIds.length} selezionati.
+                        <UiText text="Scegli " />
+                        {draft.target}
+                        <UiText text=" libri: " />
+                        {draft.backlogIds.length}
+                        <UiText text=" selezionati." />
                       </p>
                       <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
                         {library
@@ -461,7 +496,7 @@ export function ChallengeExplorer({
                           ))}
                         {!library.some((i) => i.status === "to_read") && (
                           <p className="text-sm text-muted-foreground">
-                            Aggiungi prima qualche libro alla lista Da leggere.
+                            <UiText text="Aggiungi prima qualche libro alla lista Da leggere." />
                           </p>
                         )}
                       </div>
@@ -474,12 +509,12 @@ export function ChallengeExplorer({
                         checked={draft.includePast}
                         onChange={(e) => setDraft({ ...draft, includePast: e.target.checked })}
                       />
-                      Conta anche i libri già letti prima dell’iscrizione
+                      <UiText text="Conta anche i libri già letti prima dell’iscrizione" />
                     </label>
                   )}
                   {definition.kind !== "award" && (
                     <label className="block space-y-1 text-sm">
-                      Scadenza facoltativa
+                      <UiText text="Scadenza facoltativa" />
                       <input
                         type="date"
                         className={inputClass}
@@ -500,7 +535,7 @@ export function ChallengeExplorer({
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                      Iscriviti alla sfida
+                      <UiText text="Iscriviti alla sfida" />
                     </button>
                     <span className="text-xs text-muted-foreground">
                       {validateEnrollment(draft, library) ??
@@ -512,20 +547,27 @@ export function ChallengeExplorer({
                 <div className="rounded-xl border border-border bg-accent/40 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="font-semibold">
-                      {progress.percent}% · {progress.done} di {progress.total} tappe completate
+                      {progress.percent}% · {progress.done}
+                      <UiText text=" di " />
+                      {progress.total}
+                      <UiText text=" tappe completate" />
                     </span>
                     {progress.complete && (
                       <span className="inline-flex items-center gap-2 text-sm text-primary">
                         <Trophy className="h-4 w-4" />
-                        Traguardo raggiunto
+                        <UiText text="Traguardo raggiunto" />
                       </span>
                     )}
                   </div>
                   <ProgressBar current={progress.done} total={progress.total} showLabel={false} />
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {draft.includePast
-                      ? "Contano anche le letture precedenti."
-                      : "Contano i libri terminati dal giorno dell’iscrizione."}
+                    <UiText
+                      text={
+                        draft.includePast
+                          ? "Contano anche le letture precedenti."
+                          : "Contano i libri terminati dal giorno dell’iscrizione."
+                      }
+                    />
                     {draft.deadline
                       ? ` Scadenza: ${new Date(draft.deadline + "T12:00:00").toLocaleDateString("it-IT")}.`
                       : " Senza scadenza."}{" "}
@@ -535,40 +577,37 @@ export function ChallengeExplorer({
                 </div>
               )}
               <div className="mt-3 min-w-0">
-                <h3 className="mb-3 font-display text-lg font-bold">Le tappe del percorso</h3>
+                <h3 className="mb-3 font-display text-lg font-bold">
+                  <UiText text="Le tappe del percorso" />
+                </h3>
                 <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                  Le corrispondenze sicure avanzano automaticamente dai libri segnati come Letto.
-                  Per traduzioni, edizioni o requisiti tematici, associa il libro corretto dalla tua
-                  libreria. Un libro conta una sola volta in ciascuna sfida.
+                  <UiText text="Le corrispondenze sicure avanzano automaticamente dai libri segnati come Letto. Per traduzioni, edizioni o requisiti tematici, associa il libro corretto dalla tua libreria. Un libro conta una sola volta in ciascuna sfida." />
                 </p>
                 {draft.id === "countries" && (
                   <div className="mb-4 rounded-lg border border-border bg-accent/30 p-4 text-sm leading-relaxed">
-                    <p className="font-medium">Un paese attraverso i suoi autori</p>
+                    <p className="font-medium">
+                      <UiText text="Un paese attraverso i suoi autori" />
+                    </p>
                     <p className="mt-1 text-muted-foreground">
-                      Usiamo la cittadinanza documentata dell’autore, non la lingua dell’edizione o
-                      della traduzione: la lingua originale può essere condivisa da molti paesi. Se
-                      l’autore ha più cittadinanze, puoi scegliere quale rappresentare; ogni libro
-                      conta una sola volta.
+                      <UiText text="Usiamo la cittadinanza documentata dell’autore, non la lingua dell’edizione o della traduzione: la lingua originale può essere condivisa da molti paesi. Se l’autore ha più cittadinanze, puoi scegliere quale rappresentare; ogni libro conta una sola volta." />
                     </p>
                     <p className="mt-2 text-muted-foreground">
-                      Dati mancanti, omonimi o stati storici senza corrispondenza certa restano da
-                      confermare. Puoi scegliere un paese e associare un libro dalla tua libreria.
+                      <UiText text="Dati mancanti, omonimi o stati storici senza corrispondenza certa restano da confermare. Puoi scegliere un paese e associare un libro dalla tua libreria." />
                     </p>
                   </div>
                 )}
                 {draft.id === "countries" && countryQueries.some((q) => q.isFetching) && (
                   <p role="status" className="mb-3 text-sm text-muted-foreground">
-                    Recupero progressivo dei paesi degli autori… Le tappe si aggiornano
-                    automaticamente.
+                    <UiText text="Recupero progressivo dei paesi degli autori… Le tappe si aggiornano automaticamente." />
                   </p>
                 )}
                 {definition.kind === "award" && draft.id !== "nobel" ? (
                   <>
                     <p className="mb-3 text-xs text-muted-foreground">
-                      Scorri lungo il filo per attraversare gli anni. Apri i dettagli di una tappa
-                      per trovare o associare il libro.
+                      <UiText text="Scorri lungo il filo per attraversare gli anni. Apri i dettagli di una tappa per trovare o associare il libro." />
                     </p>
-                    <div
+                    <UiElement
+                      as="div"
                       className="award-trail"
                       role="list"
                       aria-label="Percorso dei libri premiati"
@@ -600,7 +639,7 @@ export function ChallengeExplorer({
                           />
                         </div>
                       ))}
-                    </div>
+                    </UiElement>
                   </>
                 ) : (
                   <div className="space-y-3">
@@ -623,16 +662,16 @@ export function ChallengeExplorer({
                     onClick={() => setSlotLimit((n) => n + 20)}
                   >
                     <ChevronDown className="h-4 w-4" />
-                    Mostra altre tappe ({progress.total - slotLimit})
+                    <UiText text="Mostra altre tappe (" />
+                    {progress.total - slotLimit})
                   </button>
                 )}
               </div>
               {definition.kind === "award" || draft.id === "birth-year" ? (
                 <p className="text-xs text-muted-foreground">
-                  Albi verificati il{" "}
-                  {new Date(AWARDS_VERIFIED_AT + "T12:00:00").toLocaleDateString("it-IT")}. Ogni
-                  tappa rimanda alla fonte ufficiale. Le edizioni e le traduzioni dello stesso libro
-                  possono essere associate manualmente.
+                  <UiText text="Albi verificati il" />{" "}
+                  <UiDate value={new Date(AWARDS_VERIFIED_AT + "T12:00:00")} />
+                  <UiText text=". Ogni tappa rimanda alla fonte ufficiale. Le edizioni e le traduzioni dello stesso libro possono essere associate manualmente." />
                 </p>
               ) : null}
               {enrolled && (
@@ -640,15 +679,14 @@ export function ChallengeExplorer({
                   {leaveConfirm ? (
                     <div className="flex flex-wrap items-center gap-3">
                       <p className="text-sm">
-                        Vuoi lasciare questa sfida? Le associazioni e le impostazioni del percorso
-                        saranno rimosse.
+                        <UiText text="Vuoi lasciare questa sfida? Le associazioni e le impostazioni del percorso saranno rimosse." />
                       </p>
                       <button
                         disabled={saving}
                         className={buttonClass}
                         onClick={() => setLeaveConfirm(false)}
                       >
-                        Resta nella sfida
+                        <UiText text="Resta nella sfida" />
                       </button>
                       <button
                         disabled={saving}
@@ -664,7 +702,7 @@ export function ChallengeExplorer({
                           }
                         }}
                       >
-                        Lascia la sfida
+                        <UiText text="Lascia la sfida" />
                       </button>
                     </div>
                   ) : (
@@ -672,7 +710,7 @@ export function ChallengeExplorer({
                       className="text-sm text-muted-foreground underline"
                       onClick={() => setLeaveConfirm(true)}
                     >
-                      Lascia questa sfida
+                      <UiText text="Lascia questa sfida" />
                     </button>
                   )}
                 </div>
@@ -747,7 +785,8 @@ function SlotRow({
           />
         )}
         {!trail && winner?.cover && (
-          <img
+          <UiElement
+            as="img"
             src={winner.cover}
             alt={`Copertina di ${winner.title}`}
             width={56}
@@ -767,10 +806,11 @@ function SlotRow({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-muted-foreground">
-            {slot.label}
+            <UiText text={slot.label} />
             {slot.options.length > 1 ? " · vincitori ex aequo: scegli un libro" : ""}
           </p>
-          <h4
+          <UiElement
+            as="h4"
             className={`mt-1 font-display font-semibold ${trail ? "line-clamp-3 leading-snug" : ""}`}
             title={title}
           >
@@ -780,11 +820,12 @@ function SlotRow({
               </span>
             )}
             {title}
-          </h4>
+          </UiElement>
           {winner?.title && <p className="text-sm text-muted-foreground">{winner.author}</p>}
           {slot.options.slice(1).map((option) => (
             <p key={option.id} className="mt-1 text-sm">
-              oppure {option.title} — {option.author}
+              <UiText text="oppure " />
+              {option.title} — {option.author}
             </p>
           ))}
           {slot.completed && enrollment.id !== "countries" && (
@@ -793,22 +834,23 @@ function SlotRow({
               params={{ bookId: slot.completed.book_id }}
               className="mt-2 block text-sm text-primary"
             >
-              Letto: {slot.completed.books?.title}
+              <UiText text="Letto: " />
+              {slot.completed.books?.title}
               {slot.country ? ` · ${countryName(slot.country)}` : ""}
             </Link>
           )}
           {enrollment.id === "countries" && <CountryReadings slot={slot} enrollment={enrollment} />}
           {!slot.completed && slot.assignment && enrollment.id !== "countries" && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Libro associato:{" "}
+              <UiText text="Libro associato:" />{" "}
               {library.find((item) => item.book_id === slot.assignment?.bookId)?.books?.title ??
                 "non più in libreria"}
-              . Conta quando è Letto e rispetta le date della sfida.
+              <UiText text=". Conta quando è Letto e rispetta le date della sfida." />
             </p>
           )}
           {slot.fixedBookId && !fixed && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Questo libro non è più in libreria.
+              <UiText text="Questo libro non è più in libreria." />
             </p>
           )}
         </div>
@@ -820,11 +862,15 @@ function SlotRow({
           onClick={() => setShowDetails((value) => !value)}
           className="mt-4 w-full border-t border-border pt-3 text-left text-xs font-medium text-primary"
         >
-          {showDetails
-            ? "Chiudi dettagli"
-            : slot.completed
-              ? "Letto · Dettagli"
-              : "Da scoprire · Dettagli"}
+          <UiText
+            text={
+              showDetails
+                ? "Chiudi dettagli"
+                : slot.completed
+                  ? "Letto · Dettagli"
+                  : "Da scoprire · Dettagli"
+            }
+          />
         </button>
       )}
       {(!trail || showDetails) && (
@@ -839,7 +885,7 @@ function SlotRow({
                   className={buttonClass}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Fonte ufficiale
+                  <UiText text="Fonte ufficiale" />
                 </a>
                 <AwardSearch title={winner.title ?? ""} author={winner.author} />
               </>
@@ -852,11 +898,15 @@ function SlotRow({
                   setShowAssign((v) => !v);
                 }}
               >
-                {enrollment.id === "countries"
-                  ? "Scegli paese / conferma autore"
-                  : slot.assignment
-                    ? "Gestisci associazione"
-                    : "Associa dalla mia libreria"}
+                <UiText
+                  text={
+                    enrollment.id === "countries"
+                      ? "Scegli paese / conferma autore"
+                      : slot.assignment
+                        ? "Gestisci associazione"
+                        : "Associa dalla mia libreria"
+                  }
+                />
               </button>
             )}
           </div>
@@ -874,14 +924,16 @@ function SlotRow({
             >
               {enrollment.id === "countries" && (
                 <label className="block space-y-1 text-sm">
-                  Paese di provenienza dell’autore
+                  <UiText text="Paese di provenienza dell’autore" />
                   <select
                     required
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="">Scegli il paese</option>
+                    <option value="">
+                      <UiText text="Scegli il paese" />
+                    </option>
                     {READING_COUNTRY_CODES.map((code) => ({ code, name: countryName(code) }))
                       .sort((a, b) => a.name.localeCompare(b.name, "it"))
                       .map(({ code, name }) => (
@@ -893,13 +945,17 @@ function SlotRow({
                 </label>
               )}
               <label className="block space-y-1 text-sm">
-                {enrollment.id === "countries"
-                  ? "Facoltativo: conferma un libro se manca la nazionalità. Per i libri con un solo autore, la conferma vale anche per le sue altre opere."
-                  : winner
-                    ? winner.title
-                      ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
-                      : `Confermo che questo libro è un’opera di ${winner.author}`
-                    : "Confermo che questo libro soddisfa il requisito della tappa"}
+                <UiText
+                  text={
+                    enrollment.id === "countries"
+                      ? "Facoltativo: conferma un libro se manca la nazionalità. Per i libri con un solo autore, la conferma vale anche per le sue altre opere."
+                      : winner
+                        ? winner.title
+                          ? "Confermo che questo libro è l’opera premiata, anche in un’altra edizione o traduzione"
+                          : `Confermo che questo libro è un’opera di ${winner.author}`
+                        : "Confermo che questo libro soddisfa il requisito della tappa"
+                  }
+                />
                 <select
                   required={enrollment.id !== "countries"}
                   value={bookId}
@@ -907,9 +963,13 @@ function SlotRow({
                   className={inputClass}
                 >
                   <option value="">
-                    {enrollment.id === "countries"
-                      ? "Automatico: tutti i libri di questo paese"
-                      : "Scegli un libro dalla tua libreria"}
+                    <UiText
+                      text={
+                        enrollment.id === "countries"
+                          ? "Automatico: tutti i libri di questo paese"
+                          : "Scegli un libro dalla tua libreria"
+                      }
+                    />
                   </option>
                   {library.map((item) => (
                     <option key={item.id} value={item.book_id}>
@@ -925,7 +985,7 @@ function SlotRow({
                   disabled={saving || (enrollment.id === "countries" ? !country : !bookId)}
                   className={primaryClass}
                 >
-                  Salva associazione
+                  <UiText text="Salva associazione" />
                 </button>
                 {slot.assignment && (
                   <button
@@ -937,7 +997,7 @@ function SlotRow({
                     }}
                     className={buttonClass}
                   >
-                    Rimuovi associazione
+                    <UiText text="Rimuovi associazione" />
                   </button>
                 )}
               </div>
@@ -969,28 +1029,31 @@ function CountryReadings({
   return (
     <div className="mt-3 space-y-3 text-sm">
       <p className="text-xs text-muted-foreground">
-        {slot.matching.length} libri nella tua libreria{slot.completed ? " · Paese completato" : ""}
+        {slot.matching.length}
+        <UiText text=" libri nella tua libreria" />
+        {slot.completed ? " · Paese completato" : ""}
       </p>
       {groups.valid.length > 0 && (
-        <section aria-label="Letture valide">
+        <UiElement as="section" aria-label="Letture valide">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {slot.completed ? "Letture che completano il paese" : "Letture valide"}
+            <UiText text={slot.completed ? "Letture che completano il paese" : "Letture valide"} />
           </p>
           {groups.valid.map(row)}
-        </section>
+        </UiElement>
       )}
       {!slot.completed && groups.pending.length > 0 && (
-        <section aria-label="Libri ancora da leggere">
+        <UiElement as="section" aria-label="Libri ancora da leggere">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Da leggere o terminare
+            <UiText text="Da leggere o terminare" />
           </p>
           {groups.pending.map(row)}
-        </section>
+        </UiElement>
       )}
       {!!slot.completed && groups.pending.length > 0 && (
         <details className="rounded-lg border border-border p-3">
           <summary className="cursor-pointer text-xs text-muted-foreground">
-            Altri libri da leggere · {groups.pending.length}
+            <UiText text="Altri libri da leggere · " />
+            {groups.pending.length}
           </summary>
           <div className="mt-2">{groups.pending.map(row)}</div>
         </details>
@@ -998,17 +1061,18 @@ function CountryReadings({
       {groups.outside.length > 0 && (
         <details className="rounded-lg border border-border p-3">
           <summary className="cursor-pointer text-xs text-muted-foreground">
-            Altre letture · {groups.outside.length}
+            <UiText text="Altre letture · " />
+            {groups.outside.length}
           </summary>
           <p className="mt-2 text-xs text-muted-foreground">
-            Letture fuori dalle date della sfida o non disponibili per questa tappa.
+            <UiText text="Letture fuori dalle date della sfida o non disponibili per questa tappa." />
           </p>
           {groups.outside.map(row)}
         </details>
       )}
       {!slot.country && (
         <p className="text-xs text-muted-foreground">
-          Paese da assegnare: conferma un’origine e scegli un libro dalla tua libreria.
+          <UiText text="Paese da assegnare: conferma un’origine e scegli un libro dalla tua libreria." />
         </p>
       )}
     </div>
@@ -1028,30 +1092,32 @@ function AwardSearch({ title, author }: { title: string; author: string }) {
     <>
       <button className={buttonClass} onClick={() => setOpen(true)}>
         <Search className="h-3.5 w-3.5" />
-        Trova nel catalogo
+        <UiText text="Trova nel catalogo" />
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{title || author}</DialogTitle>
             <DialogDescription>
-              Apri una scheda per aggiungere il libro alla libreria. Puoi scegliere anche un’altra
-              edizione o traduzione tramite la ricerca globale.
+              <UiText text="Apri una scheda per aggiungere il libro alla libreria. Puoi scegliere anche un’altra edizione o traduzione tramite la ricerca globale." />
             </DialogDescription>
           </DialogHeader>
-          {query.isPending && <p role="status">Ricerca in corso…</p>}
+          {query.isPending && (
+            <p role="status">
+              <UiText text="Ricerca in corso…" />
+            </p>
+          )}
           {query.isError && (
             <p role="alert" className="text-sm">
-              Il catalogo non risponde.{" "}
+              <UiText text="Il catalogo non risponde." />{" "}
               <button onClick={() => void query.refetch()} className="text-primary">
-                Riprova
+                <UiText text="Riprova" />
               </button>
             </p>
           )}
           {query.data?.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Nessun risultato. Cerca il titolo italiano o il nome dell’autore nella ricerca
-              globale.
+              <UiText text="Nessun risultato. Cerca il titolo italiano o il nome dell’autore nella ricerca globale." />
             </p>
           )}
           <div className="space-y-3">

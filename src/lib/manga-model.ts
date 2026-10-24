@@ -1,5 +1,32 @@
+import { descriptionText } from "./book-metadata.ts";
 import type { Book } from "./books";
-export type MangaDetails = { totalVolumes: number | null; status: string; source: string };
+export type MangaDetails = {
+  canonicalTitle?: string | undefined;
+  totalVolumes: number | null;
+  status: string;
+  source: string;
+  mangaDexId?: string | undefined;
+  malId?: number | undefined;
+};
+export type MangaVolumeCover = { volume: number; url: string; language: string };
+export function missingPreviousVolumes(volumes: number[], selected: number) {
+  if (volumeNumber(selected) === null) return [];
+  const read = new Set(volumes);
+  return Array.from({ length: Math.max(0, selected - 1) }, (_, i) => i + 1).filter(
+    (n) => !read.has(n),
+  );
+}
+export function selectMangaVolume(volumes: number[], selected: number, includePrevious = false) {
+  if (volumeNumber(selected) === null) return volumes;
+  if (volumes.includes(selected)) return volumes.filter((n) => n !== selected);
+  return [
+    ...new Set([
+      ...volumes,
+      selected,
+      ...(includePrevious ? missingPreviousVolumes(volumes, selected) : []),
+    ]),
+  ].sort((a, b) => a - b);
+}
 export type MangaRange = [number, number];
 export type MangaProgress = {
   ranges: MangaRange[];
@@ -10,7 +37,7 @@ export type MangaProgress = {
 export const MANGA_FIELD = "manga_progress_v1";
 export const MAX_MANGA_VOLUMES = 2000;
 export function isMangaId(id: string) {
-  return /^manga:md:[0-9a-f-]{36}$/.test(id);
+  return /^manga:md:[0-9a-f-]{36}$/.test(id) || /^manga:mal:[1-9]\d{0,7}$/.test(id);
 }
 export function volumeNumber(value: unknown): number | null {
   const n = typeof value === "string" && !value.trim() ? NaN : Number(value);
@@ -73,6 +100,7 @@ export function parseMangaProgress(value: unknown): MangaProgress | null {
 }
 export function mangaCompletion(progress: MangaProgress, manga: MangaDetails) {
   const volumes = readVolumes(progress);
+  const read = new Set(volumes);
   const total = progress.total ?? manga.totalVolumes;
   return {
     count: volumes.length,
@@ -80,11 +108,9 @@ export function mangaCompletion(progress: MangaProgress, manga: MangaDetails) {
     complete:
       manga.status === "completed" &&
       total !== null &&
-      Array.from({ length: total }, (_, i) => i + 1).every((n) => volumes.includes(n)),
+      Array.from({ length: total }, (_, i) => i + 1).every((n) => read.has(n)),
     next:
-      Array.from({ length: MAX_MANGA_VOLUMES }, (_, i) => i + 1).find(
-        (n) => !volumes.includes(n),
-      ) ?? null,
+      Array.from({ length: MAX_MANGA_VOLUMES }, (_, i) => i + 1).find((n) => !read.has(n)) ?? null,
   };
 }
 export type MangaDexRecord = {
@@ -96,6 +122,7 @@ export type MangaDexRecord = {
     lastVolume?: string | null;
     status?: string;
     year?: number;
+    links?: { mal?: string };
     tags?: { attributes: { name: Record<string, string> } }[];
   };
   relationships?: { id: string; type: string; attributes?: { name?: string; fileName?: string } }[];
@@ -128,8 +155,16 @@ export function mapManga(record: MangaDexRecord, language = "it"): Book {
     published_year: a.year ?? null,
     page_count: null,
     categories: ["Manga", "Comics & Graphic Novels"],
-    description: a.description?.[language] ?? a.description?.["en"] ?? null,
+    description:
+      descriptionText(a.description?.[language] ?? a.description?.["en"] ?? "")
+        .split(/\n---+/)[0]!
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/\*\*|__/g, "")
+        .trim() || null,
     manga: {
+      canonicalTitle: a.title["en"] ?? a.title["ja-ro"] ?? title,
+      mangaDexId: record.id,
+      ...(a.links?.mal && /^\d+$/.test(a.links.mal) ? { malId: Number(a.links.mal) } : {}),
       totalVolumes: volumeNumber(a.lastVolume),
       status: a.status ?? "unknown",
       source: `https://mangadex.org/title/${record.id}`,
@@ -166,4 +201,127 @@ export function mangaLibraryPatch(
     started_at: completion.count ? (previous.started_at ?? now) : previous.started_at,
     finished_at: completion.complete ? (previous.finished_at ?? now) : null,
   };
+}
+
+export type JikanManga = {
+  mal_id: number;
+  title: string;
+  title_english?: string | null;
+  titles?: { type: string; title: string }[];
+  type?: string;
+  volumes?: number | null;
+  status?: string;
+  publishing?: boolean;
+  synopsis?: string | null;
+  published?: { from?: string | null };
+  authors?: { name: string }[];
+  images?: { jpg?: { large_image_url?: string; image_url?: string } };
+};
+export function mapJikanManga(record: JikanManga): Book {
+  return {
+    id: `manga:mal:${record.mal_id}`,
+    title: record.title_english || record.title,
+    authors: (record.authors ?? []).map((a) => a.name.split(", ").reverse().join(" ")),
+    cover_url: record.images?.jpg?.large_image_url ?? record.images?.jpg?.image_url ?? null,
+    published_year: record.published?.from
+      ? new Date(record.published.from).getUTCFullYear()
+      : null,
+    page_count: null,
+    categories: ["Manga", "Comics & Graphic Novels"],
+    description: record.synopsis ?? null,
+    manga: {
+      malId: record.mal_id,
+      totalVolumes: volumeNumber(record.volumes),
+      status:
+        record.status === "Finished" ? "completed" : record.publishing ? "ongoing" : "unknown",
+      source: `https://myanimelist.net/manga/${record.mal_id}`,
+    },
+  };
+}
+export function mergeMangaResults(primary: Book[], secondary: Book[]) {
+  const ids = new Set<string>();
+  const malIds = new Set<number>();
+  const titles = new Set<string>();
+  const normalize = (s: string) =>
+    s
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  return [...primary, ...secondary]
+    .filter((book) => {
+      const key = normalize(book.title) + ":" + book.authors.map(normalize).sort().join("|");
+      if (
+        ids.has(book.id) ||
+        (book.manga?.malId && malIds.has(book.manga.malId)) ||
+        titles.has(key)
+      )
+        return false;
+      ids.add(book.id);
+      if (book.manga?.malId) malIds.add(book.manga.malId);
+      titles.add(key);
+      return true;
+    })
+    .slice(0, 20);
+}
+
+export type MangaDexCover = {
+  attributes: { volume?: string | null; fileName: string; locale?: string | null };
+};
+export function mangaVolumeCovers(
+  records: MangaDexCover[],
+  mangaId: string,
+  language: string,
+): MangaVolumeCover[] {
+  const covers = new Map<number, MangaVolumeCover>();
+  const priority = (locale: string) =>
+    locale === language ? 0 : locale === "ja" ? 1 : locale === "en" ? 2 : 3;
+  for (const record of records) {
+    const n = volumeNumber(record.attributes.volume);
+    if (!n || !record.attributes.fileName) continue;
+    const item = {
+      volume: n,
+      language: record.attributes.locale ?? "ja",
+      url: `https://uploads.mangadex.org/covers/${mangaId}/${encodeURIComponent(record.attributes.fileName)}.256.jpg`,
+    };
+    if (!covers.has(n) || priority(item.language) < priority(covers.get(n)!.language))
+      covers.set(n, item);
+  }
+  return [...covers.values()].sort((a, b) => a.volume - b.volume);
+}
+
+/** MangaDex searches primary English titles more reliably than translated aliases. */
+export function mangaSearchTitle(query: string): string {
+  const aliases: Record<string, string> = {
+    "l attacco dei giganti": "Attack on Titan",
+    "lattacco dei giganti": "Attack on Titan",
+    "attacco dei giganti": "Attack on Titan",
+    "shingeki no kyojin": "Attack on Titan",
+    "case closed": "Detective Conan",
+    "meitantei conan": "Detective Conan",
+    conan: "Detective Conan",
+    "i cavalieri dello zodiaco": "Saint Seiya",
+    "cavalieri dello zodiaco": "Saint Seiya",
+    lamu: "Urusei Yatsura",
+    "kimetsu no yaiba": "Demon Slayer",
+  };
+  const key = query
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+  if (Object.hasOwn(aliases, key)) return aliases[key]!;
+  const partial =
+    key.length >= 6
+      ? [
+          ...new Set(
+            Object.entries(aliases)
+              .filter(([name]) => name.startsWith(key))
+              .map(([, title]) => title),
+          ),
+        ]
+      : [];
+  return partial.length === 1 ? partial[0]! : query;
 }

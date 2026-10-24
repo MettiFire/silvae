@@ -1,3 +1,6 @@
+import { useTranslate } from "@/lib/use-ui-language";
+import { UiText, UiElement } from "@/lib/ui-language-context";
+import { UiLanguageSwitch } from "@/lib/ui-language-context";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -26,7 +29,7 @@ import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { profileLabel } from "@/lib/profile-model";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 const NAV = [
   { to: "/", label: "Il diario", icon: Home },
   { to: "/discover", label: "Esplora", icon: Compass },
@@ -39,6 +42,7 @@ const NAV = [
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
 ] as const;
 export function AppShell({ children }: { children: ReactNode }) {
+  const t = useTranslate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
@@ -62,41 +66,48 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div data-book-density={density} className="app-shell min-h-screen bg-background">
       <a href="#contenuto" className="skip-link">
-        Vai al contenuto
+        <UiText text="Vai al contenuto" />
       </a>
       <ReadingPreferences onboarding />
       <header className="site-header">
         <div className="masthead site-width">
-          <Link to="/" className="wordmark brand-lockup" aria-label="Silvae, pagina iniziale">
+          <Link to="/" className="wordmark brand-lockup" aria-label={t("Silvae, pagina iniziale")}>
             <Logo className="brand-tree text-primary" />
             <span className="!text-foreground">
-              Silvae<span>.</span>
+              <UiText text="Silvae" />
+              <span>.</span>
             </span>
           </Link>
           <span className="masthead-caption">
-            Una vita
+            <UiText text="Una vita" />
             <br />
-            tra le pagine
+            <UiText text="tra le pagine" />
           </span>
           <div className="masthead-search">
             <GlobalSearch />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
+            <UiElement
+              as="button"
               onClick={toggle}
               aria-label={resolved === "dark" ? "Attiva tema chiaro" : "Attiva tema scuro"}
               className="icon-button"
             >
               {resolved === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+            </UiElement>
             {user ? (
               <>
-                <Link to="/settings" aria-label="Impostazioni del profilo" className="icon-button">
+                <Link
+                  to="/settings"
+                  aria-label={t("Impostazioni del profilo")}
+                  className="icon-button"
+                >
                   <Settings size={17} />
                 </Link>
-                <Link to="/profile" className="account-link" aria-label="Il mio profilo">
+                <Link to="/profile" className="account-link" aria-label={t("Il mio profilo")}>
                   {profile?.avatar_url ? (
-                    <img
+                    <UiElement
+                      as="img"
                       src={profile.avatar_url}
                       alt=""
                       width={32}
@@ -115,13 +126,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               </>
             ) : (
               <Link to="/auth" className="button-ink whitespace-nowrap">
-                Accedi <ArrowUpRight size={14} />
+                <UiText text="Accedi " />
+                <ArrowUpRight size={14} />
               </Link>
             )}
           </div>
         </div>
         <div className="site-width nav-rule">
-          <nav aria-label="Navigazione principale" className="desktop-nav">
+          <UiElement as="nav" aria-label="Navigazione principale" className="desktop-nav">
             {NAV.map(({ to, label }) => (
               <Link
                 key={to}
@@ -130,11 +142,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="nav-link"
                 activeProps={{ className: "nav-link is-active" }}
               >
-                {label}
+                <UiText text={label} />
               </Link>
             ))}
-          </nav>
-          <span className="nav-note">Il tuo prossimo capitolo.</span>
+          </UiElement>
+          <span className="nav-note">
+            <UiText text="Il tuo prossimo capitolo." />
+          </span>
         </div>
       </header>
       <main
@@ -146,35 +160,46 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <footer className="site-footer site-width">
+        <UiLanguageSwitch />
         <Link
           to="/"
           className="brand-lockup font-display text-2xl"
-          aria-label="Silvae, pagina iniziale"
+          aria-label={t("Silvae, pagina iniziale")}
         >
           <Logo className="brand-tree text-primary" />
-          Silvae.
+          <UiText text="Silvae." />
         </Link>
-        <p>Le storie passano. Qualcosa resta.</p>
+        <p>
+          <UiText text="Le storie passano. Qualcosa resta." />
+        </p>
         <div className="flex flex-wrap gap-x-5 gap-y-3">
           {user && (
             <>
-              <Link to="/settings">Impostazioni</Link>
+              <Link to="/settings">
+                <UiText text="Impostazioni" />
+              </Link>
               <button
                 disabled={loggingOut}
                 onClick={() => void signOut()}
                 className="inline-flex items-center gap-1"
               >
                 <LogOut size={12} />
-                Esci
+                <UiText text="Esci" />
               </button>
             </>
           )}
-          <Link to="/discover">Esplora il catalogo</Link>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Termini e condizioni</Link>
+          <Link to="/discover">
+            <UiText text="Esplora il catalogo" />
+          </Link>
+          <Link to="/privacy">
+            <UiText text="Privacy" />
+          </Link>
+          <Link to="/terms">
+            <UiText text="Termini e condizioni" />
+          </Link>
         </div>
       </footer>
-      <nav aria-label="Navigazione mobile" className="mobile-nav">
+      <UiElement as="nav" aria-label="Navigazione mobile" className="mobile-nav">
         {[NAV[0], NAV[1], NAV[2], { to: "/profile", label: "Profilo", icon: User } as const].map(
           ({ to, label, icon: Icon }) => (
             <Link
@@ -184,7 +209,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               activeProps={{ className: "is-active" }}
             >
               <Icon size={19} />
-              <span>{label}</span>
+              <span>
+                <UiText text={label} />
+              </span>
             </Link>
           ),
         )}
@@ -194,26 +221,30 @@ export function AppShell({ children }: { children: ReactNode }) {
           onClick={() => setMore(!more)}
         >
           <MoreHorizontal size={20} />
-          <span>Altro</span>
+          <span>
+            <UiText text="Altro" />
+          </span>
         </button>
-      </nav>
+      </UiElement>
       {more && (
         <div className="mobile-menu" id="mobile-other-nav">
           <div className="mb-4 flex items-center justify-between">
-            <span className="eyebrow">Il tuo spazio</span>
+            <span className="eyebrow">
+              <UiText text="Il tuo spazio" />
+            </span>
             <button onClick={() => setMore(false)} className="text-sm">
-              Chiudi
+              <UiText text="Chiudi" />
             </button>
           </div>
           {NAV.slice(3).map(({ to, label, icon: Icon }) => (
             <Link key={to} to={to} onClick={() => setMore(false)}>
               <Icon size={17} />
-              {label}
+              <UiText text={label} />
             </Link>
           ))}
           <Link to="/settings" onClick={() => setMore(false)}>
             <Settings size={17} />
-            Impostazioni
+            <UiText text="Impostazioni" />
           </Link>
         </div>
       )}
@@ -225,16 +256,24 @@ export function PageHeader({
   subtitle,
   action,
 }: {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   action?: ReactNode;
 }) {
   return (
     <header className="page-heading">
       <div>
-        <p className="eyebrow">Silvae / Il tuo spazio</p>
-        <h1>{title}</h1>
-        {subtitle && <p className="page-subtitle">{subtitle}</p>}
+        <p className="eyebrow">
+          <UiText text="Silvae / Il tuo spazio" />
+        </p>
+        <h1>
+          <UiText text={title} />
+        </h1>
+        {subtitle && (
+          <p className="page-subtitle">
+            <UiText text={subtitle} />
+          </p>
+        )}
       </div>
       {action && <div className="page-actions">{action}</div>}
     </header>
@@ -253,7 +292,7 @@ export function SectionHeading({
     <div className="section-heading">
       <h2>
         {number && <span>{number}</span>}
-        {title}
+        <UiText text={title} />
       </h2>
       {children}
     </div>

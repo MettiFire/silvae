@@ -109,6 +109,7 @@ export const READING_GENRES = [
   },
 ] as const;
 export type ReadingPreferences = {
+  uiLanguage?: "it" | "en" | "auto" | undefined;
   ebookDevices?: string[] | undefined;
   version: 1;
   language: string;
@@ -148,6 +149,9 @@ export function parsePreferences(raw: unknown): ReadingPreferences | null {
             ),
           ],
         }
+      : {}),
+    ...(r["uiLanguage"] === "it" || r["uiLanguage"] === "en" || r["uiLanguage"] === "auto"
+      ? { uiLanguage: r["uiLanguage"] }
       : {}),
     version: 1,
     language: parseBookLanguage(r["language"]),

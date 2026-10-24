@@ -36,3 +36,33 @@ test('series status uses a single library row and never stores volume counts as 
  assert.equal(mangaLibraryPatch(state([1],2),done,{...prev,status:'read',finished_at:now},now).finished_at,null);
  assert.throws(()=>mangaLibraryPatch(state([1,3],2),done,prev,now),/oltre il totale/);
 });
+
+test('jumping ahead asks about holes and selecting only one volume never fills them implicitly', async()=>{
+ const {missingPreviousVolumes,selectMangaVolume}=await import('../src/lib/manga-model.ts');
+ assert.deepEqual(missingPreviousVolumes([1,3],5),[2,4]);
+ assert.deepEqual(selectMangaVolume([1,3],5),[1,3,5]);
+ assert.deepEqual(selectMangaVolume([1,3],5,true),[1,2,3,4,5]);
+ assert.deepEqual(selectMangaVolume([1,2,3],2),[1,3]);
+ assert.deepEqual(missingPreviousVolumes([],2001),[]);
+ assert.deepEqual(selectMangaVolume([1],2001),[1]);
+});
+test('fallback series retain stable identifiers and deduplicate provider matches',async()=>{
+ const {mapJikanManga,mergeMangaResults}=await import('../src/lib/manga-model.ts');
+ const mal=mapJikanManga({mal_id:11,title:'Naruto',volumes:72,status:'Finished',authors:[{name:'Kishimoto, Masashi'}],images:{jpg:{image_url:'https://cdn.myanimelist.net/naruto.jpg'}}});
+ assert.equal(mal.id,'manga:mal:11');assert.ok(isMangaId(mal.id));assert.equal(mal.manga.totalVolumes,72);assert.equal(mal.manga.status,'completed');assert.deepEqual(mal.authors,['Masashi Kishimoto']);
+ const md={...mal,id,manga:{...mal.manga,mangaDexId:id.slice(9)}};
+ assert.deepEqual(mergeMangaResults([md,md],[mal]).map(b=>b.id),[id]);
+ const raw=encodeMangaProgress({[mal.id]:state([1,3],72)});assert.deepEqual(readVolumes(decodeMangaProgress(raw)[mal.id]),[1,3]);
+});
+test('volume cover selection prefers the selected language without mistaking chapters for volumes',async()=>{
+ const {mangaVolumeCovers}=await import('../src/lib/manga-model.ts');
+ const cover=(volume,locale,fileName)=>({attributes:{volume,locale,fileName}});
+ const results=mangaVolumeCovers([cover('1','ja','original.jpg'),cover('1','en','english.jpg'),cover('1','it','italian.jpg'),cover('2','ja','second.jpg'),cover('2.5','it','extra.jpg'),cover(null,'it','unknown.jpg')],id.slice(9),'it');
+ assert.deepEqual(results.map(c=>c.volume),[1,2]);assert.match(results[0].url,/italian.jpg/);assert.equal(results[0].language,'it');assert.equal(results[1].language,'ja');
+});
+
+test('localized and Japanese aliases use the primary catalogue title, including completion',async()=>{
+ const {mangaSearchTitle}=await import('../src/lib/manga-model.ts');
+ for(const query of ["L'attacco dei giganti",'Shingeki no Kyojin','l’attacco dei gi'])assert.equal(mangaSearchTitle(query),'Attack on Titan');
+ assert.equal(mangaSearchTitle('Case Closed'),'Detective Conan');assert.equal(mangaSearchTitle('Lamù'),'Urusei Yatsura');assert.equal(mangaSearchTitle('Naruto'),'Naruto');assert.equal(mangaSearchTitle('constructor'),'constructor');
+});

@@ -1,3 +1,7 @@
+import { useAuth } from "@/lib/auth";
+import { useBookLanguage } from "@/lib/use-book-language";
+import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +12,10 @@ import { sameAuthorName, workTitle } from "@/lib/work-identity";
 import { BookCover } from "./BookCard";
 
 export function DailyFragment() {
+  const { user } = useAuth();
+  const { language } = useBookLanguage(
+    parsePreferences(user?.user_metadata[PREFERENCES_FIELD])?.language,
+  );
   const [coverUrl, setCoverUrl] = useState("");
   const [day, setDay] = useState<string | null>(null);
   useEffect(() => {
@@ -21,17 +29,41 @@ export function DailyFragment() {
     };
   }, []);
   const fragment = day ? dailyFragment(day) : null;
+  const englishTitles: Record<string, string> = {
+    "collodi-pinocchio": "Pinocchio",
+    "verga-malavoglia": "The House by the Medlar Tree",
+    "pirandello-centomila": "One, No One and One Hundred Thousand",
+    "svevo-zeno": "Zeno’s Conscience",
+    "dante-inferno": "The Divine Comedy",
+    "manzoni-promessi": "The Betrothed",
+    "ariosto-orlando": "Orlando Furioso",
+    "boccaccio-decameron": "The Decameron",
+    "leopardi-pensieri-fama": "Thoughts",
+    "canne-al-vento": "Reeds in the Wind",
+    "fu-mattia-pascal": "The Late Mattia Pascal",
+    "svevo-una-vita": "A Life",
+    "mastro-don-gesualdo": "Mastro-don Gesualdo",
+    "vita-dei-campi": "Life in the Fields",
+    "tigri-mompracem": "The Tigers of Mompracem",
+    "corsaro-nero": "The Black Corsair",
+  };
+  const searchTitle = fragment
+    ? language === "en"
+      ? (englishTitles[fragment.id] ?? fragment.title)
+      : fragment.title
+    : "";
   const books = useQuery({
-    queryKey: ["daily-fragment-book", fragment?.id],
+    queryKey: ["daily-fragment-book", fragment?.id, language],
     enabled: !!fragment,
     queryFn: () =>
-      searchBooks(`intitle:"${fragment!.title}" inauthor:"${fragment!.author}"`, { max: 6 }),
+      searchBooks(`intitle:"${searchTitle}" inauthor:"${fragment!.author}"`, { max: 6, language }),
     staleTime: 86400000,
     retry: false,
   });
   const candidates = books.data?.filter(
     (b) =>
-      workTitle(b.title) === workTitle(fragment!.title) &&
+      (workTitle(b.title) === workTitle(fragment!.title) ||
+        workTitle(b.title) === workTitle(searchTitle)) &&
       b.authors.some((a) => sameAuthorName(a, fragment!.author)),
   );
   const book = candidates?.find((b) => b.cover_url) ?? candidates?.[0];
@@ -51,7 +83,8 @@ export function DailyFragment() {
     </div>
   );
   return (
-    <section
+    <UiElement
+      as="section"
       className="relative isolate my-10 min-h-80 overflow-hidden rounded-2xl border border-border/60 bg-muted/25 px-5 py-7 sm:px-10 sm:py-9"
       aria-label="Il frammento del giorno"
     >
@@ -60,7 +93,8 @@ export function DailyFragment() {
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
           aria-hidden="true"
         >
-          <img
+          <UiElement
+            as="img"
             src={coverUrl}
             alt=""
             decoding="async"
@@ -105,7 +139,8 @@ export function DailyFragment() {
                   params={{ bookId: book.id }}
                   className="inline-flex items-center gap-2 text-sm text-primary"
                 >
-                  Scopri questo libro <ArrowRight size={14} />
+                  <UiText text="Scopri questo libro " />
+                  <ArrowRight size={14} />
                 </Link>
               ) : (
                 <a
@@ -114,7 +149,8 @@ export function DailyFragment() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary"
                 >
-                  Leggi l’opera <ArrowRight size={14} aria-hidden="true" />
+                  <UiText text="Leggi l’opera " />
+                  <ArrowRight size={14} aria-hidden="true" />
                 </a>
               )}
             </div>
@@ -125,23 +161,24 @@ export function DailyFragment() {
                 rel="noopener noreferrer"
                 className="underline underline-offset-4"
               >
-                Leggi il brano su Wikisource ↗
+                <UiText text="Leggi il brano su Wikisource ↗" />
               </a>
               <a
                 href={`https://creativecommons.org/licenses/by-sa/${fragment.license}/deed.it`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Trascrizione: CC BY-SA {fragment.license}
+                <UiText text="Trascrizione: CC BY-SA " />
+                {fragment.license}
               </a>
             </div>
           </div>
         </div>
       ) : (
         <p className="font-display text-xl text-muted-foreground" role="status">
-          Una pagina da incontrare, ogni giorno.
+          <UiText text="Una pagina da incontrare, ogni giorno." />
         </p>
       )}
-    </section>
+    </UiElement>
   );
 }

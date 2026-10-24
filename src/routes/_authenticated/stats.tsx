@@ -1,3 +1,5 @@
+import { useTranslate } from "@/lib/use-ui-language";
+import { UiText } from "@/lib/ui-language-context";
 import { decodeMangaProgress } from "@/lib/manga-account";
 import { MANGA_FIELD, isMangaId, readVolumes } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/stats")({
 });
 
 function Stats() {
+  const t = useTranslate();
   const { user } = useAuth();
   const { data: items = [], isLoading, isError } = useLibrary(user?.id);
 
@@ -49,9 +52,13 @@ function Stats() {
       <AppShell>
         <PageHeader title="Statistiche" subtitle="Il tuo ritmo di lettura" />
         <p role={isError ? "alert" : "status"} className="editorial-empty">
-          {isError
-            ? "Le statistiche non sono disponibili. Ricarica la pagina per riprovare."
-            : "Caricamento…"}
+          <UiText
+            text={
+              isError
+                ? "Le statistiche non sono disponibili. Ricarica la pagina per riprovare."
+                : "Caricamento…"
+            }
+          />
         </p>
       </AppShell>
     );
@@ -108,26 +115,32 @@ function Stats() {
         <Card label="Abbandonati" value={stats.abandoned} />
       </div>
       <p className="mb-6 text-xs text-muted-foreground">
-        I conteggi annuali usano la data di fine lettura, comprese le date importate.{" "}
+        <UiText text="I conteggi annuali usano la data di fine lettura, comprese le date importate." />{" "}
         {stats.undated > 0
           ? `${stats.undated} libri letti senza una data valida non sono attribuiti a un anno.`
           : ""}{" "}
-        Ogni libro conta una volta; le riletture senza uno storico delle date non vengono
-        distribuite negli anni. Le pagine e il tempo stimato si basano sui libri completati con
-        numero di pagine disponibile.
+        <UiText text="Ogni libro conta una volta; le riletture senza uno storico delle date non vengono distribuite negli anni. Le pagine e il tempo stimato si basano sui libri completati con numero di pagine disponibile." />
       </p>
       <div className="mb-6 rounded-xl border border-border bg-card p-4">
-        <h2 className="mb-3 font-display font-semibold">Il tuo storico di lettura</h2>
+        <h2 className="mb-3 font-display font-semibold">
+          <UiText text="Il tuo storico di lettura" />
+        </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <caption className="sr-only">Libri e pagine completati per anno</caption>
+            <caption className="sr-only">
+              <UiText text="Libri e pagine completati per anno" />
+            </caption>
             <thead>
               <tr className="border-b border-border">
                 <th scope="col" className="py-2">
-                  Anno
+                  <UiText text="Anno" />
                 </th>
-                <th scope="col">Libri letti</th>
-                <th scope="col">Pagine</th>
+                <th scope="col">
+                  <UiText text="Libri letti" />
+                </th>
+                <th scope="col">
+                  <UiText text="Pagine" />
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -146,7 +159,7 @@ function Stats() {
       </div>
       <div className="mb-4 flex items-center gap-3">
         <label htmlFor="statistics-year" className="text-sm">
-          Dettaglio mensile
+          <UiText text="Dettaglio mensile" />
         </label>
         <select
           id="statistics-year"
@@ -168,7 +181,12 @@ function Stats() {
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={stats.byMonth}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
+              <XAxis
+                tickFormatter={(value: string) => t(value)}
+                dataKey="month"
+                stroke="var(--muted-foreground)"
+                fontSize={12}
+              />
               <YAxis allowDecimals={false} stroke="var(--muted-foreground)" fontSize={12} />
               <Tooltip
                 contentStyle={{
@@ -232,9 +250,17 @@ function Stats() {
 function Card({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <p className="font-display text-2xl font-bold">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      {hint && <p className="text-[11px] text-muted-foreground/80">{hint}</p>}
+      <p className="font-display text-2xl font-bold">
+        <UiText text={value} />
+      </p>
+      <p className="text-xs text-muted-foreground">
+        <UiText text={label} />
+      </p>
+      {hint && (
+        <p className="text-[11px] text-muted-foreground/80">
+          <UiText text={hint} />
+        </p>
+      )}
     </div>
   );
 }
@@ -242,7 +268,9 @@ function Card({ label, value, hint }: { label: string; value: string | number; h
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <h2 className="mb-3 font-display font-semibold">{title}</h2>
+      <h2 className="mb-3 font-display font-semibold">
+        <UiText text={title} />
+      </h2>
       {children}
     </div>
   );

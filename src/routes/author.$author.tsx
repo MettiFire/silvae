@@ -1,9 +1,10 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Bookmark, Check } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { groupAuthors, authorMatchesQuery } from "@/lib/author-search";
@@ -113,7 +114,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   return (
     <AppShell>
       <PageHeader
-        title={data?.name ?? name}
+        title={<span translate="no">{data?.name ?? name}</span>}
         subtitle="La storia, i libri e le opere più recenti"
         action={
           data &&
@@ -124,18 +125,30 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               className="flex items-center gap-2 rounded-lg border border-primary px-4 py-2 text-sm text-primary disabled:opacity-50"
             >
               {followed ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-              {busy ? "Salvataggio…" : followed ? "Segui già · Smetti di seguire" : "Segui autore"}
+              <UiText
+                text={
+                  busy
+                    ? "Salvataggio…"
+                    : followed
+                      ? "Segui già · Smetti di seguire"
+                      : "Segui autore"
+                }
+              />
             </button>
           ) : (
             <Link to="/auth" className="text-sm text-primary">
-              Accedi per seguire l’autore
+              <UiText text="Accedi per seguire l’autore" />
             </Link>
           ))
         }
       />
       {groups.length > 1 && (
         <label className="mb-6 flex max-w-xl flex-col gap-2 text-sm">
-          {id ? "Non è la persona che cercavi?" : "Scegli l’autore: ci possono essere omonimi."}
+          <UiText
+            text={
+              id ? "Non è la persona che cercavi?" : "Scegli l’autore: ci possono essere omonimi."
+            }
+          />
           <select
             value={id ?? ""}
             onChange={(e) => {
@@ -145,7 +158,9 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             }}
             className="rounded-lg border border-border bg-background p-2"
           >
-            <option value="">Seleziona un autore</option>
+            <option value="">
+              <UiText text="Seleziona un autore" />
+            </option>
             {groups.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -161,12 +176,13 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           onClick={() => setChosen(groups[0]!.id)}
           className="mb-6 rounded-lg border p-3 text-sm"
         >
-          Intendevi {groups[0]!.name}? · {groups[0]!.topWork}
+          <UiText text="Intendevi " />
+          {groups[0]!.name}? · {groups[0]!.topWork}
         </button>
       )}
       {error && (
         <p role="alert" className="mb-6 text-sm">
-          Non è stato possibile caricare tutti i dati.{" "}
+          <UiText text="Non è stato possibile caricare tutti i dati." />{" "}
           <button
             className="text-primary"
             onClick={() => {
@@ -175,21 +191,25 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               if (catalogue.isError) void catalogue.refetch();
             }}
           >
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
-      {candidates.isLoading && !selectedId && <p>Ricerca dell’autore…</p>}
+      {candidates.isLoading && !selectedId && (
+        <p>
+          <UiText text="Ricerca dell’autore…" />
+        </p>
+      )}
       {!candidates.isLoading && groups.length === 0 && !selectedId && (
         <p>
-          Nessun autore identificato. Prova a cercare un altro suo libro o una diversa forma del
-          nome.
+          <UiText text="Nessun autore identificato. Prova a cercare un altro suo libro o una diversa forma del nome." />
         </p>
       )}
       {data && (
         <section className="mb-8 flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:flex-row">
           {data.photo && !photoFailed && (
-            <img
+            <UiElement
+              as="img"
               src={data.photo}
               width={112}
               height={144}
@@ -214,7 +234,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               rel="noreferrer"
               className="mt-3 inline-block text-xs text-primary"
             >
-              Dati e bibliografia da Open Library ↗
+              <UiText text="Dati e bibliografia da Open Library ↗" />
             </a>
           </div>
         </section>
@@ -223,14 +243,16 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-xl font-bold">Bibliografia disponibile</h2>
+              <h2 className="font-display text-xl font-bold">
+                <UiText text="Bibliografia disponibile" />
+              </h2>
               <p className="text-sm text-muted-foreground">
-                {catalogue.data?.total ?? "…"} opere nel catalogo. Le date indicano la prima
-                pubblicazione nota.
+                {catalogue.data?.total ?? "…"}
+                <UiText text=" opere nel catalogo. Le date indicano la prima pubblicazione nota." />
               </p>
             </div>
             <label className="text-sm">
-              Ordina{" "}
+              <UiText text="Ordina" />{" "}
               <select
                 value={sort}
                 onChange={(e) => {
@@ -239,15 +261,21 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
                 }}
                 className="ml-2 rounded-lg border border-border bg-background p-2"
               >
-                <option value="new">Uscite più recenti</option>
-                <option value="popular">Più popolari</option>
-                <option value="title">Titolo A–Z</option>
+                <option value="new">
+                  <UiText text="Uscite più recenti" />
+                </option>
+                <option value="popular">
+                  <UiText text="Più popolari" />
+                </option>
+                <option value="title">
+                  <UiText text="Titolo A–Z" />
+                </option>
               </select>
             </label>
           </div>
           {sort === "popular" && (
             <p className="mb-2 text-xs text-muted-foreground">
-              Popolarità basata sulle aggiunte alle librerie su Open Library.
+              <UiText text="Popolarità basata sulle aggiunte alle librerie su Open Library." />
             </p>
           )}
           {language && (
@@ -260,7 +288,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
                   setPage(0);
                 }}
               />
-              Mostra anche opere senza edizioni in{" "}
+              <UiText text="Mostra anche opere senza edizioni in" />{" "}
               {BOOK_LANGUAGES.find((item) => item.code === language)?.label.toLowerCase()}
             </label>
           )}
@@ -268,12 +296,11 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             {language && !allLanguages
               ? "Titoli delle edizioni nella lingua scelta nelle impostazioni. "
               : "Titoli delle edizioni disponibili; alcune opere possono avere solo il titolo originale. "}
-            Il catalogo può essere incompleto; date di traduzioni e ristampe possono differire. I
-            libri futuri compaiono solo se già catalogati.
+            <UiText text="Il catalogo può essere incompleto; date di traduzioni e ristampe possono differire. I libri futuri compaiono solo se già catalogati." />
           </p>
           {catalogue.isFetching && (
             <p role="status" className="mb-4 text-sm">
-              Caricamento dei libri…
+              <UiText text="Caricamento dei libri…" />
             </p>
           )}
           <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
@@ -281,13 +308,14 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               <div key={b.id} className="relative">
                 <BookCard book={b} />
                 {hasReadBook(b, library) && (
-                  <span
+                  <UiElement
+                    as="span"
                     aria-label="Già letto"
                     className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-semibold text-white shadow-sm"
                   >
                     <Check aria-hidden="true" className="h-3 w-3" />
-                    Letto
-                  </span>
+                    <UiText text="Letto" />
+                  </UiElement>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
                   {b.published_year ?? "Anno non disponibile"}
@@ -299,7 +327,9 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             ))}
           </div>
           {!catalogue.isFetching && !catalogue.isError && !books.length && (
-            <p>Nessuna opera trovata in questa pagina.</p>
+            <p>
+              <UiText text="Nessuna opera trovata in questa pagina." />
+            </p>
           )}
           <div className="mt-6 flex items-center gap-4">
             <button
@@ -307,9 +337,12 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               onClick={() => setPage((p) => p - 1)}
               className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40"
             >
-              Precedente
+              <UiText text="Precedente" />
             </button>
-            <span className="text-sm">Pagina {page + 1}</span>
+            <span className="text-sm">
+              <UiText text="Pagina " />
+              {page + 1}
+            </span>
             <button
               disabled={
                 catalogue.isFetching || !catalogue.data || (page + 1) * 24 >= catalogue.data.total
@@ -317,7 +350,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               onClick={() => setPage((p) => p + 1)}
               className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40"
             >
-              Successiva
+              <UiText text="Successiva" />
             </button>
           </div>
         </section>

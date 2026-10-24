@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { MangaProgressLabel } from "@/components/MangaTracker";
 import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
@@ -29,27 +30,31 @@ function Home() {
       {!user ? (
         <section className="home-hero">
           <div className="home-hero-copy">
-            <p className="eyebrow">Un posto per le tue letture</p>
+            <p className="eyebrow">
+              <UiText text="Un posto per le tue letture" />
+            </p>
             <h1>
-              Tieni il filo.
+              <UiText text="Tieni il filo." />
               <br />
-              Di ogni <em>storia.</em>
+              <UiText text="Di ogni " />
+              <em>
+                <UiText text="storia." />
+              </em>
             </h1>
             <p className="max-w-md text-sm leading-7 text-muted-foreground">
-              I libri che hai amato, quelli che ti aspettano. Uno spazio per raccoglierli e trovare
-              la tua prossima lettura, insieme agli altri.
+              <UiText text="I libri che hai amato, quelli che ti aspettano. Uno spazio per raccoglierli e trovare la tua prossima lettura, insieme agli altri." />
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/auth" className="button-ink">
-                Comincia la tua libreria
+                <UiText text="Comincia la tua libreria" />
                 <ArrowRight size={14} />
               </Link>
               <Link to="/discover" className="button-outline">
-                Sfoglia il catalogo
+                <UiText text="Sfoglia il catalogo" />
               </Link>
             </div>
           </div>
-          <div className="home-hero-art" aria-label="Dal catalogo di Silvae">
+          <UiElement as="div" className="home-hero-art" aria-label="Dal catalogo di Silvae">
             {recommended.length ? (
               recommended.slice(0, 2).map(({ book }, index) => (
                 <Link
@@ -63,12 +68,12 @@ function Home() {
               ))
             ) : (
               <div className="max-w-64 py-16 text-center font-display text-3xl italic leading-relaxed text-[var(--hero-ink)]">
-                C’è sempre
+                <UiText text="C’è sempre" />
                 <br />
-                un’altra pagina.
+                <UiText text="un’altra pagina." />
               </div>
             )}
-          </div>
+          </UiElement>
         </section>
       ) : (
         <>
@@ -77,13 +82,15 @@ function Home() {
             subtitle="Le storie in cui sei adesso. E quelle che verranno."
             action={
               <Link to="/profile" className="button-outline">
-                Il mio profilo ↗
+                <UiText text="Il mio profilo ↗" />
               </Link>
             }
           />
           <section>
             <SectionHeading title="Dove eravamo rimasti" number="01">
-              <Link to="/library">La tua libreria ↗</Link>
+              <Link to="/library">
+                <UiText text="La tua libreria ↗" />
+              </Link>
             </SectionHeading>
             {reading.length ? (
               <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
@@ -98,7 +105,9 @@ function Home() {
                       {item.books && <BookCover book={item.books} />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="eyebrow mb-2">In lettura</p>
+                      <p className="eyebrow mb-2">
+                        <UiText text="In lettura" />
+                      </p>
                       <h3 className="font-display text-xl leading-snug">{item.books?.title}</h3>
                       <p className="mt-2 text-xs text-muted-foreground">
                         {item.books?.authors.join(", ")}
@@ -120,9 +129,9 @@ function Home() {
               </div>
             ) : (
               <p className="editorial-empty">
-                Nessuna lettura in corso.{" "}
+                <UiText text="Nessuna lettura in corso." />{" "}
                 <Link to="/discover" className="underline">
-                  Trova il prossimo libro.
+                  <UiText text="Trova il prossimo libro." />
                 </Link>
               </p>
             )}
@@ -148,39 +157,49 @@ function Home() {
             <span className="inline-flex">
               <BookGridSizeControl />
             </span>
-            <button
+            <UiElement
+              as="button"
               aria-label="Rinnova suggerimenti"
               className="inline-flex items-center gap-2 text-xs"
               onClick={refresh}
             >
               <RefreshCw size={13} />
-              Altri libri
-            </button>
+              <UiText text="Altri libri" />
+            </UiElement>
           </div>
         </SectionHeading>
         <p className="mb-7 max-w-xl text-xs leading-relaxed text-muted-foreground">
-          {user
-            ? "Suggerimenti dai tuoi gusti e dai libri che hai già raccolto, letti e ancora da leggere."
-            : "Percorsi nel catalogo, per incontrare qualcosa che non stavi cercando."}
+          <UiText
+            text={
+              user
+                ? "Suggerimenti dai tuoi gusti e dai libri che hai già raccolto, letti e ancora da leggere."
+                : "Percorsi nel catalogo, per incontrare qualcosa che non stavi cercando."
+            }
+          />
         </p>
         {recsLoading && (
-          <div className="book-grid grid" role="status" aria-label="Caricamento suggerimenti">
+          <UiElement
+            as="div"
+            className="book-grid grid"
+            role="status"
+            aria-label="Caricamento suggerimenti"
+          >
             {Array.from({ length: 6 }, (_, i) => (
               <div key={i} className="aspect-[2/3] animate-pulse bg-muted" />
             ))}
-          </div>
+          </UiElement>
         )}
         {recsError && (
           <p role="alert" className="editorial-empty">
-            Il catalogo non è disponibile.{" "}
+            <UiText text="Il catalogo non è disponibile." />{" "}
             <button onClick={() => void retryRecs()} className="underline">
-              Riprova
+              <UiText text="Riprova" />
             </button>
           </p>
         )}
         {!recsLoading && !recsError && !recommended.length && (
           <p className="editorial-empty">
-            Nessun suggerimento al momento. Rinnova i libri o aggiorna i gusti nelle impostazioni.
+            <UiText text="Nessun suggerimento al momento. Rinnova i libri o aggiorna i gusti nelle impostazioni." />
           </p>
         )}
         {!recsLoading && (
@@ -189,7 +208,7 @@ function Home() {
               <div key={book.id}>
                 <BookCard book={book} />
                 <p className="mt-3 border-t pt-2 text-[10px] leading-relaxed text-muted-foreground">
-                  {reason}
+                  <UiText text={reason} />
                 </p>
               </div>
             ))}
@@ -197,7 +216,7 @@ function Home() {
         )}
         <div className="mt-8 flex justify-end">
           <Link to="/discover" className="inline-flex items-center gap-3 text-xs font-medium">
-            Continua a esplorare
+            <UiText text="Continua a esplorare" />
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -209,7 +228,9 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <strong>{value}</strong>
-      <span>{label}</span>
+      <span>
+        <UiText text={label} />
+      </span>
     </div>
   );
 }

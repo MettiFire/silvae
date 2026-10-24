@@ -1,8 +1,10 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -103,7 +105,7 @@ function Social() {
   return (
     <AppShell>
       <Link to="/clubs" className="button-outline mb-5">
-        Leggiamo insieme · Scopri i book club →
+        <UiText text="Leggiamo insieme · Scopri i book club →" />
       </Link>
       <PageHeader title="Tra lettori" subtitle="Le storie che ci fanno incontrare." />
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_290px]">
@@ -111,12 +113,12 @@ function Social() {
           <SectionHeading title="Dai tuoi lettori" number="01" />
           {(feed.isLoading || following.isPending) && (
             <p role="status" className="editorial-empty">
-              Caricamento delle attività…
+              <UiText text="Caricamento delle attività…" />
             </p>
           )}
           {(feed.isError || following.isError) && (
             <p role="alert" className="editorial-empty">
-              Le attività non sono disponibili.{" "}
+              <UiText text="Le attività non sono disponibili." />{" "}
               <button
                 className="underline"
                 onClick={() => {
@@ -124,14 +126,13 @@ function Social() {
                   void feed.refetch();
                 }}
               >
-                Riprova
+                <UiText text="Riprova" />
               </button>
             </p>
           )}
           {feed.isSuccess && !feed.data.length && (
             <p className="editorial-empty">
-              Qui arriveranno le tue letture e quelle delle persone che segui. Cerca un lettore per
-              cominciare.
+              <UiText text="Qui arriveranno le tue letture e quelle delle persone che segui. Cerca un lettore per cominciare." />
             </p>
           )}
           {feed.data?.map((a) => {
@@ -153,7 +154,9 @@ function Social() {
                         {profileLabel(p)}
                       </Link>
                     ) : (
-                      <span>Un lettore</span>
+                      <span>
+                        <UiText text="Un lettore" />
+                      </span>
                     )}{" "}
                     <span className="text-muted-foreground">{VERB[a.type] || "ha aggiornato"}</span>{" "}
                     {a.book_id ? (
@@ -170,10 +173,13 @@ function Social() {
                     className="mt-2 block text-[10px] text-muted-foreground"
                     dateTime={a.created_at}
                   >
-                    {new Date(a.created_at).toLocaleDateString("it-IT", {
-                      day: "numeric",
-                      month: "long",
-                    })}
+                    <UiDate
+                      value={new Date(a.created_at)}
+                      options={{
+                        day: "numeric",
+                        month: "long",
+                      }}
+                    />
                   </time>
                 </div>
               </article>
@@ -181,23 +187,34 @@ function Social() {
           })}
         </section>
         <aside className="border-t border-foreground pt-5">
-          <p className="eyebrow">Nuove affinità</p>
-          <h2 className="mb-5 mt-2 font-display text-2xl">Trova lettori</h2>
-          <input
+          <p className="eyebrow">
+            <UiText text="Nuove affinità" />
+          </p>
+          <h2 className="mb-5 mt-2 font-display text-2xl">
+            <UiText text="Trova lettori" />
+          </h2>
+          <UiElement
+            as="input"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             aria-label="Cerca utenti"
             placeholder="Cerca uno username"
             className="h-11 w-full rounded border bg-transparent px-3 text-sm"
           />
-          {people.isFetching && <p className="mt-4 text-xs">Ricerca…</p>}
+          {people.isFetching && (
+            <p className="mt-4 text-xs">
+              <UiText text="Ricerca…" />
+            </p>
+          )}
           {people.isError && (
             <p role="alert" className="mt-4 text-xs">
-              Ricerca non disponibile.
+              <UiText text="Ricerca non disponibile." />
             </p>
           )}
           {search.length > 1 && people.isSuccess && !people.data.length && (
-            <p className="mt-4 text-xs text-muted-foreground">Nessun lettore trovato.</p>
+            <p className="mt-4 text-xs text-muted-foreground">
+              <UiText text="Nessun lettore trovato." />
+            </p>
           )}
           {people.data?.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 border-b py-4">
@@ -213,7 +230,7 @@ function Social() {
                 onClick={() => void toggle(p.id)}
                 className="text-xs text-primary"
               >
-                {following.data?.includes(p.id) ? "Segui già" : "+ Segui"}
+                <UiText text={following.data?.includes(p.id) ? "Segui già" : "+ Segui"} />
               </button>
             </div>
           ))}

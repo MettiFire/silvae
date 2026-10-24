@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
@@ -23,12 +24,12 @@ function ProfilePage() {
         <ProfileLoading />
       ) : (
         <p className="editorial-empty">
-          Il profilo non si è caricato.{" "}
+          <UiText text="Il profilo non si è caricato." />{" "}
           <button className="mr-4 underline" onClick={() => void refreshProfile()}>
-            Riprova
+            <UiText text="Riprova" />
           </button>{" "}
           <Link to="/settings" className="underline">
-            Apri le impostazioni
+            <UiText text="Apri le impostazioni" />
           </Link>
         </p>
       )}

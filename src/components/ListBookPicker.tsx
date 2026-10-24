@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
@@ -71,9 +72,11 @@ export function ListBookPicker({
     >
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Aggiungi libri alla lista</DialogTitle>
+          <DialogTitle>
+            <UiText text="Aggiungi libri alla lista" />
+          </DialogTitle>
           <DialogDescription>
-            Scegli dalla tua libreria oppure cerca nel catalogo.
+            <UiText text="Scegli dalla tua libreria oppure cerca nel catalogo." />
           </DialogDescription>
         </DialogHeader>
         <form
@@ -83,7 +86,8 @@ export function ListBookPicker({
             setSearch(term.trim());
           }}
         >
-          <input
+          <UiElement
+            as="input"
             aria-label="Cerca libri per la lista"
             placeholder="Titolo o autore"
             value={term}
@@ -94,7 +98,7 @@ export function ListBookPicker({
             className="min-w-0 flex-1 rounded border bg-background px-3 py-2 text-sm"
           />
           <button disabled={term.trim().length < 3} className="button-outline">
-            Cerca catalogo
+            <UiText text="Cerca catalogo" />
           </button>
         </form>
         {search && (
@@ -105,7 +109,7 @@ export function ListBookPicker({
               setTerm("");
             }}
           >
-            ← Torna alla tua libreria
+            <UiText text="← Torna alla tua libreria" />
           </button>
         )}
         {(error || results.error || library.error) && (
@@ -115,13 +119,13 @@ export function ListBookPicker({
         )}
         {results.isFetching && (
           <p role="status" className="text-sm">
-            Ricerca…
+            <UiText text="Ricerca…" />
           </p>
         )}
         <div className="max-h-[50vh] overflow-y-auto">
           {!books.length && !results.isFetching && (
             <p className="editorial-empty">
-              Nessun libro da mostrare. Prova a cercare nel catalogo.
+              <UiText text="Nessun libro da mostrare. Prova a cercare nel catalogo." />
             </p>
           )}
           {books.map((book) => {
@@ -140,14 +144,16 @@ export function ListBookPicker({
                   onClick={() => void add(book)}
                   className="text-xs text-primary"
                 >
-                  {done ? "Aggiunto" : busy === book.id ? "Aggiungo…" : "+ Aggiungi"}
+                  <UiText
+                    text={done ? "Aggiunto" : busy === book.id ? "Aggiungo…" : "+ Aggiungi"}
+                  />
                 </button>
               </div>
             );
           })}
         </div>
         <button className="button-ink" disabled={!!busy} onClick={close}>
-          Fatto
+          <UiText text="Fatto" />
         </button>
       </DialogContent>
     </Dialog>

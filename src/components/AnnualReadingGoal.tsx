@@ -1,8 +1,9 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { countFinishedInYear } from "@/lib/reading-dates";
 import { Target } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { ProgressBar } from "@/components/ProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import type { LibraryItem } from "@/lib/library";
@@ -57,9 +58,13 @@ export function AnnualReadingGoal({ userId, library }: { userId: string; library
         <div>
           <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
             <Target className="h-4 w-4" />
-            Il tuo ritmo
+            <UiText text="Il tuo ritmo" />
           </p>
-          <h2 className="font-display text-xl font-bold">Il mio {year}, un libro alla volta</h2>
+          <h2 className="font-display text-xl font-bold">
+            <UiText text="Il mio " />
+            {year}
+            <UiText text=", un libro alla volta" />
+          </h2>
         </div>
         <p className="font-display text-2xl font-bold">
           {finished(year)}
@@ -70,13 +75,15 @@ export function AnnualReadingGoal({ userId, library }: { userId: string; library
         </p>
       </div>
       {query.isPending && (
-        <p className="mt-3 text-sm text-muted-foreground">Caricamento obiettivo…</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          <UiText text="Caricamento obiettivo…" />
+        </p>
       )}
       {query.isError && (
         <p role="alert" className="mt-3 text-sm">
-          Impossibile caricare l’obiettivo.{" "}
+          <UiText text="Impossibile caricare l’obiettivo." />{" "}
           <button className="text-primary" onClick={() => void query.refetch()}>
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
@@ -90,8 +97,9 @@ export function AnnualReadingGoal({ userId, library }: { userId: string; library
       )}
       <form onSubmit={(e) => void save(e)} className="mt-4 flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm">
-          Voglio leggere
-          <input
+          <UiText text="Voglio leggere" />
+          <UiElement
+            as="input"
             required
             type="number"
             min={1}
@@ -101,29 +109,33 @@ export function AnnualReadingGoal({ userId, library }: { userId: string; library
             className="w-20 rounded-lg border border-border bg-background px-2 py-2"
             aria-label="Obiettivo annuale in libri"
           />
-          libri quest’anno
+          <UiText text="libri quest’anno" />
         </label>
         <button
           disabled={saving || query.isPending || query.isError}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
         >
-          {saving ? "Salvataggio…" : "Salva obiettivo"}
+          <UiText text={saving ? "Salvataggio…" : "Salva obiettivo"} />
         </button>
       </form>
       <p className="mt-3 text-xs text-muted-foreground">
-        Contano i libri segnati come Letto con una data di fine nel {year}. I libri importati senza
-        data non vengono assegnati a un anno.
+        <UiText text="Contano i libri segnati come Letto con una data di fine nel " />
+        {year}
+        <UiText text=". I libri importati senza data non vengono assegnati a un anno." />
       </p>
       {(query.data ?? []).some((item) => item.year !== year) && (
         <details className="mt-5 border-t border-border pt-4">
-          <summary className="cursor-pointer text-sm font-medium">Gli anni passati</summary>
+          <summary className="cursor-pointer text-sm font-medium">
+            <UiText text="Gli anni passati" />
+          </summary>
           <div className="mt-3 space-y-3">
             {query.data
               ?.filter((item) => item.year !== year)
               .map((item) => (
                 <div key={item.id}>
                   <p className="mb-1 text-sm">
-                    {item.year}: {finished(item.year)} / {item.goal} libri
+                    {item.year}: {finished(item.year)} / {item.goal}
+                    <UiText text=" libri" />
                   </p>
                   <ProgressBar current={finished(item.year)} total={item.goal} showLabel={false} />
                 </div>

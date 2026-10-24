@@ -1212,3 +1212,5 @@ select:not([multiple]):not([size]) {
 @media(max-width:640px) { .award-stop { flex-basis:245px; } }
 .award-stop.is-complete .award-stop-card { border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); background:color-mix(in srgb,var(--primary) 5%,var(--card)); }
 .award-trail { min-width:0; width:100%; max-width:100%; }
+
+html[lang="en"] .home-hero-art:after { content: "Your next story is waiting."; }

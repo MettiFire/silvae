@@ -1,8 +1,9 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { EbookDeviceFields } from "./EbookDevices";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import {
   Dialog,
   DialogContent,
@@ -57,9 +58,11 @@ export function ReadingPreferencesForm({
       className="space-y-6"
     >
       <fieldset disabled={busy} className="space-y-3">
-        <legend className="mb-2 font-medium">Cosa ti piace leggere?</legend>
+        <legend className="mb-2 font-medium">
+          <UiText text="Cosa ti piace leggere?" />
+        </legend>
         <p className="text-sm text-muted-foreground">
-          Scegli da 1 a 5 generi. Potrai cambiare idea quando vuoi.
+          <UiText text="Scegli da 1 a 5 generi. Potrai cambiare idea quando vuoi." />
         </p>
         <div className="flex flex-wrap gap-2">
           {READING_GENRES.map((g) => (
@@ -71,15 +74,17 @@ export function ReadingPreferencesForm({
               onClick={() => toggle("liked", g.id)}
               className={`rounded-full border px-3 py-2 text-sm transition disabled:opacity-40 ${form.liked.includes(g.id) ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"}`}
             >
-              {g.label}
+              <UiText text={g.label} />
             </button>
           ))}
         </div>
       </fieldset>
       <fieldset disabled={busy} className="space-y-3">
-        <legend className="mb-2 font-medium">Cosa preferisci evitare?</legend>
+        <legend className="mb-2 font-medium">
+          <UiText text="Cosa preferisci evitare?" />
+        </legend>
         <p className="text-sm text-muted-foreground">
-          Facoltativo, fino a 5 generi. Li escluderemo dai consigli personali, non dal catalogo.
+          <UiText text="Facoltativo, fino a 5 generi. Li escluderemo dai consigli personali, non dal catalogo." />
         </p>
         <div className="flex flex-wrap gap-2">
           {READING_GENRES.filter((g) => !form.liked.includes(g.id)).map((g) => (
@@ -91,13 +96,13 @@ export function ReadingPreferencesForm({
               onClick={() => toggle("avoided", g.id)}
               className={`rounded-full border px-3 py-1.5 text-xs disabled:opacity-40 ${form.avoided.includes(g.id) ? "border-destructive bg-destructive/10 text-destructive" : "border-border hover:bg-accent"}`}
             >
-              {g.label}
+              <UiText text={g.label} />
             </button>
           ))}
         </div>
       </fieldset>
       <label className="flex flex-col gap-2 text-sm font-medium">
-        Quanto lunghi ti piacciono?
+        <UiText text="Quanto lunghi ti piacciono?" />
         <select
           disabled={busy}
           value={form.length}
@@ -106,18 +111,27 @@ export function ReadingPreferencesForm({
           }
           className="rounded-lg border border-border bg-background p-2 font-normal"
         >
-          <option value="any">Nessuna preferenza</option>
-          <option value="short">Brevi · meno di 250 pagine</option>
-          <option value="medium">Medi · 250–450 pagine</option>
-          <option value="long">Lunghi · oltre 450 pagine</option>
+          <option value="any">
+            <UiText text="Nessuna preferenza" />
+          </option>
+          <option value="short">
+            <UiText text="Brevi · meno di 250 pagine" />
+          </option>
+          <option value="medium">
+            <UiText text="Medi · 250–450 pagine" />
+          </option>
+          <option value="long">
+            <UiText text="Lunghi · oltre 450 pagine" />
+          </option>
         </select>
         <span className="text-xs font-normal text-muted-foreground">
-          Una preferenza, non un limite: potrai scoprire anche libri di altre lunghezze.
+          <UiText text="Una preferenza, non un limite: potrai scoprire anche libri di altre lunghezze." />
         </span>
       </label>
       <label className="flex flex-col gap-2 text-sm font-medium">
-        Lingua dei libri
-        <select
+        <UiText text="Lingua dei libri" />
+        <UiElement
+          as="select"
           aria-label="Lingua dei libri"
           disabled={busy}
           value={form.language}
@@ -125,21 +139,22 @@ export function ReadingPreferencesForm({
           className="rounded-lg border border-border bg-background p-2 font-normal"
         >
           <option value="auto">
-            Automatica — dal browser
+            <UiText text="Automatica — dal browser" />
             {locale
               ? ` (${BOOK_LANGUAGES.find((l) => l.code === browserBookLanguage(locale))?.label})`
               : ""}
           </option>
-          <option value="any">Tutte le lingue</option>
+          <option value="any">
+            <UiText text="Tutte le lingue" />
+          </option>
           {BOOK_LANGUAGES.map((l) => (
             <option key={l.code} value={l.code}>
-              {l.label}
+              <UiText text={l.label} />
             </option>
           ))}
-        </select>
+        </UiElement>
         <span className="text-xs font-normal text-muted-foreground">
-          Si applica ai consigli e alla Discovery. I libri già in libreria restano visibili in
-          qualsiasi lingua.
+          <UiText text="Si applica a ricerca, consigli, copertine e descrizioni quando disponibili. I libri già in libreria restano visibili in qualsiasi lingua." />
         </span>
       </label>
       <EbookDeviceFields
@@ -152,7 +167,7 @@ export function ReadingPreferencesForm({
           disabled={busy || !form.liked.length}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {busy ? "Salvataggio…" : "Salva i miei gusti"}
+          <UiText text={busy ? "Salvataggio…" : "Salva i miei gusti"} />
         </button>
         {onSkip && (
           <button
@@ -161,13 +176,12 @@ export function ReadingPreferencesForm({
             onClick={() => onSkip?.({ ...form, status: "skipped" })}
             className="px-3 py-2 text-sm text-muted-foreground"
           >
-            Scelgo più tardi
+            <UiText text="Scelgo più tardi" />
           </button>
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        I tuoi gusti servono a personalizzare i consigli. Anche voti e preferiti aiuteranno a
-        migliorarli.
+        <UiText text="I tuoi gusti servono a personalizzare i consigli. Anche voti e preferiti aiuteranno a migliorarli." />
       </p>
     </form>
   );
@@ -207,11 +221,10 @@ function PreferencesDialog({ automatic, close }: { automatic: boolean; close: ()
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-2xl">
             <Sparkles className="h-5 w-5 text-primary" />
-            Le tue prossime letture iniziano qui
+            <UiText text="Le tue prossime letture iniziano qui" />
           </DialogTitle>
           <DialogDescription>
-            Basta un minuto per consigliarti libri anche se la tua libreria è ancora vuota. Puoi
-            saltare e ritrovare tutto nel profilo.
+            <UiText text="Basta un minuto per consigliarti libri anche se la tua libreria è ancora vuota. Puoi saltare e ritrovare tutto nel profilo." />
           </DialogDescription>
         </DialogHeader>
         <ReadingPreferencesForm
@@ -237,7 +250,9 @@ export function ReadingPreferences({ onboarding = false }: { onboarding?: boolea
         <section className="mb-10 rounded-2xl border border-border bg-card p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="font-display text-xl font-bold">I miei gusti di lettura</h2>
+              <h2 className="font-display text-xl font-bold">
+                <UiText text="I miei gusti di lettura" />
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {prefs?.status === "completed"
                   ? prefs.liked
@@ -246,23 +261,31 @@ export function ReadingPreferences({ onboarding = false }: { onboarding?: boolea
                   : "Scegli cosa ami leggere: non servono voti o letture precedenti."}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Lingua dei libri:{" "}
-                {prefs?.language === "any"
-                  ? "tutte le lingue"
-                  : !prefs?.language || prefs.language === "auto"
-                    ? "automatica, dal browser"
-                    : BOOK_LANGUAGES.find((l) => l.code === prefs.language)?.label}
+                <UiText text="Lingua dei libri:" />{" "}
+                <UiText
+                  text={
+                    prefs?.language === "any"
+                      ? "tutte le lingue"
+                      : !prefs?.language || prefs.language === "auto"
+                        ? "automatica, dal browser"
+                        : BOOK_LANGUAGES.find((l) => l.code === prefs.language)?.label
+                  }
+                />
               </p>
             </div>
             <button
               onClick={() => setManual(true)}
               className="rounded-lg border border-border px-4 py-2 text-sm"
             >
-              {prefs?.status === "completed" ? "Modifica i miei gusti" : "Scegli i miei gusti"}
+              <UiText
+                text={
+                  prefs?.status === "completed" ? "Modifica i miei gusti" : "Scegli i miei gusti"
+                }
+              />
             </button>
           </div>
           <Link to="/discover" className="mt-3 inline-block text-sm text-primary">
-            Vai ai consigli in Discover →
+            <UiText text="Vai ai consigli in Discover →" />
           </Link>
         </section>
       )}

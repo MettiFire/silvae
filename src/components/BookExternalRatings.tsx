@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { useQuery } from "@tanstack/react-query";
 import { bookCriticRating } from "@/lib/critic-rating.functions";
 import type { Book } from "@/lib/books";
@@ -21,21 +22,24 @@ export function BookExternalRatings({ book }: { book: Book }) {
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground underline underline-offset-4"
             >
-              Critica · Book Marks ↗
+              <UiText text="Critica · Book Marks ↗" />
             </a>
             <p className="text-xl tabular-nums">
               {criticRating.favorablePercent}
-              <span className="text-sm text-muted-foreground">% favorevoli</span>
+              <span className="text-sm text-muted-foreground">
+                <UiText text="% favorevoli" />
+              </span>
             </p>
             <p className="text-xs text-muted-foreground">
-              {criticRating.count} recensioni · calcolo Silvae
+              {criticRating.count}
+              <UiText text=" recensioni · calcolo Silvae" />
             </p>
             <details className="mt-1 max-w-xs text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Come si calcola</summary>
+              <summary className="cursor-pointer">
+                <UiText text="Come si calcola" />
+              </summary>
               <p className="mt-1">
-                Percentuale di recensioni Rave o Positive sul totale raccolto da Book Marks. È un
-                calcolo di Silvae, distinto dal giudizio testuale originale di Book Marks e dalla
-                media dei lettori.
+                <UiText text="Percentuale di recensioni Rave o Positive sul totale raccolto da Book Marks. È un calcolo di Silvae, distinto dal giudizio testuale originale di Book Marks e dalla media dei lettori." />
               </p>
             </details>
           </div>
@@ -43,14 +47,18 @@ export function BookExternalRatings({ book }: { book: Book }) {
         {book.average_rating != null && Number.isFinite(book.average_rating) && (
           <div>
             <p className="text-xs text-muted-foreground">
-              Lettori · {book.rating_source ?? "Catalogo esterno"}
+              <UiText text="Lettori · " />
+              {book.rating_source ?? "Catalogo esterno"}
             </p>
             <p className="text-xl tabular-nums">
               {book.average_rating.toFixed(1)}
               <span className="text-sm text-muted-foreground"> / 5</span>
             </p>
             {book.ratings_count != null && (
-              <p className="text-xs text-muted-foreground">{book.ratings_count} valutazioni</p>
+              <p className="text-xs text-muted-foreground">
+                {book.ratings_count}
+                <UiText text=" valutazioni" />
+              </p>
             )}
           </div>
         )}

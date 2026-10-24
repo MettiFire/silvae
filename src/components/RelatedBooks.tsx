@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -94,11 +95,11 @@ export function RelatedBooks({ book }: { book: Book }) {
         <SectionHeading title="Se ti interessa questo libro" />
       </div>
       <p className="-mt-3 mb-6 text-sm text-muted-foreground">
-        Altre letture vicine per generi e autori, senza riproporre i libri già nella tua libreria.
+        <UiText text="Altre letture vicine per generi e autori, senza riproporre i libri già nella tua libreria." />
       </p>
       {error ? (
         <p role="status" className="text-sm text-muted-foreground">
-          Non riesco a caricare i libri simili.{" "}
+          <UiText text="Non riesco a caricare i libri simili." />{" "}
           <button
             type="button"
             className="underline underline-offset-4"
@@ -107,29 +108,36 @@ export function RelatedBooks({ book }: { book: Book }) {
               if (user && library.isError) void library.refetch();
             }}
           >
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       ) : loading ? (
-        <div className="book-grid grid" aria-label="Caricamento libri simili" role="status">
+        <UiElement
+          as="div"
+          className="book-grid grid"
+          aria-label="Caricamento libri simili"
+          role="status"
+        >
           {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="aspect-[2/3] animate-pulse rounded bg-muted" />
           ))}
-        </div>
+        </UiElement>
       ) : related.length ? (
         <div className="book-grid grid">
           {related.map(({ book, reason }) => (
             <div key={book.id}>
               <BookCard book={book} />
-              <p className="mt-2 text-xs text-muted-foreground">{reason}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                <UiText text={reason} />
+              </p>
             </div>
           ))}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Non ci sono ancora altri titoli affini da mostrarti.{" "}
+          <UiText text="Non ci sono ancora altri titoli affini da mostrarti." />{" "}
           <Link to="/discover" className="text-primary underline underline-offset-4">
-            Esplora il catalogo
+            <UiText text="Esplora il catalogo" />
           </Link>
         </p>
       )}

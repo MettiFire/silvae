@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { useState } from "react";
 import { ListEditor } from "@/components/ListEditor";
@@ -7,7 +8,7 @@ import { getProfileMap } from "@/lib/profile-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark, BookmarkCheck, Globe, Lock, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,9 +152,9 @@ function ListPage() {
     return (
       <AppShell>
         <p role="alert" className="editorial-empty">
-          La lista non si è caricata.{" "}
+          <UiText text="La lista non si è caricata." />{" "}
           <button className="underline" onClick={() => void refetch()}>
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       </AppShell>
@@ -161,7 +162,9 @@ function ListPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
+        <p className="text-sm text-muted-foreground">
+          <UiText text="Caricamento…" />
+        </p>
       </AppShell>
     );
   }
@@ -171,7 +174,7 @@ function ListPage() {
       <AppShell>
         <PageHeader title="Lista non trovata" subtitle="La lista non esiste o non è pubblica." />
         <Link to="/discover" className="text-sm text-primary underline">
-          Scopri nuovi libri
+          <UiText text="Scopri nuovi libri" />
         </Link>
       </AppShell>
     );
@@ -180,7 +183,7 @@ function ListPage() {
   return (
     <AppShell>
       <PageHeader
-        title={list.name}
+        title={<span translate="no">{list.name}</span>}
         subtitle={
           list.description ??
           (listBooks.isPending ? "Caricamento dei libri…" : `${itemCount} libri`)
@@ -189,10 +192,10 @@ function ListPage() {
           isOwner ? (
             <div className="flex flex-wrap gap-2">
               <button onClick={() => setEditing(true)} className="button-outline">
-                Modifica lista
+                <UiText text="Modifica lista" />
               </button>
               <button onClick={() => setAdding(true)} className="button-ink">
-                + Aggiungi libri
+                <UiText text="+ Aggiungi libri" />
               </button>
             </div>
           ) : !isOwner && user ? (
@@ -206,7 +209,7 @@ function ListPage() {
               ) : (
                 <Bookmark className="h-4 w-4" />
               )}
-              {saved ? "Salvata" : "Salva lista"}
+              <UiText text={saved ? "Salvata" : "Salva lista"} />
             </button>
           ) : undefined
         }
@@ -219,14 +222,18 @@ function ListPage() {
             params={{ username: list.profiles.username }}
             className="hover:text-primary"
           >
-            di {list.profiles.display_name ?? list.profiles.username}
+            <UiText text="di " />
+            {list.profiles.display_name ?? list.profiles.username}
           </Link>
         )}
         <span className="flex items-center gap-1">
           {list.is_public ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-          {list.is_public ? "Pubblica" : "Privata"}
+          <UiText text={list.is_public ? "Pubblica" : "Privata"} />
         </span>
-        <span>{itemCount} libri</span>
+        <span>
+          {itemCount}
+          <UiText text=" libri" />
+        </span>
       </div>
 
       <div className="mb-5 flex justify-end">
@@ -234,18 +241,17 @@ function ListPage() {
       </div>
       {itemsError && (
         <p role="alert" className="editorial-empty">
-          Non è stato possibile caricare i libri della lista.
+          <UiText text="Non è stato possibile caricare i libri della lista." />
         </p>
       )}
       {listBooks.isPending && (
         <p role="status" className="editorial-empty">
-          Caricamento dei libri…
+          <UiText text="Caricamento dei libri…" />
         </p>
       )}
       {!listBooks.isPending && !itemsError && items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Nessun libro in questa lista. Usa “Aggiungi libri” oppure aggiungili dalla scheda di un
-          libro.
+          <UiText text="Nessun libro in questa lista. Usa “Aggiungi libri” oppure aggiungili dalla scheda di un libro." />
         </p>
       ) : (
         <div className="book-grid grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
@@ -256,14 +262,16 @@ function ListPage() {
                 book={it.books}
                 footer={
                   isOwner ? (
-                    <button
+                    <UiElement
+                      as="button"
                       type="button"
                       onClick={() => removeItem.mutate(it.id)}
                       aria-label={`Rimuovi ${it.books.title} dalla lista`}
                       className="mt-2 flex items-center gap-1 text-xs text-muted-foreground transition hover:text-primary"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Rimuovi
-                    </button>
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <UiText text=" Rimuovi" />
+                    </UiElement>
                   ) : undefined
                 }
               />
@@ -277,7 +285,7 @@ function ListPage() {
           disabled={listBooks.isFetchingNextPage}
           onClick={() => void listBooks.fetchNextPage()}
         >
-          {listBooks.isFetchingNextPage ? "Caricamento…" : "Mostra altri libri"}
+          <UiText text={listBooks.isFetchingNextPage ? "Caricamento…" : "Mostra altri libri"} />
         </button>
       )}
       {editing && <ListEditor list={list} close={() => setEditing(false)} />}

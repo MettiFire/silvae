@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -45,11 +46,11 @@ export function DeleteAccount() {
   }
   return (
     <section className="mt-10 border-t border-destructive/30 pt-6">
-      <h2 className="font-display text-2xl">Elimina account</h2>
+      <h2 className="font-display text-2xl">
+        <UiText text="Elimina account" />
+      </h2>
       <p className="my-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-        Elimina definitivamente il tuo account Silvae e i dati collegati: profilo, libreria, liste,
-        recensioni, frammenti, sfide, autori seguiti e collegamenti ai dispositivi. L’operazione non
-        può essere annullata.
+        <UiText text="Elimina definitivamente il tuo account Silvae e i dati collegati: profilo, libreria, liste, recensioni, frammenti, sfide, autori seguiti e collegamenti ai dispositivi. L’operazione non può essere annullata." />
       </p>
       <button
         type="button"
@@ -61,7 +62,7 @@ export function DeleteAccount() {
         }}
         className="rounded border border-destructive px-4 py-2 text-sm text-destructive disabled:opacity-50"
       >
-        Elimina il mio account
+        <UiText text="Elimina il mio account" />
       </button>
       <AlertDialog
         open={open}
@@ -75,11 +76,11 @@ export function DeleteAccount() {
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare definitivamente il tuo account?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <UiText text="Eliminare definitivamente il tuo account?" />
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Perderai l’accesso e tutti i tuoi dati personali su Silvae. Questa operazione è
-              irreversibile. Gli account Amazon, Kobo o Google collegati rimangono attivi presso i
-              rispettivi servizi.
+              <UiText text="Perderai l’accesso e tutti i tuoi dati personali su Silvae. Questa operazione è irreversibile. Gli account Amazon, Kobo o Google collegati rimangono attivi presso i rispettivi servizi." />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <form
@@ -89,7 +90,11 @@ export function DeleteAccount() {
             }}
           >
             <label className="block text-sm" htmlFor="delete-account-confirmation">
-              Scrivi <strong>ELIMINA</strong> per confermare
+              <UiText text="Scrivi " />
+              <strong>
+                <UiText text="ELIMINA" />
+              </strong>
+              <UiText text=" per confermare" />
             </label>
             <input
               id="delete-account-confirmation"
@@ -106,13 +111,15 @@ export function DeleteAccount() {
               </p>
             )}
             <AlertDialogFooter className="mt-5">
-              <AlertDialogCancel disabled={busy}>Annulla</AlertDialogCancel>
+              <AlertDialogCancel disabled={busy}>
+                <UiText text="Annulla" />
+              </AlertDialogCancel>
               <button
                 type="submit"
                 disabled={busy || confirmation !== "ELIMINA"}
                 className="rounded bg-destructive px-4 py-2 text-sm text-destructive-foreground disabled:opacity-50"
               >
-                {busy ? "Eliminazione…" : "Elimina definitivamente"}
+                <UiText text={busy ? "Eliminazione…" : "Elimina definitivamente"} />
               </button>
             </AlertDialogFooter>
           </form>

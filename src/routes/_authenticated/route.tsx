@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/ui-language-context";
 import { createFileRoute, Outlet, Navigate, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,7 @@ function AuthenticatedLayout() {
   if (loading)
     return (
       <p role="status" className="p-8 text-sm">
-        Verifica dell’accesso…
+        <UiText text="Verifica dell’accesso…" />
       </p>
     );
   return user ? <Outlet /> : <Navigate to="/auth" replace />;

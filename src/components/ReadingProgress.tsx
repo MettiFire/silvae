@@ -1,8 +1,10 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { showEbookProgress, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import type { LibraryItem } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,10 +79,11 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
     return null;
   return (
     <section className="mt-5 rounded-xl border border-border bg-card p-4">
-      <h2 className="font-display font-semibold">Avanzamento percentuale</h2>
+      <h2 className="font-display font-semibold">
+        <UiText text="Avanzamento percentuale" />
+      </h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Utile per gli ebook: la percentuale resta distinta dalle pagine dell’edizione. Al 100% il
-        libro viene segnato come letto.
+        <UiText text="Utile per gli ebook: la percentuale resta distinta dalle pagine dell’edizione. Al 100% il libro viene segnato come letto." />
       </p>
       {item.progress_percent != null && (
         <ProgressBar
@@ -92,7 +95,8 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       )}
       {item.progress_updated_at && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Ultimo aggiornamento: {new Date(item.progress_updated_at).toLocaleString("it-IT")} ·{" "}
+          <UiText text="Ultimo aggiornamento: " />
+          <UiDate value={new Date(item.progress_updated_at)} withTime /> ·{" "}
           {item.progress_source === "manual" ? "manuale" : item.progress_source}
         </p>
       )}
@@ -105,8 +109,9 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       >
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm">
-            Percentuale{" "}
-            <input
+            <UiText text="Percentuale" />{" "}
+            <UiElement
+              as="input"
               aria-label="Percentuale letta"
               inputMode="decimal"
               value={value}
@@ -121,7 +126,7 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
             disabled={busy || !item.reading_session_id}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
           >
-            {busy ? "Salvataggio…" : "Aggiorna percentuale"}
+            <UiText text={busy ? "Salvataggio…" : "Aggiorna percentuale"} />
           </button>
         </div>
         <label className="flex items-center gap-2 text-xs">
@@ -131,13 +136,12 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
             disabled={busy}
             onChange={(e) => setFinished(e.target.checked)}
           />
-          Ho finito il libro: segna come letto al 100%
+          <UiText text="Ho finito il libro: segna come letto al 100%" />
         </label>
       </form>
       {!item.reading_session_id && (
         <p className="mt-3 text-xs text-muted-foreground">
-          L’aggiornamento percentuale non è ancora disponibile. Puoi continuare ad aggiornare le
-          pagine.
+          <UiText text="L’aggiornamento percentuale non è ancora disponibile. Puoi continuare ad aggiornare le pagine." />
         </p>
       )}
       {item.reading_session_id && (
@@ -146,7 +150,7 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
           onClick={() => setRestart(true)}
           className="mt-4 text-xs text-primary"
         >
-          Inizia una nuova lettura da zero
+          <UiText text="Inizia una nuova lettura da zero" />
         </button>
       )}
       <AlertDialog
@@ -157,15 +161,17 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Iniziare una nuova lettura?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <UiText text="Iniziare una nuova lettura?" />
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Il progresso corrente ripartirà da zero e il libro tornerà In lettura. Le citazioni
-              rimangono salvate; gli aggiornamenti dei dispositivi relativi alla lettura precedente
-              non sostituiranno la nuova.
+              <UiText text="Il progresso corrente ripartirà da zero e il libro tornerà In lettura. Le citazioni rimangono salvate; gli aggiornamenti dei dispositivi relativi alla lettura precedente non sostituiranno la nuova." />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annulla</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>
+              <UiText text="Annulla" />
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={busy}
               onClick={(e) => {
@@ -173,7 +179,7 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
                 void start();
               }}
             >
-              Inizia nuova lettura
+              <UiText text="Inizia nuova lettura" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

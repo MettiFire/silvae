@@ -1,3 +1,4 @@
+import { mangaCovers } from "./manga.functions";
 import { mangaCatalogue } from "./manga.functions";
 import { isMangaId, type MangaDetails } from "./manga-model";
 import { genreQuery } from "./genre-groups.ts";
@@ -8,6 +9,7 @@ import {
   titleCompletionQuery,
 } from "@/lib/search-suggestions";
 import { getAuthor } from "@/lib/authors";
+import { BOOK_LANGUAGES } from "./book-language";
 import { applyBookLanguage } from "@/lib/book-language";
 import { sameBook, coverUrls, descriptionText } from "@/lib/book-metadata";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +17,7 @@ import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
 
 export type Book = {
   manga?: MangaDetails;
+  content_language?: string | undefined;
   id: string;
   title: string;
   authors: string[];
@@ -53,6 +56,7 @@ type Volume = {
     subtitle?: string;
     authors?: string[];
     publishedDate?: string;
+    language?: string;
     pageCount?: number;
     categories?: string[];
     description?: string;
@@ -73,6 +77,7 @@ export function mapVolume(v: Volume): Book {
   const year = i.publishedDate ? Number(i.publishedDate.slice(0, 4)) : null;
   return {
     id: v.id,
+    content_language: i.language,
     title: i.title ?? "Senza titolo",
     authors: i.authors ?? [],
     cover_url: upgradeCover(
@@ -247,22 +252,29 @@ async function olGetBook(workId: string, language?: string): Promise<Book> {
   let description = descriptionText(
     typeof w.description === "string" ? w.description : w.description?.value,
   );
-  if (!description) {
+  if (!description || (language && language !== "en")) {
     // Work-level records can be empty while a particular edition has a synopsis.
     try {
       const response = await fetch(
-        `${OL_API}/works/${encodeURIComponent(workId)}/editions.json?limit=10`,
+        `${OL_API}/works/${encodeURIComponent(workId)}/editions.json?limit=40`,
         { signal: AbortSignal.timeout(8000) },
       );
       if (response.ok) {
         const data = (await response.json()) as {
           entries?: { description?: string | { value?: string }; languages?: { key: string }[] }[];
         };
-        const entries = [...(data.entries ?? [])].sort(
-          (a, b) =>
-            Number(b.languages?.some((l) => l.key === "/languages/ita")) -
-            Number(a.languages?.some((l) => l.key === "/languages/ita")),
-        );
+        const editionLanguage = BOOK_LANGUAGES.find((l) => l.code === language)?.ol;
+        const entries = [...(data.entries ?? [])]
+          .filter(
+            (e) =>
+              !editionLanguage ||
+              e.languages?.some((l) => l.key === `/languages/${editionLanguage}`),
+          )
+          .sort(
+            (a, b) =>
+              Number(b.languages?.some((l) => l.key === `/languages/${editionLanguage}`)) -
+              Number(a.languages?.some((l) => l.key === `/languages/${editionLanguage}`)),
+          );
         description =
           entries
             .map((e) =>
@@ -270,7 +282,7 @@ async function olGetBook(workId: string, language?: string): Promise<Book> {
                 typeof e.description === "string" ? e.description : e.description?.value,
               ),
             )
-            .find(Boolean) ?? "";
+            .find(Boolean) || description;
       }
     } catch {
       /* Explicit empty state if no source supplies a description. */
@@ -420,12 +432,40 @@ export async function enrichBook(book: Book): Promise<Book> {
   };
 }
 
+async function localizedBookEdition(book: Book, language?: string): Promise<Book> {
+  if (!language || book.content_language === language || !book.isbns?.length || isMangaId(book.id))
+    return book;
+  try {
+    const hits = await olSearch(`isbn:${book.isbns[0]}`, 1, 0, "relevance", language, false);
+    const edition = hits[0];
+    if (!edition?.id.startsWith("ol:")) return book;
+    const localized = await olGetBook(edition.id.slice(3), language);
+    return {
+      ...book,
+      title: localized.title,
+      authors: localized.authors.length ? localized.authors : book.authors,
+      cover_url: localized.cover_url || book.cover_url,
+      cover_candidates: [...coverUrls(localized), ...coverUrls(book)],
+      description: localized.description || book.description,
+      content_language: language,
+    };
+  } catch {
+    return book;
+  }
+}
 export async function getBook(id: string, language?: string): Promise<Book> {
   const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
   if (isMangaId(id)) {
     try {
       const manga = (
-        await mangaCatalogue({ data: { id: id.slice(9), ...(language ? { language } : {}) } })
+        await mangaCatalogue({
+          data: {
+            ...(id.startsWith("manga:mal:")
+              ? { malId: Number(id.slice(10)) }
+              : { id: id.slice(9) }),
+            ...(language ? { language } : {}),
+          },
+        })
       )[0];
       if (manga) return { ...manga, cover_url: cached?.cover_url || manga.cover_url };
     } catch (error) {
@@ -437,7 +477,9 @@ export async function getBook(id: string, language?: string): Promise<Book> {
         manga: {
           totalVolumes: null,
           status: "unknown",
-          source: `https://mangadex.org/title/${id.slice(9)}`,
+          source: id.startsWith("manga:mal:")
+            ? `https://myanimelist.net/manga/${id.slice(10)}`
+            : `https://mangadex.org/title/${id.slice(9)}`,
         },
       };
     throw Error("Serie non trovata");
@@ -453,6 +495,7 @@ export async function getBook(id: string, language?: string): Promise<Book> {
           const volume = mapVolume(JSON.parse(detail.json) as Volume);
           book = {
             ...book,
+            content_language: volume.content_language,
             average_rating: volume.average_rating ?? null,
             ratings_count: volume.ratings_count ?? null,
             rating_source: volume.rating_source,
@@ -469,8 +512,8 @@ export async function getBook(id: string, language?: string): Promise<Book> {
         return {
           ...book,
           ...localized,
-          cover_url: book.cover_url || localized.cover_url,
-          description: descriptionText(book.description) || localized.description,
+          cover_url: localized.cover_url || book.cover_url,
+          description: localized.description || descriptionText(book.description),
         };
       } catch {
         /* Stored metadata remains available when localization fails. */
@@ -502,13 +545,16 @@ export async function getBook(id: string, language?: string): Promise<Book> {
             .is("cover_url", null);
       }
     }
-    return enriched;
+    return localizedBookEdition(enriched, language);
   }
   if (id.startsWith("ol:")) return olGetBook(id.slice(3), language);
   const out = await gbVolume({ data: { id } });
   if (out.status !== 200 || !out.json) throw new Error("Libro non trovato");
   const book = mapVolume(JSON.parse(out.json) as Volume);
-  return !book.description || !book.cover_url ? enrichBook(book) : book;
+  return localizedBookEdition(
+    !book.description || !book.cover_url ? await enrichBook(book) : book,
+    language,
+  );
 }
 
 /** Look up a book from a scanned barcode / ISBN. */
@@ -611,7 +657,19 @@ export async function withCover(book: Book, isbn?: string): Promise<Book> {
 }
 
 /** Proposte di copertina alternative (Google Libri + Open Library). */
-export async function coverCandidates(book: Book, includeEditions = false): Promise<string[]> {
+export async function coverCandidates(
+  book: Book,
+  includeEditions = false,
+  language?: string,
+): Promise<string[]> {
+  if (isMangaId(book.id)) {
+    const id =
+      book.manga?.mangaDexId ?? (book.id.startsWith("manga:md:") ? book.id.slice(9) : null);
+    const covers = id
+      ? await mangaCovers({ data: { id, ...(language ? { language } : {}) } }).catch(() => [])
+      : [];
+    return [...new Set([...coverUrls(book), ...covers.map((c) => c.url)])];
+  }
   const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
   const urls: string[] = [];
   urls.push(...coverUrls(book));

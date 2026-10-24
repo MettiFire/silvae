@@ -1,8 +1,12 @@
+import { useMangaVolumeCovers } from "@/lib/use-manga-volume-covers";
+import { UiText, UiElement } from "@/lib/ui-language-context";
+import { MangaVolumeCover, MangaVolumeGallery } from "./MangaVolumeCover";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ProgressBar } from "./ProgressBar";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { type Book } from "@/lib/books";
@@ -10,6 +14,8 @@ import { type LibraryItem } from "@/lib/library";
 import { decodeMangaProgress, saveMangaProgress } from "@/lib/manga-account";
 import {
   MANGA_FIELD,
+  missingPreviousVolumes,
+  selectMangaVolume,
   readVolumes,
   volumeRanges,
   volumeNumber,
@@ -32,7 +38,10 @@ export function MangaVolumeForm({
   const [total, setTotal] = useState(initial?.total ? String(initial.total) : "");
   const [edition, setEdition] = useState(initial?.edition ?? "");
   const [through, setThrough] = useState("");
-  const [limit, setLimit] = useState(60);
+  const [page, setPage] = useState(0);
+  const [pendingVolume, setPendingVolume] = useState<number | null>(null);
+  const covers = useMangaVolumeCovers(book);
+  const coversByVolume = new Map((covers.data ?? []).map((c) => [c.volume, c]));
   const [extra, setExtra] = useState("");
   const manga = book.manga!;
   const state = {
@@ -42,19 +51,75 @@ export function MangaVolumeForm({
     updatedAt: new Date().toISOString(),
   };
   const progress = mangaCompletion(state, manga);
+  const customNumbering =
+    (state.total !== null && manga.totalVolumes !== null && state.total !== manga.totalVolumes) ||
+    /omnibus/i.test(edition);
   const count = Math.max(
     progress.total ?? 20,
     ...volumes,
     progress.total ? 0 : (volumeNumber(extra) ?? 0),
   );
-  const change = (n: number) =>
-    setVolumes((old) => (old.includes(n) ? old.filter((v) => v !== n) : [...old, n]));
+  const change = (n: number) => {
+    if (!volumes.includes(n) && missingPreviousVolumes(volumes, n).length) setPendingVolume(n);
+    else setVolumes((old) => selectMangaVolume(old, n));
+  };
+  const safePage = Math.min(page, Math.max(0, Math.ceil(count / 48) - 1));
   return (
     <section className="mt-6 rounded-xl border border-border bg-card p-5">
-      <h2 className="font-display text-2xl">I tuoi volumi</h2>
+      <h2 className="font-display text-2xl">
+        <UiText text="I tuoi volumi" />
+      </h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Una sola serie in libreria. Segna ogni volume letto, anche fuori ordine.
+        <UiText text="Una sola serie in libreria. Segna ogni volume letto, anche fuori ordine." />
       </p>
+      <Dialog
+        open={pendingVolume !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingVolume(null);
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>
+            <UiText text="Hai letto anche i volumi precedenti?" />
+          </DialogTitle>
+          <DialogDescription>
+            <UiText text="Stai segnando il volume " />
+            {pendingVolume}
+            <UiText text=". Ci sono" />{" "}
+            {pendingVolume ? missingPreviousVolumes(volumes, pendingVolume).length : 0}
+            <UiText text=" volumi precedenti non ancora letti." />
+          </DialogDescription>
+          <div className="mt-4 flex flex-col gap-3">
+            <button
+              type="button"
+              className="button-ink"
+              onClick={() => {
+                if (pendingVolume) setVolumes((old) => selectMangaVolume(old, pendingVolume, true));
+                setPendingVolume(null);
+              }}
+            >
+              <UiText text="Segna anche tutti i precedenti" />
+            </button>
+            <button
+              type="button"
+              className="button-outline"
+              onClick={() => {
+                if (pendingVolume) setVolumes((old) => selectMangaVolume(old, pendingVolume));
+                setPendingVolume(null);
+              }}
+            >
+              <UiText text="Solo questo volume" />
+            </button>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground"
+              onClick={() => setPendingVolume(null)}
+            >
+              <UiText text="Annulla" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <form
         className="mt-5 space-y-5"
         onSubmit={(e) => {
@@ -66,16 +131,21 @@ export function MangaVolumeForm({
           <div className="flex flex-wrap items-baseline gap-3">
             <strong className="font-display text-2xl">
               {progress.count}
-              {progress.total ? ` / ${progress.total}` : ""} volumi letti
+              {progress.total ? ` / ${progress.total}` : ""}
+              <UiText text=" volumi letti" />
             </strong>
             <span className="text-xs text-primary">
-              {progress.complete
-                ? "Serie completata"
-                : manga.status === "completed"
-                  ? "Pubblicazione conclusa"
-                  : manga.status === "ongoing"
-                    ? "Serie in corso"
-                    : "Totale finale da verificare"}
+              <UiText
+                text={
+                  progress.complete
+                    ? "Serie completata"
+                    : manga.status === "completed"
+                      ? "Pubblicazione conclusa"
+                      : manga.status === "ongoing"
+                        ? "Serie in corso"
+                        : "Totale finale da verificare"
+                }
+              />
             </span>
           </div>
           {progress.total && (
@@ -83,8 +153,9 @@ export function MangaVolumeForm({
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm">
-              La tua edizione (facoltativo)
-              <input
+              <UiText text="La tua edizione (facoltativo)" />
+              <UiElement
+                as="input"
                 className="mt-1 w-full rounded-lg border border-border bg-background p-2"
                 value={edition}
                 maxLength={100}
@@ -93,8 +164,9 @@ export function MangaVolumeForm({
               />
             </label>
             <label className="text-sm">
-              Totale volumi della tua edizione
-              <input
+              <UiText text="Totale volumi della tua edizione" />
+              <UiElement
+                as="input"
                 className="mt-1 w-full rounded-lg border border-border bg-background p-2"
                 type="number"
                 min={1}
@@ -106,17 +178,20 @@ export function MangaVolumeForm({
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            {manga.totalVolumes
-              ? `Il catalogo indica ${manga.totalVolumes} volumi per l’edizione originale.`
-              : "Il catalogo non indica ancora un totale definitivo."}{" "}
-            Puoi indicare il totale della tua edizione: le ristampe e gli omnibus possono avere una
-            numerazione diversa. Una serie in corso non diventa conclusa solo perché hai letto tutti
-            i volumi indicati.
+            <UiText
+              text={
+                manga.totalVolumes
+                  ? `Il catalogo indica ${manga.totalVolumes} volumi per l’edizione originale.`
+                  : "Il catalogo non indica ancora un totale definitivo."
+              }
+            />{" "}
+            <UiText text="Puoi indicare il totale della tua edizione: le ristampe e gli omnibus possono avere una numerazione diversa. Una serie in corso non diventa conclusa solo perché hai letto tutti i volumi indicati." />
           </p>
           <div className="flex flex-wrap items-end gap-2">
             <label className="text-sm">
-              Ho letto fino al volume
-              <input
+              <UiText text="Ho letto fino al volume" />
+              <UiElement
+                as="input"
                 aria-label="Letti fino al volume"
                 type="number"
                 min={1}
@@ -141,38 +216,80 @@ export function MangaVolumeForm({
                   ]);
               }}
             >
-              Segna fino a qui
+              <UiText text="Segna fino a qui" />
             </button>
           </div>
-          <div className="grid grid-cols-5 gap-2 sm:grid-cols-10" aria-label="Volumi della serie">
-            {Array.from({ length: Math.min(count, limit) }, (_, i) => i + 1).map((n) => (
-              <button
+          <p className="text-xs text-muted-foreground">
+            <UiText text="Le copertine disponibili sono preferite nella lingua scelta; se mancano usiamo l’edizione originale. I volumi senza copertina restano numerati." />
+          </p>
+          {customNumbering && (
+            <p className="text-xs text-muted-foreground">
+              <UiText text="Per edizioni con numerazione diversa non abbiniamo automaticamente le copertine dell’edizione originale." />
+            </p>
+          )}
+          {covers.isFetching && (
+            <p role="status" className="text-xs text-muted-foreground">
+              <UiText text="Caricamento copertine dei volumi…" />
+            </p>
+          )}
+          <UiElement
+            as="div"
+            className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8"
+            aria-label="Volumi della serie"
+          >
+            {Array.from(
+              { length: Math.min(48, count - safePage * 48) },
+              (_, i) => safePage * 48 + i + 1,
+            ).map((n) => (
+              <UiElement
+                as="button"
                 key={n}
                 type="button"
                 aria-pressed={volumes.includes(n)}
                 aria-label={`Volume ${n}${volumes.includes(n) ? ", letto" : ""}`}
                 onClick={() => change(n)}
-                className={`min-h-11 rounded-md border text-sm ${volumes.includes(n) ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"}`}
+                className={`rounded-md p-1 text-sm transition ${volumes.includes(n) ? "bg-primary/15 ring-2 ring-primary" : "hover:bg-accent"}`}
               >
-                {n}
-                {volumes.includes(n) ? " ✓" : ""}
-              </button>
+                <MangaVolumeCover
+                  volume={n}
+                  url={customNumbering ? undefined : coversByVolume.get(n)?.url}
+                />
+                <span className="mt-1 block">
+                  {n}
+                  {volumes.includes(n) ? " ✓" : ""}
+                </span>
+              </UiElement>
             ))}
-          </div>
-          {count > limit && (
-            <button
-              type="button"
-              className="button-outline"
-              onClick={() => setLimit((old) => old + 60)}
-            >
-              Mostra altri volumi
-            </button>
+          </UiElement>
+          {count > 48 && (
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                className="button-outline"
+                disabled={safePage === 0}
+                onClick={() => setPage(safePage - 1)}
+              >
+                <UiText text="Precedenti" />
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {safePage * 48 + 1}–{Math.min(count, (safePage + 1) * 48)} / {count}
+              </span>
+              <button
+                type="button"
+                className="button-outline"
+                disabled={(safePage + 1) * 48 >= count}
+                onClick={() => setPage(safePage + 1)}
+              >
+                <UiText text="Successivi" />
+              </button>
+            </div>
           )}
           {!progress.total && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-sm">
-                Vai al volume{" "}
-                <input
+                <UiText text="Vai al volume" />{" "}
+                <UiElement
+                  as="input"
                   aria-label="Volume da aggiungere"
                   type="number"
                   min={1}
@@ -190,22 +307,26 @@ export function MangaVolumeForm({
                   const n = volumeNumber(extra);
                   if (n) {
                     change(n);
-                    setLimit(Math.ceil(n / 60) * 60);
+                    setPage(Math.floor((n - 1) / 48));
                   }
                 }}
               >
-                Segna / deseleziona
+                <UiText text="Segna / deseleziona" />
               </button>
             </div>
           )}
           <p className="text-sm text-muted-foreground">
-            {progress.next && (!progress.total || progress.next <= progress.total)
-              ? `Prossimo volume da leggere: ${progress.next}.`
-              : "Tutti i volumi indicati sono letti."}{" "}
-            Premi Salva per confermare le modifiche.
+            <UiText
+              text={
+                progress.next && (!progress.total || progress.next <= progress.total)
+                  ? `Prossimo volume da leggere: ${progress.next}.`
+                  : "Tutti i volumi indicati sono letti."
+              }
+            />{" "}
+            <UiText text="Premi Salva per confermare le modifiche." />
           </p>
           <button className="button-ink" disabled={busy}>
-            {busy ? "Salvataggio…" : "Salva avanzamento volumi"}
+            <UiText text={busy ? "Salvataggio…" : "Salva avanzamento volumi"} />
           </button>
         </fieldset>
       </form>
@@ -219,18 +340,24 @@ export function MangaTracker({ book, item }: { book: Book; item: LibraryItem | n
   const initial = decodeMangaProgress(user?.user_metadata[MANGA_FIELD])[book.id];
   if (!user)
     return (
-      <p className="mt-6 text-sm">
-        <Link to="/auth" className="text-primary">
-          Accedi
-        </Link>{" "}
-        per tenere traccia dei volumi.
-      </p>
+      <>
+        <MangaVolumeGallery book={book} />
+        <p className="mt-6 text-sm">
+          <Link to="/auth" className="text-primary">
+            <UiText text="Accedi" />
+          </Link>{" "}
+          <UiText text="per tenere traccia dei volumi." />
+        </p>
+      </>
     );
   if (!item)
     return (
-      <p className="mt-6 text-sm text-muted-foreground">
-        Aggiungi la serie alla libreria per segnare i volumi letti.
-      </p>
+      <>
+        <MangaVolumeGallery book={book} />
+        <p className="mt-6 text-sm text-muted-foreground">
+          <UiText text="Aggiungi la serie alla libreria per segnare i volumi letti." />
+        </p>
+      </>
     );
   const save = async (progress: MangaProgress) => {
     if (busy) return;
@@ -276,7 +403,9 @@ export function MangaProgressLabel({ bookId }: { bookId: string }) {
   const state = decodeMangaProgress(user?.user_metadata[MANGA_FIELD])[bookId];
   return (
     <p className="mt-2 text-xs text-primary">
-      Serie manga · {readVolumes(state).length} volumi letti
+      <UiText text="Serie manga · " />
+      {readVolumes(state).length}
+      <UiText text=" volumi letti" />
       {state?.total ? ` / ${state.total}` : ""}
     </p>
   );

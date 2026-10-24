@@ -1,5 +1,6 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { emptyPreferences, parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
@@ -15,8 +16,11 @@ export function EbookDeviceFields({
 }) {
   return (
     <fieldset disabled={disabled} className="space-y-3">
-      <legend className="mb-2 font-medium">Possiedi un lettore ebook?</legend>
-      <select
+      <legend className="mb-2 font-medium">
+        <UiText text="Possiedi un lettore ebook?" />
+      </legend>
+      <UiElement
+        as="select"
         aria-label="Possiedi un lettore ebook?"
         value={value === undefined ? "unknown" : value.length ? value[0] : "no"}
         onChange={(e) =>
@@ -30,14 +34,25 @@ export function EbookDeviceFields({
         }
         className="w-full rounded-lg border border-border bg-background p-2 text-sm"
       >
-        <option value="unknown">Non ancora specificato</option>
-        <option value="no">No, non uso un lettore ebook</option>
-        <option value="kindle">Sì, Kindle</option>
-        <option value="kobo">Sì, Kobo</option>
-        <option value="other">Sì, un altro lettore</option>
-      </select>
+        <option value="unknown">
+          <UiText text="Non ancora specificato" />
+        </option>
+        <option value="no">
+          <UiText text="No, non uso un lettore ebook" />
+        </option>
+        <option value="kindle">
+          <UiText text="Sì, Kindle" />
+        </option>
+        <option value="kobo">
+          <UiText text="Sì, Kobo" />
+        </option>
+        <option value="other">
+          <UiText text="Sì, un altro lettore" />
+        </option>
+      </UiElement>
       {!!value?.length && (
-        <div
+        <UiElement
+          as="div"
           className="flex flex-wrap gap-4"
           role="group"
           aria-label="Tipi di lettore, puoi selezionarne più di uno"
@@ -62,15 +77,13 @@ export function EbookDeviceFields({
                   )
                 }
               />
-              {label}
+              <UiText text={label} />
             </label>
           ))}
-        </div>
+        </UiElement>
       )}
       <p className="text-xs text-muted-foreground">
-        Se scegli No, nascondiamo l’avanzamento ebook nelle schede dei libri. Puoi cambiare scelta
-        in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione
-        automatica.
+        <UiText text="Se scegli No, nascondiamo l’avanzamento ebook nelle schede dei libri. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica." />
       </p>
     </fieldset>
   );
@@ -99,7 +112,7 @@ export function EbookDevices() {
     <section className="mb-8 space-y-4 rounded-xl border border-border p-5">
       <EbookDeviceFields value={value} onChange={setValue} disabled={busy} />
       <button disabled={busy} onClick={() => void save()} className="button-ink">
-        {busy ? "Salvataggio…" : "Salva dispositivi"}
+        <UiText text={busy ? "Salvataggio…" : "Salva dispositivi"} />
       </button>
     </section>
   );

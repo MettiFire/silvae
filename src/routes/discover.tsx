@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { GENRE_GROUPS } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -8,7 +9,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { BookCard } from "@/components/BookCard";
 import { discoverBooks } from "@/lib/books";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,23 +100,35 @@ function Discover() {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-display text-xl font-bold">
-                {user &&
-                (preferences?.liked.length || library.some((i) => i.status !== "abandoned"))
-                  ? "Consigliati per te"
-                  : "Da dove iniziare"}
+                <UiText
+                  text={
+                    user &&
+                    (preferences?.liked.length || library.some((i) => i.status !== "abandoned"))
+                      ? "Consigliati per te"
+                      : "Da dove iniziare"
+                  }
+                />
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {preferences?.status === "completed"
-                  ? "Dai tuoi gusti e dai libri letti, in lettura e da leggere."
-                  : library.some((i) => i.status !== "abandoned")
-                    ? "Dai generi e dagli autori della tua libreria, anche dei libri da leggere."
-                    : "Una selezione varia per iniziare a esplorare."}
+                <UiText
+                  text={
+                    preferences?.status === "completed"
+                      ? "Dai tuoi gusti e dai libri letti, in lettura e da leggere."
+                      : library.some((i) => i.status !== "abandoned")
+                        ? "Dai generi e dagli autori della tua libreria, anche dei libri da leggere."
+                        : "Una selezione varia per iniziare a esplorare."
+                  }
+                />
               </p>
               {user && (
                 <Link to="/profile" className="mt-1 inline-block text-xs text-primary">
-                  {preferences?.status === "completed"
-                    ? "Modifica i tuoi gusti"
-                    : "Scegli i tuoi gusti per consigli più personali"}{" "}
+                  <UiText
+                    text={
+                      preferences?.status === "completed"
+                        ? "Modifica i tuoi gusti"
+                        : "Scegli i tuoi gusti per consigli più personali"
+                    }
+                  />{" "}
                   →
                 </Link>
               )}
@@ -125,42 +138,45 @@ function Discover() {
               onClick={refresh}
               className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
             >
-              <RefreshCw className="h-4 w-4" /> Rinnova
+              <RefreshCw className="h-4 w-4" />
+              <UiText text=" Rinnova" />
             </button>
           </div>
           {recsLoading && (
             <p className="mb-3 text-sm text-muted-foreground" role="status">
-              Cerchiamo le tue prossime letture…
+              <UiText text="Cerchiamo le tue prossime letture…" />
             </p>
           )}
           {recsError && (
             <p className="mb-3 text-sm" role="alert">
-              I consigli non sono disponibili.{" "}
+              <UiText text="I consigli non sono disponibili." />{" "}
               <button onClick={() => void retryRecs()} className="text-primary">
-                Riprova
+                <UiText text="Riprova" />
               </button>
             </p>
           )}
           {!recsLoading && !recsError && !recommended.length && (
             <p className="mb-3 text-sm text-muted-foreground">
-              Nessun nuovo consiglio in questa selezione. Premi Rinnova oppure modifica i tuoi
-              gusti.
+              <UiText text="Nessun nuovo consiglio in questa selezione. Premi Rinnova oppure modifica i tuoi gusti." />
             </p>
           )}
           <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {recommended.map(({ book: b, reason }) => (
               <div key={b.id} className="relative">
                 <BookCard book={b} />
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{reason}</p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  <UiText text={reason} />
+                </p>
                 {user && (
-                  <button
+                  <UiElement
+                    as="button"
                     type="button"
                     onClick={() => void dismiss(b.id)}
                     aria-label="Non mi interessa"
                     className="absolute left-2 top-2 rounded-full bg-card/85 p-1.5 backdrop-blur transition hover:bg-accent"
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </UiElement>
                 )}
               </div>
             ))}
@@ -213,14 +229,14 @@ function Discover() {
 
       {catalogueVerifying && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">
-          Controllo che i libri proposti siano letture nuove per te…
+          <UiText text="Controllo che i libri proposti siano letture nuove per te…" />
         </p>
       )}
       {isError && (
         <p role="alert" className="mb-4 text-sm">
-          Impossibile caricare il catalogo.{" "}
+          <UiText text="Impossibile caricare il catalogo." />{" "}
           <button className="text-primary" onClick={() => void refetch()}>
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
@@ -231,11 +247,13 @@ function Discover() {
         libraryReady &&
         !filtered.length && (
           <p className="text-sm text-muted-foreground">
-            Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo.
+            <UiText text="Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo." />
           </p>
         )}
       {cataloguePending || isFetching ? (
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
+        <p className="text-sm text-muted-foreground">
+          <UiText text="Caricamento…" />
+        </p>
       ) : (
         <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
           {filtered.map((b) => (
@@ -260,7 +278,7 @@ function Select({
 }) {
   return (
     <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-      {label}
+      <UiText text={label} />
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

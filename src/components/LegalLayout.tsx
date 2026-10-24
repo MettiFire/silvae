@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "./AppShell";
@@ -14,25 +15,36 @@ export function LegalLayout({
   return (
     <AppShell>
       <article className="legal-page">
-        <p className="eyebrow">Silvae / Informazioni legali</p>
+        <p className="eyebrow">
+          <UiText text="Silvae / Informazioni legali" />
+        </p>
         <h1 className="mt-4 font-display text-4xl sm:text-5xl">{title}</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{intro}</p>
-        <p className="mt-4 text-xs text-muted-foreground">Ultimo aggiornamento: {LEGAL.updated}</p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          <UiText text="Ultimo aggiornamento: " />
+          {LEGAL.updated}
+        </p>
         {(!LEGAL.operatorName || !LEGAL.contactEmail) && (
           <p className="legal-draft" role="note">
-            Documento in completamento: devono essere confermati i dati del gestore e il contatto
-            per le richieste. Questa versione non è ancora l’informativa definitiva.
+            <UiText text="Documento in completamento: devono essere confermati i dati del gestore e il contatto per le richieste. Questa versione non è ancora l’informativa definitiva." />
           </p>
         )}
         <div className="legal-copy">{children}</div>
-        <nav
+        <UiElement
+          as="nav"
           aria-label="Documenti legali"
           className="mt-10 flex flex-wrap gap-6 border-t pt-5 text-sm"
         >
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Termini e condizioni</Link>
-          <Link to="/">Torna a Silvae</Link>
-        </nav>
+          <Link to="/privacy">
+            <UiText text="Privacy" />
+          </Link>
+          <Link to="/terms">
+            <UiText text="Termini e condizioni" />
+          </Link>
+          <Link to="/">
+            <UiText text="Torna a Silvae" />
+          </Link>
+        </UiElement>
       </article>
     </AppShell>
   );
@@ -40,9 +52,9 @@ export function LegalLayout({
 export function LegalContact() {
   return (
     <p>
-      Gestore e titolare del trattamento:{" "}
-      <strong>{LEGAL.operatorName || "dati del titolare da confermare"}</strong>. Per richieste sul
-      servizio e sui dati personali:{" "}
+      <UiText text="Gestore e titolare del trattamento:" />{" "}
+      <strong>{LEGAL.operatorName || "dati del titolare da confermare"}</strong>
+      <UiText text=". Per richieste sul servizio e sui dati personali:" />{" "}
       {LEGAL.contactEmail ? (
         <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>
       ) : (

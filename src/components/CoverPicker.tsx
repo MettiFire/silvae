@@ -1,22 +1,23 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, Loader2, Upload, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { coverCandidates, setBookCover, uploadCover, type Book } from "@/lib/books";
-import { resolvedCoverKey, useResolvedBookCover } from "@/lib/book-cover-state";
+import { useResolvedBookCover } from "@/lib/book-cover-state";
 import { coverUrls } from "@/lib/book-metadata";
 import { useAuth } from "@/lib/auth";
 
 export function CoverPicker({ book }: { book: Book }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { cover: resolvedCover } = useResolvedBookCover(book.id);
+  const { cover: resolvedCover, remember, language } = useResolvedBookCover(book.id);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const { data: options = [], isLoading } = useQuery({
-    queryKey: ["cover-options", book.id],
-    queryFn: () => coverCandidates(book, true),
+    queryKey: ["cover-options", book.id, language],
+    queryFn: () => coverCandidates(book, true, language),
     enabled: open,
     staleTime: 5 * 60 * 1000,
   });
@@ -30,7 +31,7 @@ export function CoverPicker({ book }: { book: Book }) {
     setBusy(true);
     try {
       await setBookCover(book.id, url);
-      qc.setQueryData(resolvedCoverKey(book.id), url);
+      remember(url);
       await qc.invalidateQueries({ queryKey: ["book", book.id] });
       await qc.invalidateQueries({ queryKey: ["library"] });
       await qc.invalidateQueries({ queryKey: ["library-item"] });
@@ -70,11 +71,13 @@ export function CoverPicker({ book }: { book: Book }) {
         onClick={() => setOpen(true)}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm transition hover:bg-accent"
       >
-        <ImageIcon className="h-4 w-4" /> Cambia copertina
+        <ImageIcon className="h-4 w-4" />
+        <UiText text=" Cambia copertina" />
       </button>
 
       {open && (
-        <div
+        <UiElement
+          as="div"
           role="dialog"
           aria-modal="true"
           aria-label="Scegli una copertina"
@@ -86,20 +89,22 @@ export function CoverPicker({ book }: { book: Book }) {
             className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-background p-5 shadow-xl"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="font-display text-lg font-bold">Scegli una copertina</h2>
-              <button
+              <h2 className="font-display text-lg font-bold">
+                <UiText text="Scegli una copertina" />
+              </h2>
+              <UiElement
+                as="button"
                 type="button"
                 aria-label="Chiudi"
                 onClick={() => setOpen(false)}
                 className="rounded-lg border border-border p-1.5 transition hover:bg-accent"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </UiElement>
             </div>
 
             <p className="mb-4 text-sm text-muted-foreground">
-              Scegli tra le copertine delle diverse edizioni della stessa opera. La scelta è
-              personale: lettura, voto e frammenti restano associati al libro.
+              <UiText text="Scegli tra le copertine delle diverse edizioni della stessa opera. La scelta è personale: lettura, voto e frammenti restano associati al libro." />
             </p>
             <label className="mb-5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 text-sm transition hover:border-primary/50">
               {busy ? (
@@ -107,8 +112,9 @@ export function CoverPicker({ book }: { book: Book }) {
               ) : (
                 <Upload className="h-4 w-4 text-primary" />
               )}
-              {busy ? "Attendi…" : "Carica un'immagine dal tuo dispositivo"}
-              <input
+              <UiText text={busy ? "Attendi…" : "Carica un'immagine dal tuo dispositivo"} />
+              <UiElement
+                as="input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="sr-only"
@@ -123,11 +129,13 @@ export function CoverPicker({ book }: { book: Book }) {
             </label>
 
             {isLoading && (
-              <p className="text-sm text-muted-foreground">Cerco copertine alternative…</p>
+              <p className="text-sm text-muted-foreground">
+                <UiText text="Cerco copertine alternative…" />
+              </p>
             )}
             {!isLoading && visibleOptions.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Nessuna copertina alternativa trovata: puoi caricarne una tua.
+                <UiText text="Nessuna copertina alternativa trovata: puoi caricarne una tua." />
               </p>
             )}
 
@@ -142,7 +150,8 @@ export function CoverPicker({ book }: { book: Book }) {
                     url === currentCover ? "border-primary" : "border-transparent"
                   }`}
                 >
-                  <img
+                  <UiElement
+                    as="img"
                     src={url}
                     alt={`Copertina alternativa di ${book.title}`}
                     decoding="async"
@@ -159,7 +168,7 @@ export function CoverPicker({ book }: { book: Book }) {
               ))}
             </div>
           </div>
-        </div>
+        </UiElement>
       )}
     </>
   );

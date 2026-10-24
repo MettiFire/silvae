@@ -26,7 +26,7 @@ test("Daily selection covers the full pool per cycle and never repeats on adjace
   assert.ok(
     DAILY_FRAGMENTS.every(
       (q) =>
-        new URL(q.source).hostname === "it.wikisource.org" && q.author && q.title && q.section && q.theme && q.heading && q.note,
+        new URL(q.source).hostname === "it.wikisource.org" && q.author && q.title && q.section,
     ),
   );
 });

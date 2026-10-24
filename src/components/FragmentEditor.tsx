@@ -1,6 +1,7 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import {
   Dialog,
   DialogContent,
@@ -75,12 +76,18 @@ export function FragmentEditor({
     >
       <DialogContent className="max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-2xl overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{original ? "Modifica frammento" : "Aggiungi un frammento"}</DialogTitle>
+          <DialogTitle>
+            <UiText text={original ? "Modifica frammento" : "Aggiungi un frammento"} />
+          </DialogTitle>
           <DialogDescription>
-            Le tue citazioni e note sono private.{" "}
-            {selected
-              ? `${selected.title} · ${selected.authors.join(", ")}`
-              : "Scegli il libro a cui appartiene."}
+            <UiText text="Le tue citazioni e note sono private." />{" "}
+            <UiText
+              text={
+                selected
+                  ? `${selected.title} · ${selected.authors.join(", ")}`
+                  : "Scegli il libro a cui appartiene."
+              }
+            />
           </DialogDescription>
         </DialogHeader>
         <form
@@ -93,8 +100,9 @@ export function FragmentEditor({
           {!book && (
             <fieldset disabled={busy} className="space-y-2">
               <label className="block text-sm">
-                Dalla tua libreria
-                <select
+                <UiText text="Dalla tua libreria" />
+                <UiElement
+                  as="select"
                   aria-label="Libro del frammento"
                   value={selected?.id ?? ""}
                   onChange={(e) =>
@@ -102,7 +110,9 @@ export function FragmentEditor({
                   }
                   className="mt-1 w-full rounded-lg border bg-background p-2"
                 >
-                  <option value="">Scegli un libro</option>
+                  <option value="">
+                    <UiText text="Scegli un libro" />
+                  </option>
                   {library.map(
                     (i) =>
                       i.books && (
@@ -111,10 +121,11 @@ export function FragmentEditor({
                         </option>
                       ),
                   )}
-                </select>
+                </UiElement>
               </label>
               <div className="flex gap-2">
-                <input
+                <UiElement
+                  as="input"
                   aria-label="Cerca un altro libro"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -127,12 +138,12 @@ export function FragmentEditor({
                   onClick={() => setSubmitted(search.trim())}
                   className="rounded-lg border px-3 text-sm"
                 >
-                  Cerca
+                  <UiText text="Cerca" />
                 </button>
               </div>
               {results.isError && (
                 <p role="alert" className="text-sm">
-                  Ricerca non disponibile. Riprova.
+                  <UiText text="Ricerca non disponibile. Riprova." />
                 </p>
               )}
               <div className="space-y-1">
@@ -151,7 +162,7 @@ export function FragmentEditor({
             </fieldset>
           )}
           <label className="block text-sm">
-            Tipo
+            <UiText text="Tipo" />
             <select
               disabled={busy}
               value={draft.kind}
@@ -160,13 +171,20 @@ export function FragmentEditor({
               }
               className="ml-2 rounded-lg border bg-background p-2"
             >
-              <option value="quote">Citazione</option>
-              <option value="note">Nota personale</option>
+              <option value="quote">
+                <UiText text="Citazione" />
+              </option>
+              <option value="note">
+                <UiText text="Nota personale" />
+              </option>
             </select>
           </label>
           <label className="block text-sm">
-            {draft.kind === "quote" ? "La frase che vuoi conservare" : "Il testo della nota"}
-            <textarea
+            <UiText
+              text={draft.kind === "quote" ? "La frase che vuoi conservare" : "Il testo della nota"}
+            />
+            <UiElement
+              as="textarea"
               aria-label="Testo del frammento"
               required
               maxLength={20000}
@@ -178,8 +196,9 @@ export function FragmentEditor({
             />
           </label>
           <label className="block text-sm">
-            Pagina, capitolo o posizione digitale
-            <input
+            <UiText text="Pagina, capitolo o posizione digitale" />
+            <UiElement
+              as="input"
               maxLength={300}
               disabled={busy}
               value={draft.position}
@@ -189,7 +208,10 @@ export function FragmentEditor({
             />
           </label>
           <label className="block text-sm">
-            La tua riflessione <span className="text-muted-foreground">· facoltativa</span>
+            <UiText text="La tua riflessione " />
+            <span className="text-muted-foreground">
+              <UiText text="· facoltativa" />
+            </span>
             <textarea
               maxLength={10000}
               disabled={busy}
@@ -200,8 +222,9 @@ export function FragmentEditor({
             />
           </label>
           <label className="block text-sm">
-            Tag separati da virgole
-            <input
+            <UiText text="Tag separati da virgole" />
+            <UiElement
+              as="input"
               disabled={busy}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -216,13 +239,13 @@ export function FragmentEditor({
               checked={draft.favorite}
               onChange={(e) => setDraft({ ...draft, favorite: e.target.checked })}
             />
-            Tra i preferiti
+            <UiText text="Tra i preferiti" />
           </label>
           <button
             disabled={busy || !selected || !draft.quote.trim()}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
-            {busy ? "Salvataggio…" : "Salva frammento"}
+            <UiText text={busy ? "Salvataggio…" : "Salva frammento"} />
           </button>
         </form>
       </DialogContent>

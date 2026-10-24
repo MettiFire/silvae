@@ -4,9 +4,6 @@
 export const DAILY_FRAGMENTS = [
   {
     id: "collodi-pinocchio",
-    theme: "Fiabe e possibilità",
-    heading: "Dare voce alle cose",
-    note: "Prima del burattino, un pezzo di legno: Collodi comincia dal materiale più umile e gli concede una voce. Una porta d’ingresso alla fantasia, anche da adulti.",
     quote: "C’era una volta un pezzo di legno.",
     author: "Carlo Collodi",
     title: "Le avventure di Pinocchio",
@@ -15,10 +12,80 @@ export const DAILY_FRAGMENTS = [
     license: "4.0",
   },
   {
+    id: "canne-al-vento",
+    quote: "Meglio pensare all’avvenire e sperare nell’ajuto di Dio.",
+    author: "Grazia Deledda",
+    title: "Canne al vento",
+    section: "Capitolo I",
+    source: "https://it.wikisource.org/w/index.php?title=Canne+al+vento%2FI&oldid=3796125",
+    license: "3.0",
+  },
+  {
+    id: "fu-mattia-pascal",
+    quote:
+      "Una delle poche cose, anzi forse la sola ch’io sapessi di certo era questa: che mi chiamavo Mattia Pascal.",
+    author: "Luigi Pirandello",
+    title: "Il fu Mattia Pascal",
+    section: "Capitolo I",
+    source: "https://it.wikisource.org/w/index.php?title=Il+fu+Mattia+Pascal%2F1&oldid=3706192",
+    license: "3.0",
+  },
+  {
+    id: "svevo-una-vita",
+    quote:
+      "Rileggo molte volte le tue lettere; tanto semplici, tanto buone, somigliano a te; sono tue fotografie.",
+    author: "Italo Svevo",
+    title: "Una vita",
+    section: "Capitolo I",
+    source: "https://it.wikisource.org/w/index.php?title=Una+vita%2FI&oldid=3767379",
+    license: "3.0",
+  },
+  {
+    id: "mastro-don-gesualdo",
+    quote:
+      "Lontano, nell’ampia distesa nera dell’Àlia, ammiccava soltanto un lume di carbonai, e più a sinistra la stella del mattino, sopra un nuvolone basso che tagliava l’alba nel lungo altipiano del Paradiso.",
+    author: "Giovanni Verga",
+    title: "Mastro-don Gesualdo",
+    section: "Parte prima, capitolo I",
+    source:
+      "https://it.wikisource.org/w/index.php?title=Mastro-don+Gesualdo%2FParte+prima%2FCap+I&oldid=3861894",
+    license: "3.0",
+  },
+  {
+    id: "vita-dei-campi",
+    quote:
+      "Quando mi fui iniziato ai misteri delle molle e del soffietto, m’innamorai con trasporto della voluttuosa pigrizia del caminetto.",
+    author: "Giovanni Verga",
+    title: "Vita dei campi",
+    section: "Nedda",
+    source:
+      "https://it.wikisource.org/w/index.php?title=Vita+dei+campi+%281897%29%2FNedda&oldid=3861449",
+    license: "3.0",
+  },
+  {
+    id: "tigri-mompracem",
+    quote:
+      "La notte del 20 dicembre 1849 un uragano violentissimo imperversava sopra Mompracem, isola selvaggia, di fama sinistra, covo di formidabili pirati, situata nel mare della Malesia, a poche centinaia di miglia dalle coste occidentali del Borneo.",
+    author: "Emilio Salgari",
+    title: "Le tigri di Mompracem",
+    section: "Capitolo I",
+    source:
+      "https://it.wikisource.org/w/index.php?title=Le+tigri+di+Mompracem%2FCapitolo+I+-+I+pirati+di+Mompracem&oldid=3724121",
+    license: "3.0",
+  },
+  {
+    id: "corsaro-nero",
+    quote:
+      "La piccola imbarcazione, montata da due soli uomini, che avanzava faticosamente sui flutti color inchiostro, fuggendo l’alta sponda che si delineava confusamente sulla linea dell’orizzonte, come se da quella parte temesse un grave pericolo, s’era bruscamente arrestata.",
+    author: "Emilio Salgari",
+    title: "Il Corsaro Nero",
+    section: "Capitolo I",
+    source:
+      "https://it.wikisource.org/w/index.php?title=Il+Corsaro+Nero%2FCAPITOLO+I+-+I+filibustieri+della+Tortue&oldid=3701059",
+    license: "3.0",
+  },
+  {
     id: "verga-malavoglia",
-    theme: "Famiglia e appartenenza",
-    heading: "I nomi che ci portiamo dietro",
-    note: "Una famiglia raccontata attraverso il suo soprannome e il suo paese. Verga ci invita in un mondo in cui appartenere può significare tanto protezione quanto destino.",
     quote:
       "Un tempo i Malavoglia erano stati numerosi come i sassi della strada vecchia di Trezza;",
     author: "Giovanni Verga",
@@ -29,9 +96,6 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "pirandello-centomila",
-    theme: "Identità e sguardi",
-    heading: "Chi siamo, agli occhi degli altri?",
-    note: "Una domanda domestica incrina la certezza di conoscersi. Da un gesto minuscolo, Pirandello apre un romanzo sulle persone diverse che diventiamo in ogni sguardo.",
     quote:
       "— Che fai? — mia moglie mi domandò, vedendomi insolitamente indugiare davanti allo specchio.",
     author: "Luigi Pirandello",
@@ -42,9 +106,6 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "svevo-zeno",
-    theme: "Memoria e autoinganno",
-    heading: "Di chi possiamo fidarci?",
-    note: "A presentarci Zeno è qualcuno che ha già un conto aperto con lui. Prima ancora della storia, Svevo mette in dubbio chi la racconta: leggere diventa anche imparare a sospettare.",
     quote:
       "Io sono il dottore di cui in questa novella si parla talvolta con parole poco lusinghiere.",
     author: "Italo Svevo",
@@ -55,9 +116,6 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "dante-inferno",
-    theme: "Smarrimento e scoperta",
-    heading: "Cominciare dal perdersi",
-    note: "Il viaggio si apre senza una mappa. In questi versi lo smarrimento è già un’esperienza condivisa: quel «nostra» lascia posto anche a chi legge.",
     quote:
       "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura,\nché la diritta via era smarrita.",
     author: "Dante Alighieri",
@@ -68,9 +126,6 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "manzoni-promessi",
-    theme: "Luoghi e memoria",
-    heading: "Un paesaggio che diventa storia",
-    note: "Prima dei personaggi arriva un luogo. Lo sguardo segue l’acqua e le montagne, poi si avvicina alle vite: un invito a leggere lentamente, come si osserva un paesaggio.",
     quote:
       "Quel ramo del lago di Como, che volge a mezzogiorno, tra due catene non interrotte di monti,",
     author: "Alessandro Manzoni",
@@ -81,9 +136,6 @@ export const DAILY_FRAGMENTS = [
   },
   {
     id: "ariosto-orlando",
-    theme: "Desiderio e avventura",
-    heading: "Seguire il filo delle storie",
-    note: "L’elenco iniziale promette un mondo in movimento: incontri, battaglie, amori. Ariosto prepara il lettore a lasciare una storia per inseguirne un’altra.",
     quote: "Le donne, i cavallier, l’arme, gli amori,\nle cortesie, l’audaci imprese io canto,",
     author: "Ludovico Ariosto",
     title: "Orlando furioso",
@@ -92,29 +144,23 @@ export const DAILY_FRAGMENTS = [
     license: "3.0",
   },
   {
-    id: "boccaccio-decameron",
-    theme: "Cura e legami",
-    heading: "La letteratura come compagnia",
-    note: "Prima delle cento novelle, Boccaccio sceglie la compassione. Raccontare nasce dal bisogno di alleviare una pena: un buon motivo per cercare compagnia in un libro.",
-    quote:
-      "Ma quantunque cessata sia la pena, non per ciò è la memoria fuggita de’ benefici giá ricevuti, datimi da coloro a’ quali per benivolenza da loro a me portata erano gravi le mie fatiche; né passerá mai, sí come io credo, se non per morte.",
-    author: "Giovanni Boccaccio",
-    title: "Decameron",
-    section: "Proemio",
-    source: "https://it.wikisource.org/w/index.php?title=Decameron/Proemio&oldid=3798744",
-    license: "3.0",
-  },
-  {
     id: "leopardi-pensieri-fama",
-    theme: "Libri e reputazione",
-    heading: "Un libro vale il nome che porta?",
-    note: "Leopardi osserva quanto la fama condizioni il nostro giudizio. Un pensiero pungente da portare con sé davanti a una classifica: scegliere un libro è anche concedere una possibilità a un nome sconosciuto.",
     quote:
       "Dice il La Bruyère una cosa verissima; che è piú facile ad un libro mediocre di acquistar grido per virtú di una riputazione giá ottenuta dall’autore, che ad un autore di venire in riputazione per mezzo d’un libro eccellente.",
     author: "Giacomo Leopardi",
     title: "Pensieri",
     section: "Pensiero LX · La Bruyère citato da Leopardi",
     source: "https://it.wikisource.org/w/index.php?title=Pensieri_(Leopardi)/LX&oldid=3737677",
+    license: "3.0",
+  },
+  {
+    id: "boccaccio-decameron",
+    quote:
+      "Ma quantunque cessata sia la pena, non per ciò è la memoria fuggita de’ benefici giá ricevuti, datimi da coloro a’ quali per benivolenza da loro a me portata erano gravi le mie fatiche; né passerá mai, sí come io credo, se non per morte.",
+    author: "Giovanni Boccaccio",
+    title: "Decameron",
+    section: "Proemio",
+    source: "https://it.wikisource.org/w/index.php?title=Decameron/Proemio&oldid=3798744",
     license: "3.0",
   },
 ] as const;

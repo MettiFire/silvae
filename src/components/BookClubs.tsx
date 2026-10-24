@@ -1,8 +1,10 @@
+import { UiDate } from "@/lib/ui-language-context";
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { Users, MessageCircle, Plus, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/localized-toast";
 import { profileLabel } from "@/lib/profile-model";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,7 +148,7 @@ export function BookClubs({
             className="underline"
             onClick={() => void qc.invalidateQueries({ queryKey: ["book-clubs"] })}
           >
-            Riprova
+            <UiText text="Riprova" />
           </button>
         </p>
       )}
@@ -160,14 +162,17 @@ export function BookClubs({
                 setSearch(term.trim());
               }}
             >
-              <input
+              <UiElement
+                as="input"
                 aria-label="Cerca book club"
                 placeholder="Cerca un club"
                 className={input}
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
               />
-              <button className="button-outline">Cerca</button>
+              <button className="button-outline">
+                <UiText text="Cerca" />
+              </button>
             </form>
             <button
               className="button-ink"
@@ -175,22 +180,23 @@ export function BookClubs({
               onClick={() => setCreate((v) => !v)}
             >
               <Plus size={14} />
-              Crea un club
+              <UiText text="Crea un club" />
             </button>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />
-            Solo i miei club
+            <UiText text="Solo i miei club" />
           </label>
           {create && (
             <form onSubmit={createClub} className="space-y-4 rounded-lg border bg-card p-5">
-              <h2 className="font-display text-xl">Un nuovo posto per leggere insieme</h2>
+              <h2 className="font-display text-xl">
+                <UiText text="Un nuovo posto per leggere insieme" />
+              </h2>
               <p className="text-xs text-muted-foreground">
-                Il club, le iscrizioni e i messaggi sono visibili agli altri lettori di Silvae. Puoi
-                gestire il libro del momento e moderare le discussioni.
+                <UiText text="Il club, le iscrizioni e i messaggi sono visibili agli altri lettori di Silvae. Puoi gestire il libro del momento e moderare le discussioni." />
               </p>
               <label className="grid gap-2 text-sm">
-                Nome del club
+                <UiText text="Nome del club" />
                 <input
                   required
                   minLength={3}
@@ -201,7 +207,7 @@ export function BookClubs({
                 />
               </label>
               <label className="grid gap-2 text-sm">
-                Di cosa parlerete?
+                <UiText text="Di cosa parlerete?" />
                 <textarea
                   maxLength={2000}
                   rows={3}
@@ -211,16 +217,24 @@ export function BookClubs({
                 />
               </label>
               <button disabled={busy} className="button-ink">
-                {busy ? "Creazione…" : "Crea club pubblico"}
+                <UiText text={busy ? "Creazione…" : "Crea club pubblico"} />
               </button>
             </form>
           )}
-          {clubs.isPending && <p role="status">Caricamento club…</p>}
+          {clubs.isPending && (
+            <p role="status">
+              <UiText text="Caricamento club…" />
+            </p>
+          )}
           {clubs.isSuccess && !clubs.data.pages.flat().filter((c) => !mine || c.joined).length && (
             <p className="editorial-empty">
-              {mine
-                ? "Non sei ancora iscritto a un club. Esplora quelli disponibili o creane uno."
-                : "Nessun club trovato. Puoi creare il primo spazio di lettura."}
+              <UiText
+                text={
+                  mine
+                    ? "Non sei ancora iscritto a un club. Esplora quelli disponibili o creane uno."
+                    : "Nessun club trovato. Puoi creare il primo spazio di lettura."
+                }
+              />
             </p>
           )}
           <div className="grid gap-5 md:grid-cols-2">
@@ -231,8 +245,12 @@ export function BookClubs({
                 <article key={c.id} className="rounded-xl border bg-card p-5">
                   <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
                     <Users size={15} />
-                    {c.members} {c.members === 1 ? "lettore" : "lettori"}
-                    {c.joined && <span className="ml-auto text-primary">Iscritto</span>}
+                    {c.members} <UiText text={c.members === 1 ? "lettore" : "lettori"} />
+                    {c.joined && (
+                      <span className="ml-auto text-primary">
+                        <UiText text="Iscritto" />
+                      </span>
+                    )}
                   </div>
                   <h2 className="font-display text-2xl">
                     <Link to="/clubs" search={{ club: c.id }}>
@@ -244,7 +262,8 @@ export function BookClubs({
                   </p>
                   {c.book && (
                     <p className="mt-4 text-sm">
-                      Insieme leggiamo <span className="font-medium">{c.book.title}</span>
+                      <UiText text="Insieme leggiamo " />
+                      <span className="font-medium">{c.book.title}</span>
                     </p>
                   )}
                   <Link
@@ -252,7 +271,7 @@ export function BookClubs({
                     search={{ club: c.id }}
                     className="mt-5 inline-block text-sm text-primary"
                   >
-                    Entra nel club →
+                    <UiText text="Entra nel club →" />
                   </Link>
                 </article>
               ))}
@@ -263,7 +282,7 @@ export function BookClubs({
               disabled={clubs.isFetchingNextPage}
               onClick={() => void clubs.fetchNextPage()}
             >
-              Altri club
+              <UiText text="Altri club" />
             </button>
           )}
         </>
@@ -277,16 +296,26 @@ export function BookClubs({
             }}
           >
             <ArrowLeft size={14} />
-            Tutti i club
+            <UiText text="Tutti i club" />
           </button>
-          {detail.isPending && <p role="status">Caricamento club…</p>}
+          {detail.isPending && (
+            <p role="status">
+              <UiText text="Caricamento club…" />
+            </p>
+          )}
           {detail.isSuccess && !club && (
-            <p className="editorial-empty">Questo club non è più disponibile.</p>
+            <p className="editorial-empty">
+              <UiText text="Questo club non è più disponibile." />
+            </p>
           )}
           {club && (
             <>
               <header className="space-y-3 border-b pb-6">
-                <p className="eyebrow">Club pubblico · {club.members} lettori</p>
+                <p className="eyebrow">
+                  <UiText text="Club pubblico · " />
+                  {club.members}
+                  <UiText text=" lettori" />
+                </p>
                 <h2 className="font-display text-3xl">{club.name}</h2>
                 <p className="max-w-2xl whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
                   {club.description}
@@ -298,12 +327,12 @@ export function BookClubs({
                       disabled={busy}
                       onClick={() => void run(() => joinClub(user.id, club.id, club.joined))}
                     >
-                      {club.joined ? "Lascia il club" : "Iscriviti al club"}
+                      <UiText text={club.joined ? "Lascia il club" : "Iscriviti al club"} />
                     </button>
                   )}
                   {owner && (
                     <button className="button-outline" onClick={() => setManaging((v) => !v)}>
-                      Gestisci il club
+                      <UiText text="Gestisci il club" />
                     </button>
                   )}
                 </div>
@@ -326,7 +355,9 @@ export function BookClubs({
                       })
                     }
                   />
-                  <h3 className="font-display text-lg">Scegli il libro del momento</h3>
+                  <h3 className="font-display text-lg">
+                    <UiText text="Scegli il libro del momento" />
+                  </h3>
                   <ClubBookPicker onSelect={selectBook} disabled={busy} />
                   <ConfirmRemove
                     label="Elimina questo club e tutte le discussioni"
@@ -356,7 +387,7 @@ export function BookClubs({
                         })
                       }
                     >
-                      Rimuovi la lettura corrente
+                      <UiText text="Rimuovi la lettura corrente" />
                     </button>
                   )}
                 </div>
@@ -379,7 +410,9 @@ export function BookClubs({
                     />
                   </Link>
                   <div>
-                    <p className="eyebrow">La lettura del momento</p>
+                    <p className="eyebrow">
+                      <UiText text="La lettura del momento" />
+                    </p>
                     <Link
                       to="/book/$bookId"
                       params={{ bookId: club.book.id }}
@@ -394,12 +427,14 @@ export function BookClubs({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Il club non ha ancora scelto la prossima lettura.
+                  <UiText text="Il club non ha ancora scelto la prossima lettura." />
                 </p>
               )}
               {!topicId ? (
                 <>
-                  <h3 className="font-display text-2xl">Discussioni</h3>
+                  <h3 className="font-display text-2xl">
+                    <UiText text="Discussioni" />
+                  </h3>
                   {club.joined ? (
                     <form
                       className="space-y-3 rounded-lg border p-4"
@@ -424,8 +459,9 @@ export function BookClubs({
                       }}
                     >
                       <label className="grid gap-2 text-sm">
-                        Apri una discussione
-                        <input
+                        <UiText text="Apri una discussione" />
+                        <UiElement
+                          as="input"
                           className={input}
                           placeholder="Di cosa vuoi parlare?"
                           required
@@ -435,7 +471,8 @@ export function BookClubs({
                           onChange={(e) => setTitle(e.target.value)}
                         />
                       </label>
-                      <textarea
+                      <UiElement
+                        as="textarea"
                         aria-label="Testo della discussione"
                         className={input}
                         required
@@ -450,32 +487,36 @@ export function BookClubs({
                           checked={spoiler}
                           onChange={(e) => setSpoiler(e.target.checked)}
                         />
-                        Contiene spoiler: titolo e testo saranno nascosti fino alla conferma
+                        <UiText text="Contiene spoiler: titolo e testo saranno nascosti fino alla conferma" />
                       </label>
                       <button
                         disabled={busy || !body.trim() || title.trim().length < 3}
                         className="button-ink"
                       >
-                        Pubblica discussione
+                        <UiText text="Pubblica discussione" />
                       </button>
                     </form>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Iscriviti al club per aprire discussioni e rispondere.
+                      <UiText text="Iscriviti al club per aprire discussioni e rispondere." />
                     </p>
                   )}
-                  {topics.isPending && <p role="status">Caricamento discussioni…</p>}
+                  {topics.isPending && (
+                    <p role="status">
+                      <UiText text="Caricamento discussioni…" />
+                    </p>
+                  )}
                   {topics.isSuccess && !topics.data.pages.flat().length && (
                     <p className="editorial-empty">
-                      La conversazione comincia qui. Apri la prima discussione.
+                      <UiText text="La conversazione comincia qui. Apri la prima discussione." />
                     </p>
                   )}
                   <div className="divide-y">
                     {topics.data?.pages.flat().map((t) => (
                       <article key={t.id} className="py-5">
                         <p className="mb-2 text-xs text-muted-foreground">
-                          {t.author ? profileLabel(t.author) : "Lettore"} ·{" "}
-                          {new Date(t.created_at).toLocaleDateString("it-IT")}
+                          <UiText text={t.author ? profileLabel(t.author) : "Lettore"} /> ·{" "}
+                          <UiDate value={new Date(t.created_at)} />
                           {t.book ? ` · ${t.book.title}` : ""}
                         </p>
                         <Link
@@ -483,11 +524,15 @@ export function BookClubs({
                           search={{ club: club.id, topic: t.id }}
                           className="font-display text-xl"
                         >
-                          {t.spoiler ? "Discussione con spoiler — apri per leggere" : t.title}
+                          <UiText
+                            text={
+                              t.spoiler ? "Discussione con spoiler — apri per leggere" : t.title
+                            }
+                          />
                         </Link>
                         <span className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                           <MessageCircle size={13} />
-                          Entra nella discussione
+                          <UiText text="Entra nella discussione" />
                         </span>
                       </article>
                     ))}
@@ -498,7 +543,7 @@ export function BookClubs({
                       disabled={topics.isFetchingNextPage}
                       onClick={() => void topics.fetchNextPage()}
                     >
-                      Altre discussioni
+                      <UiText text="Altre discussioni" />
                     </button>
                   )}
                 </>
@@ -506,21 +551,29 @@ export function BookClubs({
                 <>
                   <button className="button-outline" onClick={() => onOpen(club.id)}>
                     <ArrowLeft size={14} />
-                    Discussioni del club
+                    <UiText text="Discussioni del club" />
                   </button>
-                  {selectedTopic.isPending && <p role="status">Caricamento discussione…</p>}
+                  {selectedTopic.isPending && (
+                    <p role="status">
+                      <UiText text="Caricamento discussione…" />
+                    </p>
+                  )}
                   {selectedTopic.isSuccess && !selectedTopic.data && (
-                    <p className="editorial-empty">Discussione non disponibile.</p>
+                    <p className="editorial-empty">
+                      <UiText text="Discussione non disponibile." />
+                    </p>
                   )}
                   {selectedTopic.data &&
                     (selectedTopic.data.spoiler && !revealed.includes(topicId) ? (
                       <div className="rounded-lg border p-5">
-                        <p>Questa discussione e le risposte possono contenere spoiler.</p>
+                        <p>
+                          <UiText text="Questa discussione e le risposte possono contenere spoiler." />
+                        </p>
                         <button
                           className="button-outline mt-4"
                           onClick={() => setRevealed((v) => [...v, topicId])}
                         >
-                          Mostra discussione
+                          <UiText text="Mostra discussione" />
                         </button>
                       </div>
                     ) : (
@@ -554,13 +607,17 @@ export function BookClubs({
                         </article>
                         {replies.isError && (
                           <p role="alert">
-                            Risposte non disponibili.{" "}
+                            <UiText text="Risposte non disponibili." />{" "}
                             <button className="underline" onClick={() => void replies.refetch()}>
-                              Riprova
+                              <UiText text="Riprova" />
                             </button>
                           </p>
                         )}
-                        {replies.isPending && <p role="status">Caricamento risposte…</p>}
+                        {replies.isPending && (
+                          <p role="status">
+                            <UiText text="Caricamento risposte…" />
+                          </p>
+                        )}
                         <div className="divide-y">
                           {replies.data?.pages.flat().map((m) => (
                             <article key={m.id} className="py-4">
@@ -569,10 +626,10 @@ export function BookClubs({
                                 params={{ username: m.author?.username ?? "" }}
                                 className="text-xs text-muted-foreground"
                               >
-                                {m.author ? profileLabel(m.author) : "Lettore"}
+                                <UiText text={m.author ? profileLabel(m.author) : "Lettore"} />
                               </Link>
                               <span className="ml-2 text-xs text-muted-foreground">
-                                {new Date(m.created_at).toLocaleString("it-IT")}
+                                <UiDate value={new Date(m.created_at)} withTime />
                               </span>
                               <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">
                                 {m.body}
@@ -601,7 +658,7 @@ export function BookClubs({
                             disabled={replies.isFetchingNextPage}
                             onClick={() => void replies.fetchNextPage()}
                           >
-                            Altre risposte
+                            <UiText text="Altre risposte" />
                           </button>
                         )}
                         {club.joined && (
@@ -621,7 +678,7 @@ export function BookClubs({
                             }}
                           >
                             <label className="grid gap-2 text-sm">
-                              La tua risposta
+                              <UiText text="La tua risposta" />
                               <textarea
                                 className={input}
                                 required
@@ -632,7 +689,7 @@ export function BookClubs({
                               />
                             </label>
                             <button disabled={busy || !message.trim()} className="button-ink">
-                              Invia risposta
+                              <UiText text="Invia risposta" />
                             </button>
                           </form>
                         )}
@@ -667,7 +724,7 @@ function ClubDetailsEditor({
       }}
     >
       <label className="grid gap-2 text-sm">
-        Nome
+        <UiText text="Nome" />
         <input
           className={input}
           value={name}
@@ -678,7 +735,7 @@ function ClubDetailsEditor({
         />
       </label>
       <label className="grid gap-2 text-sm">
-        Descrizione
+        <UiText text="Descrizione" />
         <textarea
           className={input}
           value={description}
@@ -688,7 +745,7 @@ function ClubDetailsEditor({
         />
       </label>
       <button disabled={busy} className="button-outline">
-        Salva dettagli
+        <UiText text="Salva dettagli" />
       </button>
     </form>
   );
@@ -707,17 +764,19 @@ function ConfirmRemove({
     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
       {confirm ? (
         <>
-          <span>Confermi la rimozione? Non può essere annullata.</span>
+          <span>
+            <UiText text="Confermi la rimozione? Non può essere annullata." />
+          </span>
           <button
             type="button"
             disabled={busy}
             className="text-destructive underline"
             onClick={() => void onRemove()}
           >
-            Conferma
+            <UiText text="Conferma" />
           </button>
           <button type="button" onClick={() => setConfirm(false)}>
-            Annulla
+            <UiText text="Annulla" />
           </button>
         </>
       ) : (
@@ -726,7 +785,7 @@ function ConfirmRemove({
           onClick={() => setConfirm(true)}
           className="text-muted-foreground underline"
         >
-          {label}
+          <UiText text={label} />
         </button>
       )}
     </div>

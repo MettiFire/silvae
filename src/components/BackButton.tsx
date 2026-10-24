@@ -1,3 +1,4 @@
+import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useCanGoBack, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,8 @@ export function BackButton({
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <button
+    <UiElement
+      as="button"
       type="button"
       aria-label="Torna alla pagina precedente"
       onClick={() => {
@@ -44,7 +46,7 @@ export function BackButton({
       )}
     >
       <ArrowLeft size={16} aria-hidden="true" />
-      Indietro
-    </button>
+      <UiText text="Indietro" />
+    </UiElement>
   );
 }
