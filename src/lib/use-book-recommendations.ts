@@ -77,6 +77,8 @@ export function useBookRecommendations() {
     },
     staleTime: 0,
     refetchOnMount: "always",
+    // Keep refresh/new-visit rotation, but do not repeat catalogue calls on tab focus.
+    refetchOnWindowFocus: false,
   });
 
   const candidates = useMemo(() => recs.map((r) => r.book), [recs]);

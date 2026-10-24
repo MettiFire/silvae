@@ -1,5 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { MangaProgressLabel } from "@/components/MangaTracker";
+import { MangaProgressLabel } from "@/components/MangaProgressLabel";
 import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";

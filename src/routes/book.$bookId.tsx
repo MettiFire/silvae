@@ -1,7 +1,10 @@
 import { UiDate } from "@/lib/ui-language-context";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { BookExternalRatings } from "@/components/BookExternalRatings";
-import { MangaTracker } from "@/components/MangaTracker";
+import { lazy, Suspense } from "react";
+const MangaTracker = lazy(() =>
+  import("@/components/MangaTracker").then((module) => ({ default: module.MangaTracker })),
+);
 import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -496,7 +499,13 @@ function BookPage() {
 
           {manga && book.manga && (
             <>
-              <MangaTracker book={book} item={item} />
+              <Suspense
+                fallback={
+                  <div className="min-h-80 animate-pulse rounded-xl bg-muted" aria-busy="true" />
+                }
+              >
+                <MangaTracker book={book} item={item} />
+              </Suspense>
               <a
                 className="mt-3 inline-block text-xs text-muted-foreground underline"
                 href={book.manga.source}

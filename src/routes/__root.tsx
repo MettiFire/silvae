@@ -121,6 +121,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       ).meta,
     ],
     links: [
+      { rel: "preconnect", href: "https://books.google.com" },
+      { rel: "preconnect", href: "https://covers.openlibrary.org" },
       { rel: "stylesheet", href: appCss },
       {
         rel: "preload",

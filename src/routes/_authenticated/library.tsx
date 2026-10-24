@@ -1,5 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { MangaProgressLabel } from "@/components/MangaTracker";
+import { MangaProgressLabel } from "@/components/MangaProgressLabel";
 import { isMangaId } from "@/lib/manga-model";
 import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";

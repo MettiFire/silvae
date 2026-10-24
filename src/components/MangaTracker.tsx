@@ -398,15 +398,3 @@ export function MangaTracker({ book, item }: { book: Book; item: LibraryItem | n
     />
   );
 }
-export function MangaProgressLabel({ bookId }: { bookId: string }) {
-  const { user } = useAuth();
-  const state = decodeMangaProgress(user?.user_metadata[MANGA_FIELD])[bookId];
-  return (
-    <p className="mt-2 text-xs text-primary">
-      <UiText text="Serie manga · " />
-      {readVolumes(state).length}
-      <UiText text=" volumi letti" />
-      {state?.total ? ` / ${state.total}` : ""}
-    </p>
-  );
-}
