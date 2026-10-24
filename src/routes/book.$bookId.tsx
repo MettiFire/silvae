@@ -1,3 +1,4 @@
+import { BookExternalRatings } from "@/components/BookExternalRatings";
 import { MangaTracker } from "@/components/MangaTracker";
 import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
@@ -378,13 +379,12 @@ function BookPage() {
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <div>
               <p className="text-xs text-muted-foreground">
-                Chi l’ha letto {communityRating ? `· ${communityRating.count} voti` : ""}
+                Lettori Silvae {communityRating ? `· ${communityRating.count} voti` : ""}
               </p>
               <div className="flex items-center gap-2">
-                <LeafRating value={communityRating?.average ?? null} readOnly size={16} />
                 <span className="text-sm">
                   {communityRating
-                    ? communityRating.average.toFixed(1)
+                    ? `${communityRating.average.toFixed(1)} / 5`
                     : ratingError
                       ? "Valutazioni non disponibili"
                       : ratingLoading
@@ -405,12 +405,7 @@ function BookPage() {
             )}
           </div>
 
-          {book.average_rating != null && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Voto del catalogo esterno: {book.average_rating.toFixed(1)} / 5
-              {book.ratings_count ? ` · ${book.ratings_count} valutazioni` : ""}
-            </p>
-          )}
+          <BookExternalRatings book={book} />
 
           {book.categories.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">

@@ -30,3 +30,29 @@ test("Daily selection covers the full pool per cycle and never repeats on adjace
     ),
   );
 });
+
+test("Every rolling window contains distinct works, including rotation boundaries", () => {
+  const n = DAILY_FRAGMENTS.length;
+  const seen = new Map();
+  const start = Date.parse("2026-10-24T00:00:00Z");
+  for (let i = 0; i < 1000; i++) {
+    const fragment = dailyFragment(new Date(start + i * 86400000).toISOString().slice(0,10));
+    const key = `${fragment.author}:${fragment.title}`;
+    if (seen.has(key)) assert.ok(i - seen.get(key) >= n);
+    seen.set(key, i);
+  }
+  assert.notEqual(dailyFragment("2026-10-24").title, "Decameron");
+});
+
+test("Adding multiple excerpts does not give a book more days in the rotation", async () => {
+  const { selectDailyFragment } = await import("../src/lib/daily-fragment.ts");
+  const pool = [
+    { id:"a1", title:"Un libro", author:"Autore" },
+    { id:"b", title:"Altro libro", author:"Altra autrice" },
+    { id:"a2", title:"Un líbro!", author:"AUTORE" },
+    { id:"c", title:"Terzo libro", author:"Terza autrice" },
+  ];
+  const ids = Array.from({ length: 6 }, (_, i) => selectDailyFragment(`2026-10-${24+i}`, pool).id);
+  assert.deepEqual(ids, ["a1", "b", "c", "a2", "b", "c"]);
+  assert.throws(() => selectDailyFragment("2026-10-24", []));
+});

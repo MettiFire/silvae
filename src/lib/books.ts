@@ -26,6 +26,7 @@ export type Book = {
   description: string | null;
   cover_candidates?: string[];
   isbns?: string[];
+  rating_source?: "Google Books" | "Open Library" | undefined;
   average_rating?: number | null;
   ratings_count?: number | null;
   reading_count?: number | null;
@@ -87,6 +88,7 @@ export function mapVolume(v: Volume): Book {
     cover_candidates: [i.imageLinks?.thumbnail, i.imageLinks?.smallThumbnail]
       .map(upgradeCover)
       .filter((v): v is string => !!v),
+    rating_source: "Google Books",
     average_rating: i.averageRating ?? null,
     ratings_count: i.ratingsCount ?? null,
   };
@@ -119,6 +121,7 @@ function mapOLDoc(d: OLDoc): Book {
     categories: (d.subject ?? []).slice(0, 4),
     description: null,
     isbns: d.isbn ?? [],
+    rating_source: "Open Library",
     average_rating: d.ratings_average ?? null,
     ratings_count: d.ratings_count ?? null,
   };
@@ -208,7 +211,13 @@ async function olGetBook(workId: string, language?: string): Promise<Book> {
   };
   let catalogue: Book | undefined;
   try {
-    catalogue = (await olSearch(`key:/works/${workId}`, 1, 0, "relevance", language, false))[0];
+    catalogue = (await olSearch(`key:"/works/${workId}"`, 1, 0, "relevance", language, false))[0];
+    // Ratings and critic ISBN matching belong to the work even without an edition
+    // in the preferred language. Never discard them because of a language filter.
+    if (!catalogue && language)
+      catalogue = (
+        await olSearch(`key:"/works/${workId}"`, 1, 0, "relevance", undefined, false)
+      )[0];
   } catch {
     /* Work details still render. */
   }
@@ -278,6 +287,9 @@ async function olGetBook(workId: string, language?: string): Promise<Book> {
     page_count: catalogue?.page_count ?? null,
     cover_candidates: catalogue?.cover_candidates ?? [],
     isbns: catalogue?.isbns ?? [],
+    average_rating: catalogue?.average_rating ?? null,
+    ratings_count: catalogue?.ratings_count ?? null,
+    rating_source: catalogue?.rating_source,
     categories: (w.subjects ?? []).slice(0, 6),
     description: description || null,
   };
@@ -396,6 +408,10 @@ export async function enrichBook(book: Book): Promise<Book> {
     ...book,
     cover_url: book.cover_url || source.cover_url,
     cover_candidates: candidates,
+    average_rating: book.average_rating ?? source.average_rating ?? null,
+    ratings_count:
+      (book.average_rating != null ? book.ratings_count : source.ratings_count) ?? null,
+    rating_source: book.average_rating != null ? book.rating_source : source.rating_source,
     isbns: source.isbns ?? book.isbns ?? [],
     description: descriptionText(book.description) || source.description,
     page_count: book.page_count ?? source.page_count,
@@ -427,7 +443,26 @@ export async function getBook(id: string, language?: string): Promise<Book> {
     throw Error("Serie non trovata");
   }
   if (cached) {
-    const book = cached as Book;
+    let book = cached as Book;
+    // Cached rows intentionally contain only catalogue fields. Restore provider
+    // ratings and ISBNs without replacing the user's chosen cover or title.
+    if (!id.includes(":") && book.average_rating == null) {
+      try {
+        const detail = await gbVolume({ data: { id } });
+        if (detail.status === 200 && detail.json) {
+          const volume = mapVolume(JSON.parse(detail.json) as Volume);
+          book = {
+            ...book,
+            average_rating: volume.average_rating ?? null,
+            ratings_count: volume.ratings_count ?? null,
+            rating_source: volume.rating_source,
+            isbns: volume.isbns ?? book.isbns ?? [],
+          };
+        }
+      } catch {
+        /* Other catalogues remain available during provider outages. */
+      }
+    }
     if (language && id.startsWith("ol:")) {
       try {
         const localized = await olGetBook(id.slice(3), language);
@@ -444,7 +479,10 @@ export async function getBook(id: string, language?: string): Promise<Book> {
 
     // Search results often have no synopsis. Do not let that incomplete cache
     // permanently suppress the full work/edition description.
-    const enriched = !book.description || !book.cover_url ? await enrichBook(book) : book;
+    const enriched =
+      !book.description || !book.cover_url || book.average_rating == null
+        ? await enrichBook(book)
+        : book;
     if (enriched !== book) {
       const { data: session } = await supabase.auth.getSession();
       if (session.session) {
