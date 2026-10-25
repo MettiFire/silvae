@@ -8,12 +8,14 @@ if (typeof window !== "undefined") {
   const KEY = "silvae-chunk-reload";
   const reloadOnce = () => {
     const last = Number(sessionStorage.getItem(KEY) ?? 0);
-    if (Date.now() - last < 10000) return;
+    if (Date.now() - last < 10000) return false;
     sessionStorage.setItem(KEY, String(Date.now()));
     window.location.reload();
+    return true;
   };
-  window.addEventListener("vite:preloadError", (e) => {
-    e.preventDefault();
+  // Never call preventDefault here: it makes the failed import resolve to
+  // undefined, and the router then crashes reading `.component` of it.
+  window.addEventListener("vite:preloadError", () => {
     reloadOnce();
   });
   window.addEventListener("unhandledrejection", (e) => {
