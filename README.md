@@ -7,6 +7,10 @@ discovering books, saving favorite passages, and sharing reading journeys.
 It supports books, graphic novels, and manga series through an editorial interface
 with light and dark themes.
 
+Live: https://silvae.lovable.app
+
+Hosted on Lovable because it's free and easy to use.
+
 [Open Silvae](https://silvae.lovable.app) · [Report an issue](https://github.com/MettiFire/silvae/issues)
 
 ## 📚 Features 
