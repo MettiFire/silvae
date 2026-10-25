@@ -1,0 +1,1353 @@
+{
+  "generatedAt": "2026-10-25T13:08:08.181Z",
+  "sources": [
+    {
+      "author": "Italo Svevo",
+      "language": "it",
+      "page": "Italo Svevo",
+      "revision": 1373080,
+      "death": 1928,
+      "quotes": 44
+    },
+    {
+      "author": "Luigi Pirandello",
+      "language": "it",
+      "page": "Luigi Pirandello",
+      "revision": 1428060,
+      "death": 1936,
+      "quotes": 33
+    },
+    {
+      "author": "Grazia Deledda",
+      "language": "it",
+      "page": "Grazia Deledda",
+      "revision": 1365507,
+      "death": 1936,
+      "quotes": 2
+    },
+    {
+      "author": "Giovanni Verga",
+      "language": "it",
+      "page": "Giovanni Verga",
+      "revision": 1352344,
+      "death": 1922,
+      "quotes": 11
+    },
+    {
+      "author": "Emilio Salgari",
+      "language": "it",
+      "page": "Emilio Salgari",
+      "revision": 1412549,
+      "death": 1911,
+      "quotes": 0
+    },
+    {
+      "author": "Carlo Collodi",
+      "language": "it",
+      "page": "Carlo Collodi",
+      "revision": 1328218,
+      "death": 1890,
+      "quotes": 3
+    },
+    {
+      "author": "Alessandro Manzoni",
+      "language": "it",
+      "page": "Alessandro Manzoni",
+      "revision": 1414577,
+      "death": 1873,
+      "quotes": 10
+    },
+    {
+      "author": "Antonio Fogazzaro",
+      "language": "it",
+      "page": "Antonio Fogazzaro",
+      "revision": 1425335,
+      "death": 1911,
+      "quotes": 1
+    },
+    {
+      "author": "Matilde Serao",
+      "language": "it",
+      "page": "Matilde Serao",
+      "revision": 1363649,
+      "death": 1927,
+      "quotes": 3
+    },
+    {
+      "author": "Federico De Roberto",
+      "language": "it",
+      "page": "Federico De Roberto",
+      "revision": 1392599,
+      "death": 1927,
+      "quotes": 38
+    },
+    {
+      "author": "Luigi Capuana",
+      "language": "it",
+      "page": "Luigi Capuana",
+      "revision": 1430557,
+      "death": 1915,
+      "quotes": 4
+    },
+    {
+      "author": "Edmondo De Amicis",
+      "language": "it",
+      "page": "Edmondo De Amicis",
+      "revision": 1417530,
+      "death": 1908,
+      "quotes": 9
+    },
+    {
+      "author": "Gabriele D'Annunzio",
+      "language": "it",
+      "page": "Gabriele D'Annunzio",
+      "revision": 1418814,
+      "death": 1938,
+      "quotes": 43
+    },
+    {
+      "author": "Carolina Invernizio",
+      "language": "it",
+      "page": "Carolina Invernizio",
+      "revision": 1283628,
+      "death": 1916,
+      "quotes": 1
+    },
+    {
+      "author": "Neera",
+      "language": "it",
+      "page": "Neera",
+      "revision": 1235793,
+      "death": 1918,
+      "quotes": 0
+    },
+    {
+      "author": "Guido Gozzano",
+      "language": "it",
+      "page": "Guido Gozzano",
+      "revision": 1415666,
+      "death": 1916,
+      "quotes": 0
+    },
+    {
+      "author": "Giovanni Pascoli",
+      "language": "it",
+      "page": "Giovanni Pascoli",
+      "revision": 1419349,
+      "death": 1912,
+      "quotes": 2
+    },
+    {
+      "author": "Giacomo Leopardi",
+      "language": "it",
+      "page": "Giacomo Leopardi",
+      "revision": 1429706,
+      "death": 1837,
+      "quotes": 0
+    },
+    {
+      "author": "Ada Negri",
+      "language": "it",
+      "page": "Ada Negri",
+      "revision": 1327419,
+      "death": 1945,
+      "quotes": 1
+    },
+    {
+      "author": "Massimo d'Azeglio",
+      "language": "it",
+      "page": "Massimo d'Azeglio",
+      "revision": 1413029,
+      "death": 1866,
+      "quotes": 8
+    },
+    {
+      "author": "Ippolito Nievo",
+      "language": "it",
+      "page": "Ippolito Nievo",
+      "revision": 1419114,
+      "death": 1861,
+      "quotes": 30
+    },
+    {
+      "author": "Ugo Foscolo",
+      "language": "it",
+      "page": "Ugo Foscolo",
+      "revision": 1419761,
+      "death": 1827,
+      "quotes": 2
+    },
+    {
+      "author": "Niccolò Tommaseo",
+      "language": "it",
+      "page": "Niccolò Tommaseo",
+      "revision": 1427219,
+      "death": 1874,
+      "quotes": 10
+    },
+    {
+      "author": "Silvio Pellico",
+      "language": "it",
+      "page": "Silvio Pellico",
+      "revision": 1350481,
+      "death": 1854,
+      "quotes": 18
+    },
+    {
+      "author": "Carlo Dossi",
+      "language": "it",
+      "page": "Carlo Dossi",
+      "revision": 1372075,
+      "death": 1910,
+      "quotes": 9
+    },
+    {
+      "author": "Alfredo Oriani",
+      "language": "it",
+      "page": "Alfredo Oriani",
+      "revision": 1378676,
+      "death": 1909,
+      "quotes": 8
+    },
+    {
+      "author": "Carlo Goldoni",
+      "language": "it",
+      "page": "Carlo Goldoni",
+      "revision": 1413807,
+      "death": 1793,
+      "quotes": 3
+    },
+    {
+      "author": "Vittorio Alfieri",
+      "language": "it",
+      "page": "Vittorio Alfieri",
+      "revision": 1430161,
+      "death": 1803,
+      "quotes": 1
+    },
+    {
+      "author": "Ludovico Ariosto",
+      "language": "it",
+      "page": "Ludovico Ariosto",
+      "revision": 1429724,
+      "death": 1533,
+      "quotes": 1
+    },
+    {
+      "author": "Torquato Tasso",
+      "language": "it",
+      "page": "Torquato Tasso",
+      "revision": 1423868,
+      "death": 1595,
+      "quotes": 1
+    },
+    {
+      "author": "Dante Alighieri",
+      "language": "it",
+      "page": "Dante Alighieri",
+      "revision": 1426805,
+      "death": 1321,
+      "quotes": 0
+    },
+    {
+      "author": "Giovanni Boccaccio",
+      "language": "it",
+      "page": "Giovanni Boccaccio",
+      "revision": 1311617,
+      "death": 1375,
+      "quotes": 0
+    },
+    {
+      "author": "Niccolò Machiavelli",
+      "language": "it",
+      "page": "Niccolò Machiavelli",
+      "revision": 1429723,
+      "death": 1527,
+      "quotes": 18
+    },
+    {
+      "author": "Francesco Guicciardini",
+      "language": "it",
+      "page": "Francesco Guicciardini",
+      "revision": 1421969,
+      "death": 1540,
+      "quotes": 0
+    },
+    {
+      "author": "Baldassarre Castiglione",
+      "language": "it",
+      "page": "Baldassarre Castiglione",
+      "revision": 1310919,
+      "death": 1529,
+      "quotes": 4
+    },
+    {
+      "author": "Giorgio Vasari",
+      "language": "it",
+      "page": "Giorgio Vasari",
+      "revision": 1292610,
+      "death": 1574,
+      "quotes": 0
+    },
+    {
+      "author": "Galileo Galilei",
+      "language": "it",
+      "page": "Galileo Galilei",
+      "revision": 1427247,
+      "death": 1642,
+      "quotes": 5
+    },
+    {
+      "author": "Cesare Beccaria",
+      "language": "it",
+      "page": "Cesare Beccaria",
+      "revision": 1371127,
+      "death": 1794,
+      "quotes": 5
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Jane Austen",
+      "revision": 3990258,
+      "death": 1817,
+      "quotes": 0
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Emma (novel)",
+      "revision": 4032050,
+      "death": 1817,
+      "quotes": 26
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Sense and Sensibility",
+      "revision": 3952623,
+      "death": 1817,
+      "quotes": 18
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Pride and Prejudice",
+      "revision": 3940795,
+      "death": 1817,
+      "quotes": 15
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Mansfield Park (novel)",
+      "revision": 3940802,
+      "death": 1817,
+      "quotes": 13
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Northanger Abbey",
+      "revision": 3940812,
+      "death": 1817,
+      "quotes": 5
+    },
+    {
+      "author": "Jane Austen",
+      "language": "en",
+      "page": "Persuasion (novel)",
+      "revision": 3953197,
+      "death": 1817,
+      "quotes": 16
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Charles Dickens",
+      "revision": 3991765,
+      "death": 1870,
+      "quotes": 25
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "The Pickwick Papers",
+      "revision": 3940762,
+      "death": 1870,
+      "quotes": 26
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Oliver Twist",
+      "revision": 4005199,
+      "death": 1870,
+      "quotes": 13
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Nicholas Nickleby",
+      "revision": 3940763,
+      "death": 1870,
+      "quotes": 33
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Barnaby Rudge",
+      "revision": 3940765,
+      "death": 1870,
+      "quotes": 25
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Martin Chuzzlewit",
+      "revision": 3940772,
+      "death": 1870,
+      "quotes": 11
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "A Christmas Carol",
+      "revision": 3976403,
+      "death": 1870,
+      "quotes": 11
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "David Copperfield",
+      "revision": 3940782,
+      "death": 1870,
+      "quotes": 14
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Bleak House",
+      "revision": 3940783,
+      "death": 1870,
+      "quotes": 15
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "A Child's History of England",
+      "revision": 3940784,
+      "death": 1870,
+      "quotes": 6
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "A Tale of Two Cities",
+      "revision": 3945673,
+      "death": 1870,
+      "quotes": 27
+    },
+    {
+      "author": "Charles Dickens",
+      "language": "en",
+      "page": "Great Expectations",
+      "revision": 3952639,
+      "death": 1870,
+      "quotes": 7
+    },
+    {
+      "author": "George Eliot",
+      "language": "en",
+      "page": "George Eliot",
+      "revision": 4033491,
+      "death": 1880,
+      "quotes": 127
+    },
+    {
+      "author": "Charlotte Brontë",
+      "language": "en",
+      "page": "Charlotte Brontë",
+      "revision": 3945880,
+      "death": 1855,
+      "quotes": 30
+    },
+    {
+      "author": "Emily Brontë",
+      "language": "en",
+      "page": "Emily Brontë",
+      "revision": 4022679,
+      "death": 1848,
+      "quotes": 0
+    },
+    {
+      "author": "Emily Brontë",
+      "language": "en",
+      "page": "Wuthering Heights",
+      "revision": 3952637,
+      "death": 1848,
+      "quotes": 22
+    },
+    {
+      "author": "Anne Brontë",
+      "language": "en",
+      "page": "Anne Brontë",
+      "revision": 3945878,
+      "death": 1849,
+      "quotes": 75
+    },
+    {
+      "author": "Thomas Hardy",
+      "language": "en",
+      "page": "Thomas Hardy",
+      "revision": 4000373,
+      "death": 1928,
+      "quotes": 103
+    },
+    {
+      "author": "Robert Louis Stevenson",
+      "language": "en",
+      "page": "Robert Louis Stevenson",
+      "revision": 4028590,
+      "death": 1894,
+      "quotes": 79
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Mark Twain",
+      "revision": 3992852,
+      "death": 1910,
+      "quotes": 66
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Life on the Mississippi",
+      "revision": 3941016,
+      "death": 1910,
+      "quotes": 14
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Pudd'nhead Wilson",
+      "revision": 3941019,
+      "death": 1910,
+      "quotes": 28
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "The Prince and the Pauper",
+      "revision": 3941038,
+      "death": 1910,
+      "quotes": 8
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "A Connecticut Yankee in King Arthur's Court",
+      "revision": 3941048,
+      "death": 1910,
+      "quotes": 7
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "The Adventures of Tom Sawyer",
+      "revision": 3941053,
+      "death": 1910,
+      "quotes": 16
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Adventures of Huckleberry Finn",
+      "revision": 4038370,
+      "death": 1910,
+      "quotes": 22
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Following the Equator",
+      "revision": 4030089,
+      "death": 1910,
+      "quotes": 38
+    },
+    {
+      "author": "Mark Twain",
+      "language": "en",
+      "page": "Autobiography of Mark Twain",
+      "revision": 3890499,
+      "death": 1910,
+      "quotes": 29
+    },
+    {
+      "author": "Henry James",
+      "language": "en",
+      "page": "Henry James",
+      "revision": 3766915,
+      "death": 1916,
+      "quotes": 48
+    },
+    {
+      "author": "Henry James",
+      "language": "en",
+      "page": "The American Scene",
+      "revision": 3871795,
+      "death": 1916,
+      "quotes": 2
+    },
+    {
+      "author": "Oscar Wilde",
+      "language": "en",
+      "page": "Oscar Wilde",
+      "revision": 4035928,
+      "death": 1900,
+      "quotes": 165
+    },
+    {
+      "author": "Oscar Wilde",
+      "language": "en",
+      "page": "The Picture of Dorian Gray",
+      "revision": 3952625,
+      "death": 1900,
+      "quotes": 117
+    },
+    {
+      "author": "Arthur Conan Doyle",
+      "language": "en",
+      "page": "Arthur Conan Doyle",
+      "revision": 3732324,
+      "death": 1930,
+      "quotes": 0
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "H. G. Wells",
+      "revision": 4041676,
+      "death": 1946,
+      "quotes": 51
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "The Time Machine",
+      "revision": 3778033,
+      "death": 1946,
+      "quotes": 11
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "The Food of the Gods and How It Came to Earth",
+      "revision": 3950783,
+      "death": 1946,
+      "quotes": 11
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "In the Days of the Comet",
+      "revision": 2201773,
+      "death": 1946,
+      "quotes": 5
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "The Outline of History",
+      "revision": 2842647,
+      "death": 1946,
+      "quotes": 35
+    },
+    {
+      "author": "H. G. Wells",
+      "language": "en",
+      "page": "World Brain",
+      "revision": 3963219,
+      "death": 1946,
+      "quotes": 0
+    },
+    {
+      "author": "Virginia Woolf",
+      "language": "en",
+      "page": "Virginia Woolf",
+      "revision": 3962859,
+      "death": 1941,
+      "quotes": 70
+    },
+    {
+      "author": "Edith Wharton",
+      "language": "en",
+      "page": "Edith Wharton",
+      "revision": 3882320,
+      "death": 1937,
+      "quotes": 9
+    },
+    {
+      "author": "Jack London",
+      "language": "en",
+      "page": "Jack London",
+      "revision": 3689862,
+      "death": 1916,
+      "quotes": 18
+    },
+    {
+      "author": "Frances Hodgson Burnett",
+      "language": "en",
+      "page": "Frances Hodgson Burnett",
+      "revision": 3877339,
+      "death": 1924,
+      "quotes": 13
+    },
+    {
+      "author": "Frances Hodgson Burnett",
+      "language": "en",
+      "page": "A Little Princess",
+      "revision": 3614144,
+      "death": 1924,
+      "quotes": 9
+    },
+    {
+      "author": "Lewis Carroll",
+      "language": "en",
+      "page": "Lewis Carroll",
+      "revision": 3943329,
+      "death": 1898,
+      "quotes": 40
+    },
+    {
+      "author": "Lewis Carroll",
+      "language": "en",
+      "page": "Through the Looking-Glass",
+      "revision": 4042884,
+      "death": 1898,
+      "quotes": 4
+    },
+    {
+      "author": "Lewis Carroll",
+      "language": "en",
+      "page": "Alice's Adventures in Wonderland",
+      "revision": 3952630,
+      "death": 1898,
+      "quotes": 35
+    },
+    {
+      "author": "Lewis Carroll",
+      "language": "en",
+      "page": "The Hunting of the Snark",
+      "revision": 2810242,
+      "death": 1898,
+      "quotes": 1
+    },
+    {
+      "author": "Herman Melville",
+      "language": "en",
+      "page": "Herman Melville",
+      "revision": 4005224,
+      "death": 1891,
+      "quotes": 61
+    },
+    {
+      "author": "Nathaniel Hawthorne",
+      "language": "en",
+      "page": "Nathaniel Hawthorne",
+      "revision": 3976735,
+      "death": 1864,
+      "quotes": 12
+    },
+    {
+      "author": "Louisa May Alcott",
+      "language": "en",
+      "page": "Louisa May Alcott",
+      "revision": 3957259,
+      "death": 1888,
+      "quotes": 14
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "Joseph Conrad",
+      "revision": 4010482,
+      "death": 1924,
+      "quotes": 28
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "The Nigger of the \"Narcissus\"",
+      "revision": 3547631,
+      "death": 1924,
+      "quotes": 2
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "Lord Jim",
+      "revision": 3547629,
+      "death": 1924,
+      "quotes": 20
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "Heart of Darkness",
+      "revision": 3987647,
+      "death": 1924,
+      "quotes": 13
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "Henry James (book)",
+      "revision": 3547628,
+      "death": 1924,
+      "quotes": 3
+    },
+    {
+      "author": "Joseph Conrad",
+      "language": "en",
+      "page": "A Personal Record",
+      "revision": 3547627,
+      "death": 1924,
+      "quotes": 10
+    },
+    {
+      "author": "D. H. Lawrence",
+      "language": "en",
+      "page": "D. H. Lawrence",
+      "revision": 4029582,
+      "death": 1930,
+      "quotes": 10
+    },
+    {
+      "author": "F. Scott Fitzgerald",
+      "language": "en",
+      "page": "F. Scott Fitzgerald",
+      "revision": 3915331,
+      "death": 1940,
+      "quotes": 49
+    },
+    {
+      "author": "F. Scott Fitzgerald",
+      "language": "en",
+      "page": "The Great Gatsby",
+      "revision": 3952643,
+      "death": 1940,
+      "quotes": 17
+    },
+    {
+      "author": "F. Scott Fitzgerald",
+      "language": "en",
+      "page": "Tender is the Night",
+      "revision": 3923992,
+      "death": 1940,
+      "quotes": 5
+    },
+    {
+      "author": "F. Scott Fitzgerald",
+      "language": "en",
+      "page": "Tender is the Night",
+      "revision": 3923992,
+      "death": 1940,
+      "quotes": 5
+    },
+    {
+      "author": "L. Frank Baum",
+      "language": "en",
+      "page": "L. Frank Baum",
+      "revision": 3908720,
+      "death": 1919,
+      "quotes": 20
+    },
+    {
+      "author": "L. Frank Baum",
+      "language": "en",
+      "page": "The Wizard of Oz (1939 film)",
+      "revision": 4017905,
+      "death": 1919,
+      "quotes": 11
+    },
+    {
+      "author": "H. P. Lovecraft",
+      "language": "en",
+      "page": "H. P. Lovecraft",
+      "revision": 3822131,
+      "death": 1937,
+      "quotes": 0
+    },
+    {
+      "author": "Edgar Allan Poe",
+      "language": "en",
+      "page": "Edgar Allan Poe",
+      "revision": 4011247,
+      "death": 1849,
+      "quotes": 41
+    },
+    {
+      "author": "Rudyard Kipling",
+      "language": "en",
+      "page": "Rudyard Kipling",
+      "revision": 3971230,
+      "death": 1936,
+      "quotes": 120
+    },
+    {
+      "author": "Walter Scott",
+      "language": "en",
+      "page": "Walter Scott",
+      "revision": 3929936,
+      "death": 1832,
+      "quotes": 72
+    },
+    {
+      "author": "Anthony Trollope",
+      "language": "en",
+      "page": "Anthony Trollope",
+      "revision": 4032470,
+      "death": 1882,
+      "quotes": 79
+    },
+    {
+      "author": "William Makepeace Thackeray",
+      "language": "en",
+      "page": "William Makepeace Thackeray",
+      "revision": 3949824,
+      "death": 1863,
+      "quotes": 59
+    },
+    {
+      "author": "Elizabeth Gaskell",
+      "language": "en",
+      "page": "Elizabeth Gaskell",
+      "revision": 3877943,
+      "death": 1865,
+      "quotes": 7
+    },
+    {
+      "author": "Wilkie Collins",
+      "language": "en",
+      "page": "Wilkie Collins",
+      "revision": 3915585,
+      "death": 1889,
+      "quotes": 10
+    },
+    {
+      "author": "Mary Shelley",
+      "language": "en",
+      "page": "Mary Shelley",
+      "revision": 3886661,
+      "death": 1851,
+      "quotes": 14
+    },
+    {
+      "author": "Bram Stoker",
+      "language": "en",
+      "page": "Bram Stoker",
+      "revision": 3708254,
+      "death": 1912,
+      "quotes": 7
+    },
+    {
+      "author": "George MacDonald",
+      "language": "en",
+      "page": "George MacDonald",
+      "revision": 4028323,
+      "death": 1905,
+      "quotes": 24
+    },
+    {
+      "author": "William Morris",
+      "language": "en",
+      "page": "William Morris",
+      "revision": 3954552,
+      "death": 1896,
+      "quotes": 58
+    },
+    {
+      "author": "H. Rider Haggard",
+      "language": "en",
+      "page": "H. Rider Haggard",
+      "revision": 3809048,
+      "death": 1925,
+      "quotes": 32
+    },
+    {
+      "author": "Arthur Machen",
+      "language": "en",
+      "page": "Arthur Machen",
+      "revision": 3955753,
+      "death": 1947,
+      "quotes": 1
+    },
+    {
+      "author": "Algernon Blackwood",
+      "language": "en",
+      "page": "Algernon Blackwood",
+      "revision": 3925170,
+      "death": 1951,
+      "quotes": 0
+    },
+    {
+      "author": "Sheridan Le Fanu",
+      "language": "en",
+      "page": "Sheridan Le Fanu",
+      "revision": 3486263,
+      "death": 1873,
+      "quotes": 3
+    },
+    {
+      "author": "M. R. James",
+      "language": "en",
+      "page": "M. R. James",
+      "revision": 3766944,
+      "death": 1936,
+      "quotes": 0
+    },
+    {
+      "author": "Saki",
+      "language": "en",
+      "page": "Saki",
+      "revision": 3460637,
+      "death": 1916,
+      "quotes": 38
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "G. K. Chesterton",
+      "revision": 4029494,
+      "death": 1936,
+      "quotes": 89
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "The Defendant",
+      "revision": 3068077,
+      "death": 1936,
+      "quotes": 19
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "Heretics (book)",
+      "revision": 3547620,
+      "death": 1936,
+      "quotes": 34
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "Orthodoxy (book)",
+      "revision": 3809353,
+      "death": 1936,
+      "quotes": 23
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "The Man Who Was Thursday",
+      "revision": 3809359,
+      "death": 1936,
+      "quotes": 17
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "What's Wrong with the World",
+      "revision": 3547624,
+      "death": 1936,
+      "quotes": 24
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "Father Brown",
+      "revision": 3809379,
+      "death": 1936,
+      "quotes": 19
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "The Ballad of the White Horse",
+      "revision": 3547621,
+      "death": 1936,
+      "quotes": 37
+    },
+    {
+      "author": "G. K. Chesterton",
+      "language": "en",
+      "page": "The Everlasting Man",
+      "revision": 3676576,
+      "death": 1936,
+      "quotes": 33
+    },
+    {
+      "author": "Hilaire Belloc",
+      "language": "en",
+      "page": "Hilaire Belloc",
+      "revision": 3915959,
+      "death": 1953,
+      "quotes": 53
+    },
+    {
+      "author": "Jerome K. Jerome",
+      "language": "en",
+      "page": "Jerome K. Jerome",
+      "revision": 3915528,
+      "death": 1927,
+      "quotes": 32
+    },
+    {
+      "author": "E. Nesbit",
+      "language": "en",
+      "page": "Edith Nesbit",
+      "revision": 3882570,
+      "death": 1924,
+      "quotes": 0
+    },
+    {
+      "author": "Kenneth Grahame",
+      "language": "en",
+      "page": "Kenneth Grahame",
+      "revision": 3652681,
+      "death": 1932,
+      "quotes": 7
+    },
+    {
+      "author": "Kenneth Grahame",
+      "language": "en",
+      "page": "The Wind in the Willows",
+      "revision": 4024060,
+      "death": 1932,
+      "quotes": 34
+    },
+    {
+      "author": "Edgar Rice Burroughs",
+      "language": "en",
+      "page": "Edgar Rice Burroughs",
+      "revision": 4017375,
+      "death": 1950,
+      "quotes": 38
+    },
+    {
+      "author": "James Joyce",
+      "language": "en",
+      "page": "James Joyce",
+      "revision": 4010712,
+      "death": 1941,
+      "quotes": 23
+    },
+    {
+      "author": "James Joyce",
+      "language": "en",
+      "page": "A Portrait of the Artist as a Young Man",
+      "revision": 3588414,
+      "death": 1941,
+      "quotes": 12
+    },
+    {
+      "author": "James Joyce",
+      "language": "en",
+      "page": "Ulysses (novel)",
+      "revision": 3962898,
+      "death": 1941,
+      "quotes": 25
+    },
+    {
+      "author": "Katherine Mansfield",
+      "language": "en",
+      "page": "Katherine Mansfield",
+      "revision": 4028342,
+      "death": 1923,
+      "quotes": 0
+    },
+    {
+      "author": "Willa Cather",
+      "language": "en",
+      "page": "Willa Cather",
+      "revision": 3915189,
+      "death": 1947,
+      "quotes": 45
+    },
+    {
+      "author": "Gertrude Stein",
+      "language": "en",
+      "page": "Gertrude Stein",
+      "revision": 3962864,
+      "death": 1946,
+      "quotes": 64
+    },
+    {
+      "author": "Sherwood Anderson",
+      "language": "en",
+      "page": "Sherwood Anderson",
+      "revision": 3877661,
+      "death": 1941,
+      "quotes": 3
+    },
+    {
+      "author": "Stephen Crane",
+      "language": "en",
+      "page": "Stephen Crane",
+      "revision": 4028332,
+      "death": 1900,
+      "quotes": 14
+    },
+    {
+      "author": "Theodore Dreiser",
+      "language": "en",
+      "page": "Theodore Dreiser",
+      "revision": 3909697,
+      "death": 1945,
+      "quotes": 3
+    },
+    {
+      "author": "Sinclair Lewis",
+      "language": "en",
+      "page": "Sinclair Lewis",
+      "revision": 3776058,
+      "death": 1951,
+      "quotes": 28
+    },
+    {
+      "author": "Booth Tarkington",
+      "language": "en",
+      "page": "Booth Tarkington",
+      "revision": 3829635,
+      "death": 1946,
+      "quotes": 0
+    },
+    {
+      "author": "O. Henry",
+      "language": "en",
+      "page": "O. Henry",
+      "revision": 3231316,
+      "death": 1910,
+      "quotes": 22
+    },
+    {
+      "author": "Washington Irving",
+      "language": "en",
+      "page": "Washington Irving",
+      "revision": 3915237,
+      "death": 1859,
+      "quotes": 13
+    },
+    {
+      "author": "James Fenimore Cooper",
+      "language": "en",
+      "page": "James Fenimore Cooper",
+      "revision": 3802208,
+      "death": 1851,
+      "quotes": 15
+    },
+    {
+      "author": "James Fenimore Cooper",
+      "language": "en",
+      "page": "The American Democrat",
+      "revision": 3068076,
+      "death": 1851,
+      "quotes": 28
+    },
+    {
+      "author": "Harriet Beecher Stowe",
+      "language": "en",
+      "page": "Harriet Beecher Stowe",
+      "revision": 3981135,
+      "death": 1896,
+      "quotes": 17
+    },
+    {
+      "author": "Frederick Douglass",
+      "language": "en",
+      "page": "Frederick Douglass",
+      "revision": 4021210,
+      "death": 1895,
+      "quotes": 0
+    },
+    {
+      "author": "Henry David Thoreau",
+      "language": "en",
+      "page": "Henry David Thoreau",
+      "revision": 4038125,
+      "death": 1862,
+      "quotes": 105
+    },
+    {
+      "author": "Henry David Thoreau",
+      "language": "en",
+      "page": "Civil Disobedience (Thoreau)",
+      "revision": 3068081,
+      "death": 1862,
+      "quotes": 18
+    },
+    {
+      "author": "Henry David Thoreau",
+      "language": "en",
+      "page": "Walden",
+      "revision": 3922179,
+      "death": 1862,
+      "quotes": 78
+    },
+    {
+      "author": "Ralph Waldo Emerson",
+      "language": "en",
+      "page": "Ralph Waldo Emerson",
+      "revision": 4033954,
+      "death": 1882,
+      "quotes": 191
+    },
+    {
+      "author": "Ralph Waldo Emerson",
+      "language": "en",
+      "page": "Essays (Emerson)",
+      "revision": 3898978,
+      "death": 1882,
+      "quotes": 60
+    }
+  ],
+  "skipped": [
+    {
+      "author": "Giuseppe Tomasi di Lampedusa",
+      "reason": "Author outside public-domain cutoff"
+    },
+    {
+      "author": "Sibilla Aleramo",
+      "reason": "Author outside public-domain cutoff"
+    },
+    {
+      "author": "E. M. Forster",
+      "reason": "Author outside public-domain cutoff"
+    },
+    {
+      "author": "L. M. Montgomery",
+      "reason": "Missing source revision"
+    },
+    {
+      "author": "Frank Norris",
+      "reason": "Missing source revision"
+    }
+  ],
+  "languages": {
+    "it": {
+      "works": 98,
+      "excerpts": 181,
+      "authors": 29,
+      "file": "it-76380c69d241.json"
+    },
+    "en": {
+      "works": 392,
+      "excerpts": 1050,
+      "authors": 57,
+      "file": "en-e8fca677bc19.json"
+    }
+  }
+}

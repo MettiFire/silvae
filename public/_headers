@@ -22,3 +22,12 @@
 /icons/*
   Cache-Control: public, max-age=86400
   X-Content-Type-Options: nosniff
+
+/fragments/it-*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+/fragments/en-*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+/fragments/manifest.json
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600

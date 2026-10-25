@@ -18,4 +18,6 @@ Metadata-only sources: https://api.mangadex.org/ and https://docs.api.jikan.moe/
 
 # Daily fragments
 
-The earlier nine works were an initial verified collection, not a technical limit. There are now sixteen distinct public-domain works, including seven new excerpts verified against pinned Wikisource revisions. The fixed work rotation keeps fifteen other books between appearances. New works were inserted after the current Pinocchio slot and recent works kept later in the transition cycle.
+The earlier nine works were an initial verified collection, not a technical limit. The bundled fallback contains sixteen distinct public-domain works, including seven new excerpts verified against pinned Wikisource revisions. The fixed work rotation keeps fifteen other books between appearances. New works were inserted after the current Pinocchio slot and recent works kept later in the transition cycle.
+
+The normal daily fragment now comes from the larger language-specific Wikiquote archive; see [daily-fragment-archive.md](daily-fragment-archive.md) for current counts, import, licensing and rotation behavior.

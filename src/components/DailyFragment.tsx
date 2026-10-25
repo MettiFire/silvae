@@ -1,3 +1,5 @@
+import { selectArchiveFragment } from "@/lib/fragment-archive";
+import { useFragmentArchive } from "@/lib/use-fragment-archive";
 import { useAuth } from "@/lib/auth";
 import { useBookLanguage } from "@/lib/use-book-language";
 import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
@@ -28,7 +30,16 @@ export function DailyFragment() {
       window.removeEventListener("focus", update);
     };
   }, []);
-  const fragment = day ? dailyFragment(day) : null;
+  const archive = useFragmentArchive();
+  // Keep the bundled collection as a network-failure fallback; no third-party
+  // quote API is contacted while rendering the home page.
+  const fragment = day
+    ? archive.data?.length
+      ? selectArchiveFragment(day, archive.data)
+      : archive.isError
+        ? dailyFragment(day)
+        : null
+    : null;
   const englishTitles: Record<string, string> = {
     "collodi-pinocchio": "Pinocchio",
     "verga-malavoglia": "The House by the Medlar Tree",
@@ -129,7 +140,17 @@ export function DailyFragment() {
               </blockquote>
               <figcaption className="mt-5 text-sm text-muted-foreground">
                 {fragment.author} ·{" "}
-                <cite className="font-medium not-italic text-foreground">{fragment.title}</cite>
+                <cite className="font-medium not-italic text-foreground">
+                  <a
+                    href={fragment.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`${"sourceName" in fragment ? fragment.sourceName : "Wikisource"} · CC BY-SA ${fragment.license}`}
+                    className="hover:underline"
+                  >
+                    {fragment.title}
+                  </a>
+                </cite>
               </figcaption>
             </figure>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -161,7 +182,7 @@ export function DailyFragment() {
                 rel="noopener noreferrer"
                 className="underline underline-offset-4"
               >
-                <UiText text="Leggi il brano su Wikisource ↗" />
+                {"sourceName" in fragment ? fragment.sourceName : "Wikisource"}
               </a>
               <a
                 href={`https://creativecommons.org/licenses/by-sa/${fragment.license}/deed.it`}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-25T13:08:08.181Z",
+  "languages": {
+    "it": {
+      "works": 98,
+      "excerpts": 181,
+      "authors": 29,
+      "file": "it-76380c69d241.json"
+    },
+    "en": {
+      "works": 392,
+      "excerpts": 1050,
+      "authors": 57,
+      "file": "en-e8fca677bc19.json"
+    }
+  }
+}
