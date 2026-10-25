@@ -46,9 +46,9 @@ export function bookKind(book: Pick<Book, "categories">): "fiction" | "nonfictio
     /\b(?:non ?fiction|history|historia|storia|science|social science|philosophy|filosofia|biography|biografia|saggistica|saggi|essays|civilization|economics|psychology|politics|human beings)\b/.test(
       text.replace(/(?:science|historical) fiction/g, ""),
     );
-  if (fiction && !essay) return "fiction";
-  if (essay && !fiction) return "nonfiction";
-  return null;
+  if (/\bnon ?fiction\b/.test(text) && !fiction) return "nonfiction";
+  if (fiction) return "fiction";
+  return essay ? "nonfiction" : null;
 }
 
 export function rankRelatedBooks(
