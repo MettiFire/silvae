@@ -1,10 +1,11 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { useTranslate } from "@/lib/use-ui-language";
 import { UiText } from "@/lib/ui-language-context";
 import { decodeMangaProgress } from "@/lib/manga-account";
 import { MANGA_FIELD, isMangaId, readVolumes } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -44,7 +45,7 @@ function Stats() {
     (sum, item) => sum + readVolumes(mangaState[item.book_id]).length,
     0,
   );
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useRememberedState<number>("stats.year", new Date().getFullYear());
   const stats = useMemo(() => readingStatistics(items, year), [items, year]);
 
   if (isLoading || isError)

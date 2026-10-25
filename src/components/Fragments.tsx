@@ -1,3 +1,4 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiDate } from "@/lib/ui-language-context";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
@@ -127,14 +128,14 @@ export function Fragments({ book }: { book?: Book | undefined }) {
   const qc = useQueryClient();
   const [editor, setEditor] = useState<Fragment | null | false>(false);
   const [importing, setImporting] = useState(false);
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const [bookId, setBookId] = useState("");
-  const [source, setSource] = useState("");
-  const [tag, setTag] = useState("");
-  const [favorite, setFavorite] = useState(false);
-  const [trash, setTrash] = useState(false);
-  const [order, setOrder] = useState("new");
+  const [page, setPage] = useRememberedState<number>("fragments.page", 0);
+  const [search, setSearch] = useRememberedState<string>("fragments.search", "");
+  const [bookId, setBookId] = useRememberedState<string>("fragments.bookId", "");
+  const [source, setSource] = useRememberedState<string>("fragments.source", "");
+  const [tag, setTag] = useRememberedState<string>("fragments.tag", "");
+  const [favorite, setFavorite] = useRememberedState<boolean>("fragments.favorite", false);
+  const [trash, setTrash] = useRememberedState<boolean>("fragments.trash", false);
+  const [order, setOrder] = useRememberedState<string>("fragments.order", "new");
   const [busy, setBusy] = useState<string | null>(null);
   const bookChoices = useQuery({
     queryKey: ["fragment-books", user?.id],

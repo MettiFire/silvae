@@ -1,9 +1,10 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { isMangaId } from "@/lib/manga-model";
 import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { List } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -32,17 +33,21 @@ function LibraryPage() {
   const { user } = useAuth();
   const { data: items = [], isLoading, isError, refetch } = useLibrary(user?.id);
   const update = useUpdateItem();
-  const [visible, setVisible] = useState(40);
-  const [tab, setTab] = useState<ReadingStatus>("read");
-  const [order, setOrder] = useState<LibraryOrder>("last-read");
-  const [q, setQ] = useState("");
-  const [view, setView] = useState<View>("grid");
-  const [onlyReview, setOnlyReview] = useState(false);
-  const [onlyFav, setOnlyFav] = useState(false);
-  const [minRating, setMinRating] = useState(0);
-  const [genre, setGenre] = useState("all");
-  const [format, setFormat] = useState("all");
-  const [year, setYear] = useState("all");
+  const [visible, setVisible] = useRememberedState<number>("library.visible", 40);
+  const [tab, setTab] = useRememberedState<ReadingStatus>(
+    "library.tab",
+    "read",
+    (value) => typeof value === "string" && Object.hasOwn(STATUS_LABEL, value),
+  );
+  const [order, setOrder] = useRememberedState<LibraryOrder>("library.order", "last-read");
+  const [q, setQ] = useRememberedState<string>("library.q", "");
+  const [view, setView] = useRememberedState<View>("library.view", "grid");
+  const [onlyReview, setOnlyReview] = useRememberedState<boolean>("library.onlyReview", false);
+  const [onlyFav, setOnlyFav] = useRememberedState<boolean>("library.onlyFav", false);
+  const [minRating, setMinRating] = useRememberedState<number>("library.minRating", 0);
+  const [genre, setGenre] = useRememberedState<string>("library.genre", "all");
+  const [format, setFormat] = useRememberedState<string>("library.format", "all");
+  const [year, setYear] = useRememberedState<string>("library.year", "all");
 
   const genres = useMemo(() => {
     const available = new Set(items.flatMap((i) => genreGroups(i.books?.categories ?? [])));

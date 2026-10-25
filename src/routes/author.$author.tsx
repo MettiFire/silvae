@@ -1,3 +1,4 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { validAuthorId, SUPPLEMENT_AUTHOR } from "@/lib/catalogue-supplement";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
@@ -40,11 +41,15 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const { user } = useAuth();
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
-  const [allLanguages, setAllLanguages] = useState(false);
+  const [allLanguages, setAllLanguages] = useRememberedState<boolean>("author.allLanguages", false);
   const { data: library = [] } = useLibrary(user?.id);
-  const [chosen, setChosen] = useState<string | null>(selectedId ?? null);
-  const [page, setPage] = useState(0);
-  const [sort, setSort] = useState<"new" | "title" | "popular">("popular");
+  const [chosen, setChosen] = useRememberedState<string | null>(
+    "author.chosen",
+    selectedId ?? null,
+    (value) => value === null || (typeof value === "string" && validAuthorId(value)),
+  );
+  const [page, setPage] = useRememberedState<number>("author.page", 0);
+  const [sort, setSort] = useRememberedState<"new" | "title" | "popular">("author.sort", "popular");
   const [busy, setBusy] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const candidates = useQuery({

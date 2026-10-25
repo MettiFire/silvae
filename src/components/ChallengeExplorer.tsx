@@ -1,3 +1,4 @@
+import { useRememberedState, useScreenEntryKey } from "@/lib/use-remembered-state";
 import { UiDate } from "@/lib/ui-language-context";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { countryFlag, countryReadingGroups } from "@/lib/challenge-country-display";
@@ -81,11 +82,29 @@ export function ChallengeExplorer({
   onSave: (value: ChallengeEnrollment) => Promise<unknown>;
   onLeave: (id: ChallengeId) => Promise<unknown>;
 }) {
-  const [tab, setTab] = useState<"explore" | "mine">("explore");
-  const [filter, setFilter] = useState<"all" | "award" | "thematic">("all");
-  const [active, setActive] = useState<ChallengeId | null>(null);
-  const [draft, setDraft] = useState<ChallengeEnrollment | null>(null);
-  const [slotLimit, setSlotLimit] = useState(20);
+  const [tab, setTab] = useRememberedState<"explore" | "mine">("challenges.tab", "explore");
+  const [filter, setFilter] = useRememberedState<"all" | "award" | "thematic">(
+    "challenges.filter",
+    "all",
+  );
+  const [active, setActive] = useRememberedState<ChallengeId | null>(
+    "challenges.active",
+    null,
+    (value) => value === null || CHALLENGE_CATALOGUE.some((entry) => entry.id === value),
+  );
+  const draftEntry = useScreenEntryKey();
+  const [draftState, updateDraft] = useState<{
+    entry: string;
+    value: ChallengeEnrollment | null;
+  } | null>(null);
+  const draft =
+    draftState?.entry === draftEntry && draftState.value?.id === active
+      ? draftState.value
+      : active
+        ? buildDraft(active)
+        : null;
+  const setDraft = (value: ChallengeEnrollment | null) => updateDraft({ entry: draftEntry, value });
+  const [slotLimit, setSlotLimit] = useRememberedState<number>("challenges.limit", 20);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const enrolled = active ? enrollments.find((entry) => entry.id === active) : undefined;
   const definition = CHALLENGE_CATALOGUE.find((entry) => entry.id === active);
@@ -116,7 +135,7 @@ export function ChallengeExplorer({
     () => (draft ? challengeProgress(draft, library, authorCountries) : null),
     [draft, library, authorCountries],
   );
-  function open(id: ChallengeId) {
+  function buildDraft(id: ChallengeId) {
     const existing = enrollments.find((entry) => entry.id === id);
     const next = fullAwardEnrollment(existing ?? createEnrollment(id));
     if (!existing && id === "backlog")
@@ -124,7 +143,10 @@ export function ChallengeExplorer({
         .filter((i) => i.status === "to_read")
         .slice(0, 5)
         .map((i) => i.book_id);
-    setDraft(next);
+    return next;
+  }
+  function open(id: ChallengeId) {
+    setDraft(buildDraft(id));
     setActive(id);
     setSlotLimit(20);
     setLeaveConfirm(false);
@@ -793,7 +815,10 @@ function SlotRow({
   const [bookId, setBookId] = useState(slot.assignment?.bookId ?? "");
   const [country, setCountry] = useState(slot.country ?? "");
   const [showAssign, setShowAssign] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useRememberedState<boolean>(
+    `challenges.slot.${slot.id}`,
+    false,
+  );
   const fixed = slot.fixedBookId
     ? library.find((item) => item.book_id === slot.fixedBookId)
     : undefined;

@@ -1,9 +1,10 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { GENRE_GROUPS } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { RefreshCw, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
@@ -41,10 +42,13 @@ function Discover() {
     libraryReady,
   } = useBookRecommendations();
   const qc = useQueryClient();
-  const [genre, setGenre] = useState("all");
-  const [year, setYear] = useState("all");
-  const [minRating, setMinRating] = useState(0);
-  const [order, setOrder] = useState<"relevance" | "newest">("relevance");
+  const [genre, setGenre] = useRememberedState<string>("discover.genre", "all");
+  const [year, setYear] = useRememberedState<string>("discover.year", "all");
+  const [minRating, setMinRating] = useRememberedState<number>("discover.minRating", 0);
+  const [order, setOrder] = useRememberedState<"relevance" | "newest">(
+    "discover.order",
+    "relevance",
+  );
 
   const owned = useMemo(() => new Set(library.map((i) => i.book_id)), [library]);
 

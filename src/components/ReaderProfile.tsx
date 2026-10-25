@@ -1,3 +1,4 @@
+import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -291,8 +292,11 @@ export function ReaderProfileView({
   listsError?: boolean;
   authorsError?: boolean;
 }) {
-  const [tab, setTab] = useState<"read" | "wishlist" | "favorites" | "lists" | "authors">("read");
-  const [visible, setVisible] = useState(20);
+  const [tab, setTab] = useRememberedState<"read" | "wishlist" | "favorites" | "lists" | "authors">(
+    "profile.tab",
+    "read",
+  );
+  const [visible, setVisible] = useRememberedState<number>("profile.visible", 20);
   const shelves = profileShelves(items);
   const rows =
     tab === "wishlist" ? shelves.wishlist : tab === "favorites" ? shelves.favorites : shelves.read;
