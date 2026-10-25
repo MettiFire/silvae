@@ -1,6 +1,4 @@
-import { RemoveLibraryBook } from "@/components/RemoveLibraryBook";
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { MangaProgressLabel } from "@/components/MangaProgressLabel";
 import { isMangaId } from "@/lib/manga-model";
 import { GENRE_GROUPS, genreGroups } from "@/lib/genre-groups";
 import { pageSeo } from "@/lib/site-seo";
@@ -283,19 +281,14 @@ function LibraryPage() {
                     <UiText text="Dati CSV da verificare" />
                   </p>
                 )}
-                {isMangaId(i.book_id) ? (
-                  <MangaProgressLabel bookId={i.book_id} />
-                ) : (
-                  i.status === "reading" && (
-                    <ProgressBar
-                      className="mt-2 max-w-sm"
-                      percentage={i.progress_percent}
-                      current={i.current_page}
-                      total={i.total_pages ?? 0}
-                    />
-                  )
+                {!isMangaId(i.book_id) && i.status === "reading" && (
+                  <ProgressBar
+                    className="mt-2 max-w-sm"
+                    percentage={i.progress_percent}
+                    current={i.current_page}
+                    total={i.total_pages ?? 0}
+                  />
                 )}
-                <RemoveLibraryBook id={i.id} title={i.books?.title ?? ""} />
               </div>
               <LeafRating
                 value={i.rating != null ? Number(i.rating) : null}
@@ -319,24 +312,19 @@ function LibraryPage() {
                 }
                 footer={
                   <>
-                    <RemoveLibraryBook id={i.id} title={i.books.title} />
                     {i.needs_review && (
                       <p className="mt-1 text-xs text-primary">
                         <UiText text="Dati CSV da verificare" />
                       </p>
                     )}
-                    {isMangaId(i.book_id) ? (
-                      <MangaProgressLabel bookId={i.book_id} />
-                    ) : (
-                      i.status === "reading" && (
-                        <ProgressBar
-                          className="mt-1"
-                          percentage={i.progress_percent}
-                          current={i.current_page}
-                          total={i.total_pages ?? 0}
-                          showLabel={false}
-                        />
-                      )
+                    {!isMangaId(i.book_id) && i.status === "reading" && (
+                      <ProgressBar
+                        className="mt-1"
+                        percentage={i.progress_percent}
+                        current={i.current_page}
+                        total={i.total_pages ?? 0}
+                        showLabel={false}
+                      />
                     )}
                   </>
                 }
