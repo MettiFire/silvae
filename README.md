@@ -1,4 +1,4 @@
-# Silvae 🌿
+# 🌿 Silvae 
 
 **Keep track of every story.**
 
@@ -9,7 +9,7 @@ with light and dark themes.
 
 [Open Silvae](https://silvae.lovable.app) · [Report an issue](https://github.com/MettiFire/silvae/issues)
 
-## Features 📚
+## 📚 Features 
 
 - **Your library:** organize books as to read, currently reading, read, or abandoned.
   Track dates, progress, rereads, favorites, reviews, and personal leaf ratings.
@@ -36,7 +36,7 @@ Settings also let you choose a book language and multiple languages for daily fr
 Titles, covers, descriptions, and work matching depend on external catalogues;
 coverage and matching across editions are not guaranteed for every book.
 
-## Tech stack
+## 🧱 Tech stack 
 
 - React 19, TypeScript, TanStack Start / Router / Query, and Vite.
 - Tailwind CSS, Radix UI components, and Recharts.
@@ -83,7 +83,7 @@ authentication origins and callback URLs. Google sign-in, email confirmation,
 and password recovery also require their respective provider settings;
 copying the frontend alone does not enable them.
 
-## Commands
+## 🛠️ Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -145,7 +145,7 @@ Function deployment.
   `public/sitemap.xml`, and `public/robots.txt`.
 - Do not rewrite published Git history: the Lovable integration relies on it.
 
-## Documentation
+## 📄 Documentation
 
 The documentation includes English and Italian implementation notes:
 
