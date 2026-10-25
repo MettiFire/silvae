@@ -1,3 +1,4 @@
+import { validAuthorId, SUPPLEMENT_AUTHOR } from "@/lib/catalogue-supplement";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -20,7 +21,7 @@ import { hasReadBook } from "@/lib/library-order";
 
 export const Route = createFileRoute("/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
-    typeof s["olid"] === "string" && /^OL\d+A$/.test(s["olid"]) ? { olid: s["olid"] } : {},
+    typeof s["olid"] === "string" && validAuthorId(s["olid"]) ? { olid: s["olid"] } : {},
   head: ({ params }) =>
     pageSeo(
       `${params.author} — Autore su Silvae`,
@@ -47,7 +48,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const [busy, setBusy] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const candidates = useQuery({
-    queryKey: ["author-candidates-v2", name, language ?? "any"],
+    queryKey: ["author-candidates-v3", name, language ?? "any"],
     queryFn: ({ signal }) => findAuthors(name, language, signal),
     staleTime: 3600000,
     enabled: languageReady,
@@ -108,6 +109,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
       setBusy(false);
     }
   };
+  const isSupplement = id === SUPPLEMENT_AUTHOR.id;
   const error = candidates.error || details.error || catalogue.error;
   const data = details.data;
   const books = catalogue.data?.books ?? [];
@@ -234,7 +236,13 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
               rel="noreferrer"
               className="mt-3 inline-block text-xs text-primary"
             >
-              <UiText text="Dati e bibliografia da Open Library ↗" />
+              <UiText
+                text={
+                  isSupplement
+                    ? "Dati e bibliografia dal catalogo editoriale ↗"
+                    : "Dati e bibliografia da Open Library ↗"
+                }
+              />
             </a>
           </div>
         </section>
@@ -254,7 +262,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             <label className="text-sm">
               <UiText text="Ordina" />{" "}
               <select
-                value={sort}
+                value={isSupplement && sort === "popular" ? "new" : sort}
                 onChange={(e) => {
                   setSort(e.target.value as typeof sort);
                   setPage(0);
@@ -264,21 +272,23 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
                 <option value="new">
                   <UiText text="Uscite più recenti" />
                 </option>
-                <option value="popular">
-                  <UiText text="Più popolari" />
-                </option>
+                {!isSupplement && (
+                  <option value="popular">
+                    <UiText text="Più popolari" />
+                  </option>
+                )}
                 <option value="title">
                   <UiText text="Titolo A–Z" />
                 </option>
               </select>
             </label>
           </div>
-          {sort === "popular" && (
+          {!isSupplement && sort === "popular" && (
             <p className="mb-2 text-xs text-muted-foreground">
               <UiText text="Popolarità basata sulle aggiunte alle librerie su Open Library." />
             </p>
           )}
-          {language && (
+          {language && !isSupplement && (
             <label className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
@@ -293,9 +303,15 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
             </label>
           )}
           <p className="mb-5 text-xs text-muted-foreground">
-            {language && !allLanguages
-              ? "Titoli delle edizioni nella lingua scelta nelle impostazioni. "
-              : "Titoli delle edizioni disponibili; alcune opere possono avere solo il titolo originale. "}
+            <UiText
+              text={
+                isSupplement
+                  ? "Edizioni italiane dal catalogo editoriale. "
+                  : language && !allLanguages
+                    ? "Titoli delle edizioni nella lingua scelta nelle impostazioni. "
+                    : "Titoli delle edizioni disponibili; alcune opere possono avere solo il titolo originale. "
+              }
+            />
             <UiText text="Il catalogo può essere incompleto; date di traduzioni e ristampe possono differire. I libri futuri compaiono solo se già catalogati." />
           </p>
           {catalogue.isFetching && (

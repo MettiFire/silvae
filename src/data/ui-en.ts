@@ -1,4 +1,23 @@
 export const UI_EN: Record<string, string> = {
+  "Da completare": "To complete",
+  "Trova una lettura per questa lettera": "Find a read for this letter",
+  "Rimuovi dalla libreria": "Remove from library",
+  "Rimozione…": "Removing…",
+  "Dati e bibliografia dal catalogo editoriale ↗": "Publisher catalogue and bibliography ↗",
+  "Edizioni italiane dal catalogo editoriale.": "Italian editions from the publisher catalogue.",
+  "Autori meno frequenti nei frammenti": "Less frequent authors in fragments",
+  "Preferenza aggiornata": "Preference updated",
+  "Mostra meno di questo autore": "Show less from this author",
+  "Ti proporremo meno frammenti di questo autore": "We’ll suggest fewer fragments from this author",
+  "Preferenza non salvata. Riprova.": "Preference not saved. Try again.",
+  "Rimuovere questo libro?": "Remove this book?",
+  "Verranno rimossi dalla tua libreria stato di lettura, date, voto e avanzamento di questo libro. Potrai aggiungerlo di nuovo.":
+    "This book’s reading status, dates, rating and progress will be removed from your library. You can add it again.",
+  "Libro rimosso dalla libreria": "Book removed from your library",
+  "L’alfabeto delle storie": "The alphabet of stories",
+  "Ventisei lettere, ventisei letture": "Twenty-six letters, twenty-six reads",
+  "Completa le lettere da A a Z con i titoli dei libri e delle graphic novel che hai letto. Conta la prima lettera del titolo, articoli inclusi; accenti e punteggiatura non cambiano la lettera. Ogni opera vale una sola tappa.":
+    "Complete A to Z with the titles of books and graphic novels you’ve read. Use the title’s first letter, including articles; ignore accents and punctuation. Each work counts once.",
   Bentornato: "Welcome back",
   "Tutti i generi": "All genres",
   "Qualsiasi anno": "Any year",

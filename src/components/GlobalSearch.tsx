@@ -1,3 +1,4 @@
+import { supplementSearch, SUPPLEMENT_AUTHOR } from "@/lib/catalogue-supplement";
 import { useLibrary } from "@/lib/library";
 import { unifiedSearchResults, preferOwnedManga } from "@/lib/unified-search";
 import { isMangaId } from "@/lib/manga-model";
@@ -8,9 +9,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ScanBarcode, UserRound } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
-import { authorSearchResults } from "@/lib/author-search";
-import { findAuthors } from "@/lib/authors";
-import { searchBookSuggestions, searchByIsbn } from "@/lib/books";
+import { authorSearchResults, authorMatchesQuery } from "@/lib/author-search";
+import { findAuthors, type AuthorCandidate } from "@/lib/authors";
+import { searchBookSuggestions, searchByIsbn, type Book } from "@/lib/books";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useAuth } from "@/lib/auth";
 import { useBookLanguage } from "@/lib/use-book-language";
@@ -51,16 +52,19 @@ export function GlobalSearch() {
     isFetching,
     isError,
     refetch: retryBooks,
-  } = useQuery({
-    queryKey: ["global-search-works", debounced, language ?? "any"],
+  } = useQuery<Book[]>({
+    queryKey: ["global-search-works-v2", debounced, language ?? "any"],
+    placeholderData: () => supplementSearch(debounced),
     enabled: mode !== "manga" && languageReady && debounced.trim().length >= 2,
     queryFn: ({ signal }) => searchBookSuggestions(debounced, signal, language),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  const authors = useQuery({
-    queryKey: ["author-candidates-v2", debounced.trim(), language ?? "any"],
+  const authors = useQuery<AuthorCandidate[]>({
+    queryKey: ["author-candidates-v3", debounced.trim(), language ?? "any"],
+    placeholderData: () =>
+      authorMatchesQuery(SUPPLEMENT_AUTHOR, debounced) ? [SUPPLEMENT_AUTHOR] : [],
     enabled:
       mode !== "manga" &&
       languageReady &&

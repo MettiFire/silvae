@@ -1,9 +1,11 @@
+import { titleInitial } from "./alphabet-challenge.ts";
 import { authorCountryKey } from "./author-country-key.ts";
 import { readingDay, todayDay } from "./reading-dates.ts";
 import { AWARD_DATA, type AwardFamily, type AwardWinner } from "../data/reading-awards.ts";
 import type { LibraryItem } from "./library";
 
-export type ChallengeId = AwardFamily | "birth-year" | "countries" | "comfort-zone" | "backlog";
+export type ChallengeId =
+  AwardFamily | "birth-year" | "countries" | "comfort-zone" | "backlog" | "alphabet";
 export type ChallengeDefinition = {
   id: ChallengeId;
   name: string;
@@ -13,6 +15,15 @@ export type ChallengeDefinition = {
   color: string;
 };
 export const CHALLENGE_CATALOGUE: ChallengeDefinition[] = [
+  {
+    id: "alphabet",
+    name: "L’alfabeto delle storie",
+    tagline: "Ventisei lettere, ventisei letture",
+    description:
+      "Completa le lettere da A a Z con i titoli dei libri e delle graphic novel che hai letto. Conta la prima lettera del titolo, articoli inclusi; accenti e punteggiatura non cambiano la lettera. Ogni opera vale una sola tappa.",
+    kind: "thematic",
+    color: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  },
   {
     id: "strega",
     name: "Una vita da Strega",
@@ -163,6 +174,12 @@ export function createEnrollment(
 }
 export function challengeSlots(enrollment: ChallengeEnrollment): ChallengeSlot[] {
   const { id } = enrollment;
+  if (id === "alphabet")
+    return Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ", (letter) => ({
+      id: `letter-${letter}`,
+      label: letter,
+      options: [],
+    }));
   if (id === "countries")
     return Array.from({ length: 12 }, (_, i) => ({
       id: `country-${i + 1}`,
@@ -263,18 +280,21 @@ export function challengeProgress(
       enrollment.id === "countries"
         ? (manual?.country?.toUpperCase() ?? available.shift())
         : undefined;
-    const matching = country
-      ? library.filter(
-          (item) => bookCountries(item).includes(country) || manual?.bookId === item.book_id,
-        )
-      : [];
+    const matching =
+      enrollment.id === "alphabet"
+        ? library.filter((item) => titleInitial(item.books?.title ?? "") === slot.label)
+        : country
+          ? library.filter(
+              (item) => bookCountries(item).includes(country) || manual?.bookId === item.book_id,
+            )
+          : [];
     const assigned = slot.fixedBookId
       ? eligible.find((item) => item.book_id === slot.fixedBookId)
       : manual
         ? eligible.find((item) => item.book_id === manual.bookId)
         : undefined;
     const options =
-      enrollment.id === "countries"
+      enrollment.id === "countries" || enrollment.id === "alphabet"
         ? matching.filter((item) => eligibleReading(item, enrollment))
         : assigned
           ? [assigned]

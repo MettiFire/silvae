@@ -1,3 +1,4 @@
+import { RemoveLibraryBook } from "@/components/RemoveLibraryBook";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { MangaProgressLabel } from "@/components/MangaProgressLabel";
 import { isMangaId } from "@/lib/manga-model";
@@ -294,6 +295,7 @@ function LibraryPage() {
                     />
                   )
                 )}
+                <RemoveLibraryBook id={i.id} title={i.books?.title ?? ""} />
               </div>
               <LeafRating
                 value={i.rating != null ? Number(i.rating) : null}
@@ -317,6 +319,7 @@ function LibraryPage() {
                 }
                 footer={
                   <>
+                    <RemoveLibraryBook id={i.id} title={i.books.title} />
                     {i.needs_review && (
                       <p className="mt-1 text-xs text-primary">
                         <UiText text="Dati CSV da verificare" />

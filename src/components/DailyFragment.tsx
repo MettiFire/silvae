@@ -1,3 +1,9 @@
+import { useTranslate } from "@/lib/use-ui-language";
+import { useFragmentFeedback } from "@/lib/use-fragment-feedback";
+import { preferredFragmentPool } from "@/lib/fragment-feedback";
+import { DAILY_FRAGMENTS } from "@/data/daily-fragments";
+import { selectDailyFragment } from "@/lib/daily-fragment";
+import { toast } from "@/lib/localized-toast";
 import { selectMultilingualFragment } from "@/lib/fragment-archive";
 import { useFragmentArchive } from "@/lib/use-fragment-archive";
 import { useAuth } from "@/lib/auth";
@@ -7,13 +13,14 @@ import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
-import { dailyFragment, fragmentDay } from "@/lib/daily-fragment";
+import { ArrowRight, ThumbsDown } from "lucide-react";
+import { fragmentDay } from "@/lib/daily-fragment";
 import { searchBooks } from "@/lib/books";
 import { sameAuthorName, workTitle } from "@/lib/work-identity";
 import { BookCover } from "./BookCard";
 
 export function DailyFragment() {
+  const t = useTranslate();
   const { user } = useAuth();
   const { language } = useBookLanguage(
     parsePreferences(user?.user_metadata[PREFERENCES_FIELD])?.language,
@@ -31,13 +38,18 @@ export function DailyFragment() {
     };
   }, []);
   const archive = useFragmentArchive();
+  const feedback = useFragmentFeedback();
   // Keep the bundled collection as a network-failure fallback; no third-party
   // quote API is contacted while rendering the home page.
   const fragment = day
     ? archive.data?.length
-      ? selectMultilingualFragment(day, archive.data, archive.languages)
+      ? selectMultilingualFragment(
+          day,
+          preferredFragmentPool(archive.data, feedback.feedback, day),
+          archive.languages,
+        )
       : archive.isError && archive.languages.includes("it")
-        ? dailyFragment(day)
+        ? selectDailyFragment(day, preferredFragmentPool(DAILY_FRAGMENTS, feedback.feedback, day))
         : null
     : null;
   const englishTitles: Record<string, string> = {
@@ -174,6 +186,32 @@ export function DailyFragment() {
                   <ArrowRight size={14} aria-hidden="true" />
                 </a>
               )}
+              <button
+                type="button"
+                disabled={feedback.busy}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+                onClick={async () => {
+                  const author = fragment.author;
+                  try {
+                    await feedback.change(author, true);
+                    toast.success("Ti proporremo meno frammenti di questo autore", {
+                      action: {
+                        label: t("Annulla"),
+                        onClick: () => {
+                          void feedback
+                            .change(author, false)
+                            .catch(() => toast.error("Preferenza non salvata. Riprova."));
+                        },
+                      },
+                    });
+                  } catch {
+                    toast.error("Preferenza non salvata. Riprova.");
+                  }
+                }}
+              >
+                <ThumbsDown size={13} aria-hidden="true" />
+                <UiText text="Mostra meno di questo autore" />
+              </button>
             </div>
             <div className="sr-only">
               <a

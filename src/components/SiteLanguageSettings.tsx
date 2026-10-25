@@ -1,3 +1,4 @@
+import { useFragmentFeedback } from "@/lib/use-fragment-feedback";
 import { FRAGMENT_LANGUAGES, resolveFragmentLanguages } from "@/lib/fragment-languages";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/lib/localized-toast";
 export function SiteLanguageSettings() {
   const { user } = useAuth();
+  const fragmentFeedback = useFragmentFeedback();
   const ui = useUiLanguage();
   const t = useTranslate();
   const qc = useQueryClient();
@@ -103,6 +105,33 @@ export function SiteLanguageSettings() {
           ))}
         </div>
       </fieldset>
+      {fragmentFeedback.feedback.length > 0 && (
+        <section className="mt-6 border-t border-border pt-5">
+          <h3 className="text-sm font-medium">{t("Autori meno frequenti nei frammenti")}</h3>
+          <ul className="mt-3 space-y-2">
+            {fragmentFeedback.feedback.map(({ author }) => (
+              <li key={author} className="flex items-center justify-between gap-3 text-sm">
+                <span>{author}</span>
+                <button
+                  type="button"
+                  disabled={fragmentFeedback.busy || busy}
+                  className="text-primary hover:underline disabled:opacity-50"
+                  onClick={async () => {
+                    try {
+                      await fragmentFeedback.change(author, false);
+                      toast.success("Preferenza aggiornata");
+                    } catch {
+                      toast.error("Preferenza non salvata. Riprova.");
+                    }
+                  }}
+                >
+                  {t("Ripristina")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <button className="button-ink mt-5" disabled={busy}>
         {t(busy ? "Salvataggio…" : "Salva preferenze linguistiche")}
       </button>

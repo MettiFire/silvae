@@ -1,3 +1,4 @@
+import { RemoveLibraryBook } from "@/components/RemoveLibraryBook";
 import { UiDate } from "@/lib/ui-language-context";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { BookExternalRatings } from "@/components/BookExternalRatings";
@@ -305,6 +306,7 @@ function BookPage() {
                 </p>
               )}
               <AddToListMenu book={book} />
+              {item && <RemoveLibraryBook id={item.id} title={book.title} />}
               {item && (
                 <div className="flex items-center gap-2">
                   <button

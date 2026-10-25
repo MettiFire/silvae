@@ -62,7 +62,7 @@ const iconFor = (id: ChallengeId) =>
     ? Globe2
     : id === "comfort-zone"
       ? Compass
-      : id === "backlog"
+      : id === "backlog" || id === "alphabet"
         ? BookOpen
         : id === "birth-year"
           ? Flag
@@ -277,10 +277,14 @@ export function ChallengeExplorer({
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <h2 className="font-display text-xl font-bold leading-tight">{c.name}</h2>
-                <p className="mt-2 text-sm font-medium text-primary">{c.tagline}</p>
+                <h2 className="font-display text-xl font-bold leading-tight">
+                  <UiText text={c.name} />
+                </h2>
+                <p className="mt-2 text-sm font-medium text-primary">
+                  <UiText text={c.tagline} />
+                </p>
                 <p className="mb-5 mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {c.description}
+                  <UiText text={c.description} />
                 </p>
                 {p && (
                   <div className="mt-auto mb-4">
@@ -327,8 +331,12 @@ export function ChallengeExplorer({
           {definition && draft && progress && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display text-2xl">{definition.name}</DialogTitle>
-                <DialogDescription>{definition.description}</DialogDescription>
+                <DialogTitle className="font-display text-2xl">
+                  <UiText text={definition.name} />
+                </DialogTitle>
+                <DialogDescription>
+                  <UiText text={definition.description} />
+                </DialogDescription>
               </DialogHeader>
               {draft.id === "nobel" && (
                 <div className="rounded-xl border border-border bg-accent/30 p-4 text-sm leading-relaxed">
@@ -601,7 +609,13 @@ export function ChallengeExplorer({
                     <UiText text="Recupero progressivo dei paesi degli autori… Le tappe si aggiornano automaticamente." />
                   </p>
                 )}
-                {definition.kind === "award" && draft.id !== "nobel" ? (
+                {draft.id === "alphabet" ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {progress.slots.map((slot) => (
+                      <AlphabetSlot key={slot.id} slot={slot} />
+                    ))}
+                  </div>
+                ) : definition.kind === "award" && draft.id !== "nobel" ? (
                   <>
                     <p className="mb-3 text-xs text-muted-foreground">
                       <UiText text="Scorri lungo il filo per attraversare gli anni. Apri i dettagli di una tappa per trovare o associare il libro." />
@@ -656,7 +670,7 @@ export function ChallengeExplorer({
                     ))}
                   </div>
                 )}
-                {progress.total > slotLimit && (
+                {draft.id !== "alphabet" && progress.total > slotLimit && (
                   <button
                     className={`${buttonClass} mt-4 w-full`}
                     onClick={() => setSlotLimit((n) => n + 20)}
@@ -724,6 +738,41 @@ export function ChallengeExplorer({
 }
 
 type ResolvedSlot = ReturnType<typeof challengeProgress>["slots"][number];
+function AlphabetSlot({ slot }: { slot: ResolvedSlot }) {
+  const item = slot.completed ?? slot.matching.find((entry) => !!entry.books);
+  return (
+    <article
+      className={`rounded-xl border p-4 ${slot.completed ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h4 className="font-display text-3xl">{slot.label}</h4>
+        {slot.completed && <Check className="h-4 w-4 text-primary" aria-label="Letto" />}
+      </div>
+      {item?.books ? (
+        <Link
+          to="/book/$bookId"
+          params={{ bookId: item.book_id }}
+          className="flex items-start gap-3"
+        >
+          <BookCover book={item.books} className="h-20 w-14 shrink-0" fit="contain" />
+          <span className="min-w-0">
+            <span className="line-clamp-2 block text-sm font-medium">{item.books.title}</span>
+            <span className="line-clamp-1 block text-xs text-muted-foreground">
+              {item.books.authors.join(", ")}
+            </span>
+            <span className="mt-2 block text-xs text-primary">
+              <UiText text={slot.completed ? "Letto" : "Da completare"} />
+            </span>
+          </span>
+        </Link>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          <UiText text="Trova una lettura per questa lettera" />
+        </p>
+      )}
+    </article>
+  );
+}
 function SlotRow({
   slot,
   enrollment,
@@ -890,7 +939,7 @@ function SlotRow({
                 <AwardSearch title={winner.title ?? ""} author={winner.author} />
               </>
             )}
-            {joined && !slot.fixedBookId && (
+            {joined && !slot.fixedBookId && enrollment.id !== "alphabet" && (
               <button
                 className={buttonClass}
                 onClick={() => {

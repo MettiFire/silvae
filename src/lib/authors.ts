@@ -1,3 +1,4 @@
+import { SUPPLEMENT_AUTHOR, CATALOGUE_SUPPLEMENT } from "./catalogue-supplement.ts";
 import { verifiedAuthorIdentity } from "./verified-author-identities.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
 import { authorCountryKey } from "./author-country-key.ts";
@@ -66,26 +67,33 @@ export async function findAuthors(
   language?: string,
   signal?: AbortSignal,
 ): Promise<AuthorCandidate[]> {
+  const local = authorMatchesQuery(SUPPLEMENT_AUTHOR, name) ? [SUPPLEMENT_AUTHOR] : [];
   const d = await get(
     `/search/authors.json?${new URLSearchParams({ q: name, limit: "20" })}`,
     signal,
-  );
-  return (d.docs ?? [])
-    .filter((a: AuthorDoc) => /^OL\d+A$/.test(a.key))
-    .map((a: AuthorDoc) => ({
-      id: a.key,
-      name: authorDisplayName([a.name, ...(a.alternate_names ?? [])], name, language),
-      alternateNames: [a.name, ...(a.alternate_names ?? [])],
-      death: a.death_date ?? null,
-      birth: a.birth_date ?? null,
-      topWork: a.top_work ?? null,
-      workCount: a.work_count ?? 0,
-    }))
-    .sort(
-      (a: AuthorCandidate, b: AuthorCandidate) =>
-        Number(authorCountryKey(b.name) === authorCountryKey(name)) -
-        Number(authorCountryKey(a.name) === authorCountryKey(name)),
-    );
+  ).catch((error) => {
+    if (signal?.aborted || !local.length) throw error;
+    return { docs: [] };
+  });
+  return [
+    ...local,
+    ...(d.docs ?? [])
+      .filter((a: AuthorDoc) => /^OL\d+A$/.test(a.key))
+      .map((a: AuthorDoc) => ({
+        id: a.key,
+        name: authorDisplayName([a.name, ...(a.alternate_names ?? [])], name, language),
+        alternateNames: [a.name, ...(a.alternate_names ?? [])],
+        death: a.death_date ?? null,
+        birth: a.birth_date ?? null,
+        topWork: a.top_work ?? null,
+        workCount: a.work_count ?? 0,
+      }))
+      .sort(
+        (a: AuthorCandidate, b: AuthorCandidate) =>
+          Number(authorCountryKey(b.name) === authorCountryKey(name)) -
+          Number(authorCountryKey(a.name) === authorCountryKey(name)),
+      ),
+  ];
 }
 export function defaultAuthor(candidates: AuthorCandidate[], name: string): string | null {
   const authority = verifiedAuthorIdentity(name);
@@ -111,6 +119,16 @@ export async function getAuthor(
   preferredName?: string,
   language?: string,
 ): Promise<AuthorDetails> {
+  if (id === SUPPLEMENT_AUTHOR.id)
+    return {
+      id,
+      name: SUPPLEMENT_AUTHOR.name,
+      bio: "Autore di riletture umoristiche della mitologia greca pubblicate da Mondadori.",
+      birth: null,
+      death: null,
+      photo: null,
+      source: "https://www.libreriarizzoli.it/autore/il-trono-del-muori/c/05773817",
+    };
   if (!/^OL\d+A$/.test(id)) throw new Error("Autore non valido.");
   const a = await get(`/authors/${id}.json`);
   return {
@@ -135,6 +153,16 @@ export async function getAuthorBooks(
     authorIds?: string[] | undefined;
   } = {},
 ): Promise<{ books: Book[]; total: number }> {
+  if (id === SUPPLEMENT_AUTHOR.id) {
+    const books = CATALOGUE_SUPPLEMENT.filter((book) =>
+      book.authors.includes(SUPPLEMENT_AUTHOR.name),
+    ).sort((a, b) =>
+      sort === "title"
+        ? a.title.localeCompare(b.title)
+        : (b.published_year ?? 0) - (a.published_year ?? 0),
+    );
+    return { books: page === 0 ? books : [], total: books.length };
+  }
   if (!/^OL\d+A$/.test(id)) throw new Error("Autore non valido.");
   const ids = [
     ...new Set([id, ...(options.authorIds ?? []).filter((key) => /^OL\d+A$/.test(key))]),
@@ -156,7 +184,7 @@ export async function getAuthorBooks(
       .map((d: AuthorBookDoc) => d.key.split("/").pop()!),
     options.language,
   );
-  return {
+  const result: { books: Book[]; total: number } = {
     total: data.numFound ?? data.num_found ?? 0,
     books: (data.docs ?? []).map((d: AuthorBookDoc) => {
       const edition = d.editions?.docs?.[0];
@@ -183,4 +211,19 @@ export async function getAuthorBooks(
       };
     }),
   };
+  // The Italian Portugal edition is absent from Open Library's language index.
+  if (
+    page === 0 &&
+    (!options.language || options.language === "it") &&
+    ids.some((key) => ["OL3144540A", "OL7534188A"].includes(key))
+  ) {
+    const portugal = CATALOGUE_SUPPLEMENT[0]!;
+    const index = result.books.findIndex((book) => book.id === portugal.id);
+    if (index >= 0) result.books[index] = portugal;
+    else {
+      result.books.push(portugal);
+      result.total++;
+    }
+  }
+  return result;
 }

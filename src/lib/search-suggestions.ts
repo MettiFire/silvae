@@ -63,3 +63,12 @@ export function bookSuggestions(books: Book[], limit = 5) {
   }
   return groups.slice(0, limit);
 }
+
+/** Complete words across both title and authors, without sending user Solr syntax. */
+export function catalogueCompletionQuery(query: string) {
+  const words = textKey(query).split(" ").filter(Boolean).slice(0, 16);
+  return words.map((word, i) => (i === words.length - 1 ? `${word}*` : word)).join(" AND ");
+}
+export function matchesCatalogueCompletion(book: Pick<Book, "title" | "authors">, query: string) {
+  return matchesTitleCompletion([book.title, ...book.authors].join(" "), query);
+}

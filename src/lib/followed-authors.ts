@@ -1,3 +1,4 @@
+import { validAuthorId } from "./catalogue-supplement.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../integrations/supabase/types";
 export const AUTHORS_FIELD = "followed_authors_v1";
@@ -18,7 +19,7 @@ export function parseFollowedAuthors(raw: unknown): FollowedAuthor[] {
         !a ||
         typeof a !== "object" ||
         typeof a.id !== "string" ||
-        !/^OL\d+A$/.test(a.id) ||
+        !validAuthorId(a.id) ||
         seen.has(a.id) ||
         typeof a.name !== "string" ||
         !a.name.trim() ||
@@ -43,7 +44,7 @@ export async function changeFollowedAuthor(
   if (error) throw error;
   if (data.user?.id !== userId) throw new Error("Accedi di nuovo per salvare l’autore.");
   const previous = parseFollowedAuthors(data.user.user_metadata[AUTHORS_FIELD]);
-  const ids = new Set([author.id, ...(author.ids ?? []).filter((id) => /^OL\d+A$/.test(id))]);
+  const ids = new Set([author.id, ...(author.ids ?? []).filter((id) => validAuthorId(id))]);
   if (
     follow &&
     previous.some((a) => a.id === author.id) &&

@@ -1,3 +1,4 @@
+import { CATALOGUE_SUPPLEMENT, supplementSearch } from "./catalogue-supplement";
 import { olCatalogueSearch as serverOlCatalogueSearch } from "./openlibrary.functions";
 import { createOpenLibrarySearch } from "./openlibrary-search";
 const browserOlSearch = createOpenLibrarySearch();
@@ -16,8 +17,8 @@ import { genreQuery } from "./genre-groups.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
 import {
   bookSuggestions,
-  matchesTitleCompletion,
-  titleCompletionQuery,
+  matchesCatalogueCompletion,
+  catalogueCompletionQuery,
 } from "@/lib/search-suggestions";
 import { getAuthor } from "@/lib/authors";
 import { BOOK_LANGUAGES } from "./book-language";
@@ -309,6 +310,7 @@ export async function searchBooks(
   } = {},
 ) {
   if (!query.trim()) return [];
+  const local = supplementSearch(query);
   const max = Math.max(1, Math.min(40, opts.max ?? 20));
   const params = new URLSearchParams({
     q: query,
@@ -327,11 +329,28 @@ export async function searchBooks(
     }
     const data = JSON.parse(out.json || "{}") as { items?: Volume[] };
     const books = (data.items ?? []).map(mapVolume);
-    if (books.length) return books;
+    if (books.length) return bookSuggestions([...local, ...books], max);
   } catch {
     // Missing keys, upstream outages and exhausted quotas all use the public fallback.
   }
-  return olSearch(query, max, opts.startIndex ?? 0, opts.orderBy ?? "relevance", opts.language);
+  try {
+    return bookSuggestions(
+      [
+        ...local,
+        ...(await olSearch(
+          query,
+          max,
+          opts.startIndex ?? 0,
+          opts.orderBy ?? "relevance",
+          opts.language,
+        )),
+      ],
+      max,
+    );
+  } catch (error) {
+    if (local.length) return local;
+    throw error;
+  }
 }
 
 /** Work-level autocomplete: one request, no serial cover lookups on each keystroke. */
@@ -343,7 +362,7 @@ export async function searchBookSuggestions(
   const clean = query.trim();
   if (clean.length < 2) return [];
   if (/^(?:[\d\s-]{10,})$/.test(clean)) return bookSuggestions(await searchByIsbn(clean));
-  const completion = titleCompletionQuery(clean);
+  const completion = catalogueCompletionQuery(clean);
   if (!completion) return [];
   try {
     const params = new URLSearchParams({
@@ -368,17 +387,24 @@ export async function searchBookSuggestions(
         if (edition?.isbn) localized.isbn = edition.isbn;
         return mapOLDoc(localized);
       })
-      .filter((book) => matchesTitleCompletion(book.title, clean));
-    if (books.length) return bookSuggestions(books);
+      .filter((book) => matchesCatalogueCompletion(book, clean));
+    if (books.length) return bookSuggestions([...supplementSearch(clean), ...books]);
   } catch (error) {
     if (signal?.aborted) throw error;
   }
-  // A second provider remains available during outages or gaps in the work catalogue.
-  return bookSuggestions(
-    (await searchBooks(clean, { max: 20, language })).filter((book) =>
-      matchesTitleCompletion(book.title, clean),
-    ),
-  );
+  // Keep verified gaps available even when both remote providers are unavailable.
+  const local = supplementSearch(clean);
+  try {
+    return bookSuggestions([
+      ...local,
+      ...(await searchBooks(clean, { max: 20, language })).filter((book) =>
+        matchesCatalogueCompletion(book, clean),
+      ),
+    ]);
+  } catch (error) {
+    if (signal?.aborted || !local.length) throw error;
+    return local;
+  }
 }
 
 /** Enrich incomplete stored records while keeping their original ID and chosen cover. */
@@ -444,6 +470,17 @@ async function localizedBookEdition(book: Book, language?: string): Promise<Book
 }
 export async function getBook(id: string, language?: string): Promise<Book> {
   const { data: cached } = await supabase.from("books").select("*").eq("id", id).maybeSingle();
+  const supplement = CATALOGUE_SUPPLEMENT.find((book) => book.id === id);
+  if (
+    supplement &&
+    (supplement.content_language === language || !language || !id.startsWith("ol:"))
+  )
+    return {
+      ...supplement,
+      ...(cached ?? {}),
+      isbns: supplement.isbns ?? [],
+      description: cached?.description || supplement.description,
+    };
   if (isMangaId(id)) {
     try {
       const manga = (
