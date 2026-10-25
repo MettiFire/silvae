@@ -1,4 +1,4 @@
-# Silvae
+# Silvae 🌿
 
 **Keep track of every story.**
 
@@ -9,7 +9,7 @@ with light and dark themes.
 
 [Open Silvae](https://silvae.lovable.app) · [Report an issue](https://github.com/MettiFire/silvae/issues)
 
-## Features
+## Features 📚
 
 - **Your library:** organize books as to read, currently reading, read, or abandoned.
   Track dates, progress, rereads, favorites, reviews, and personal leaf ratings.
