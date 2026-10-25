@@ -31,6 +31,10 @@ async function resolveLimited(book: Book, signal: AbortSignal) {
         ...(book.isbns ? { isbns: book.isbns.slice(0, 3) } : {}),
       },
     });
+  } catch (error) {
+    if (signal.aborted) throw error;
+    // A failed lookup only means "unverified": never break the page for it.
+    return { workIds: [], titles: [], verified: false };
   } finally {
     const next = waiting.shift();
     if (next) next();
