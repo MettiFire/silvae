@@ -131,3 +131,30 @@ export async function loadFragmentArchive(
   if (!validArchive(archive, language)) throw Error("Invalid fragment archive");
   return archive;
 }
+
+/** Balance selected languages, then advance each language by its own publication day.
+ * Advancing by the real day would permanently skip half of an even-sized pool.
+ */
+export function selectMultilingualFragment(
+  day: string,
+  pool: readonly ArchivedFragment[],
+  languages: readonly string[],
+) {
+  const available = [...new Set(languages)]
+    .filter((l) => pool.some((e) => e.language === l))
+    .sort();
+  if (!available.length) throw Error("Empty fragment archive");
+  const epoch = Date.parse("2026-10-26T00:00:00Z");
+  const date = Date.parse(`${day}T00:00:00Z`);
+  if (!Number.isFinite(date) || new Date(date).toISOString().slice(0, 10) !== day)
+    throw Error("Invalid fragment day");
+  const offset = Math.floor((date - epoch) / 86400000);
+  const selected = available[((offset % available.length) + available.length) % available.length]!;
+  const virtualDay = new Date(epoch + Math.floor(offset / available.length) * 86400000)
+    .toISOString()
+    .slice(0, 10);
+  return selectArchiveFragment(
+    virtualDay,
+    pool.filter((e) => e.language === selected),
+  );
+}

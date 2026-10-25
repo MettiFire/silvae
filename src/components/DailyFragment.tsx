@@ -1,4 +1,4 @@
-import { selectArchiveFragment } from "@/lib/fragment-archive";
+import { selectMultilingualFragment } from "@/lib/fragment-archive";
 import { useFragmentArchive } from "@/lib/use-fragment-archive";
 import { useAuth } from "@/lib/auth";
 import { useBookLanguage } from "@/lib/use-book-language";
@@ -35,8 +35,8 @@ export function DailyFragment() {
   // quote API is contacted while rendering the home page.
   const fragment = day
     ? archive.data?.length
-      ? selectArchiveFragment(day, archive.data)
-      : archive.isError
+      ? selectMultilingualFragment(day, archive.data, archive.languages)
+      : archive.isError && archive.languages.includes("it")
         ? dailyFragment(day)
         : null
     : null;
@@ -197,7 +197,13 @@ export function DailyFragment() {
         </div>
       ) : (
         <p className="font-display text-xl text-muted-foreground" role="status">
-          <UiText text="Una pagina da incontrare, ogni giorno." />
+          <UiText
+            text={
+              archive.isError
+                ? "Frammento temporaneamente non disponibile."
+                : "Una pagina da incontrare, ogni giorno."
+            }
+          />
         </p>
       )}
     </UiElement>

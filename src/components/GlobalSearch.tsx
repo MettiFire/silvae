@@ -1,3 +1,6 @@
+import { useLibrary } from "@/lib/library";
+import { unifiedSearchResults, preferOwnedManga } from "@/lib/unified-search";
+import { isMangaId } from "@/lib/manga-model";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { mangaCatalogue } from "@/lib/manga-client";
 import { useEffect, useRef, useState } from "react";
@@ -16,7 +19,7 @@ import { BookCover } from "@/components/BookCard";
 
 export function GlobalSearch() {
   const [term, setTerm] = useState("");
-  const [mode, setMode] = useState<"books" | "manga">("books");
+  const [mode, setMode] = useState<"all" | "books" | "manga">("all");
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -26,6 +29,7 @@ export function GlobalSearch() {
   const [resultHeight, setResultHeight] = useState(320);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: library = [] } = useLibrary(user?.id);
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
 
@@ -49,7 +53,7 @@ export function GlobalSearch() {
     refetch: retryBooks,
   } = useQuery({
     queryKey: ["global-search-works", debounced, language ?? "any"],
-    enabled: mode === "books" && languageReady && debounced.trim().length >= 2,
+    enabled: mode !== "manga" && languageReady && debounced.trim().length >= 2,
     queryFn: ({ signal }) => searchBookSuggestions(debounced, signal, language),
     staleTime: 5 * 60 * 1000,
     retry: false,
@@ -58,7 +62,7 @@ export function GlobalSearch() {
   const authors = useQuery({
     queryKey: ["author-candidates-v2", debounced.trim(), language ?? "any"],
     enabled:
-      mode === "books" &&
+      mode !== "manga" &&
       languageReady &&
       debounced.trim().length >= 3 &&
       !/^[\d\s-]+$/.test(debounced),
@@ -67,16 +71,35 @@ export function GlobalSearch() {
     retry: false,
   });
   const manga = useQuery({
-    queryKey: ["manga-search", debounced, language ?? "it"],
-    enabled: mode === "manga" && languageReady && debounced.trim().length >= 2,
-    queryFn: () =>
-      mangaCatalogue({ data: { query: debounced, ...(language ? { language } : {}) } }),
+    queryKey: ["manga-search-v3", debounced, language ?? "it"],
+    enabled:
+      mode !== "books" &&
+      languageReady &&
+      debounced.trim().length >= 2 &&
+      !/^[\d\s-]+$/.test(debounced),
+    queryFn: ({ signal }) =>
+      mangaCatalogue({ signal, data: { query: debounced, ...(language ? { language } : {}) } }),
     staleTime: 3600000,
     retry: false,
   });
-  const visibleResults = mode === "manga" ? (manga.data ?? []) : results;
-  const fetching = mode === "manga" ? manga.isFetching : isFetching;
-  const searchError = mode === "manga" ? manga.isError : isError;
+  const mangaResults = preferOwnedManga(
+    manga.data ?? [],
+    library.flatMap((item) => (item.books ? [item.books] : [])),
+  );
+  const visibleResults =
+    mode === "all"
+      ? unifiedSearchResults(results, mangaResults, debounced)
+      : mode === "manga"
+        ? mangaResults
+        : results;
+  const fetching =
+    mode === "all"
+      ? manga.isFetching || isFetching
+      : mode === "manga"
+        ? manga.isFetching
+        : isFetching;
+  const searchError =
+    mode === "all" ? manga.isError && isError : mode === "manga" ? manga.isError : isError;
   const authorResults =
     mode === "manga" || /^[\d\s-]+$/.test(debounced)
       ? []
@@ -165,12 +188,15 @@ export function GlobalSearch() {
         aria-label="Tipo di ricerca"
         value={mode}
         onChange={(e) => {
-          setMode(e.target.value as "books" | "manga");
+          setMode(e.target.value as "all" | "books" | "manga");
           setActive(-1);
           setOpen(true);
         }}
         className="absolute left-2 top-1/2 z-10 h-7 w-20 -translate-y-1/2 rounded border-0 bg-card pl-1 text-xs"
       >
+        <option value="all">
+          <UiText text="Tutto" />
+        </option>
         <option value="books">
           <UiText text="Libri" />
         </option>
@@ -188,8 +214,8 @@ export function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)}
-        placeholder={mode === "manga" ? "Cerca una serie manga…" : "Cerca libri, autori…"}
-        aria-label={mode === "manga" ? "Cerca manga" : "Cerca libri e autori"}
+        placeholder={mode === "manga" ? "Cerca una serie manga…" : "Cerca libri, manga, autori…"}
+        aria-label={mode === "manga" ? "Cerca manga" : "Cerca libri, manga e autori"}
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={visible}
@@ -226,7 +252,7 @@ export function GlobalSearch() {
 
         className="h-10 w-full rounded-xl border border-border bg-card pl-24 pr-11 text-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
       />
-      {mode === "books" && (
+      {mode !== "manga" && (
         <UiElement
           as="button"
           type="button"
@@ -261,27 +287,31 @@ export function GlobalSearch() {
                 disabled={fetching}
                 className="mt-2 underline disabled:opacity-50"
                 onClick={() => {
-                  void (mode === "manga" ? manga.refetch() : retryBooks());
+                  void (mode === "all"
+                    ? Promise.allSettled([manga.refetch(), retryBooks()])
+                    : mode === "manga"
+                      ? manga.refetch()
+                      : retryBooks());
                 }}
               >
                 <UiText text="Riprova" />
               </button>
             </div>
           )}
-          {(fetching || (mode === "books" && authors.isFetching)) && (
+          {(fetching || (mode !== "manga" && authors.isFetching)) && (
             <p className="px-3 py-3 text-sm text-muted-foreground">
               <UiText text="Ricerca in corso…" />
             </p>
           )}
           {!fetching &&
-            !(mode === "books" && authors.isFetching) &&
+            !(mode !== "manga" && authors.isFetching) &&
             !searchError &&
             options.length === 0 && (
               <p className="px-3 py-3 text-sm text-muted-foreground">
                 <UiText text="Nessun risultato" />
               </p>
             )}
-          {mode === "books" && authors.isError && (
+          {mode !== "manga" && authors.isError && (
             <p role="status" className="px-3 py-2 text-xs text-muted-foreground">
               <UiText text="Ricerca autori temporaneamente non disponibile." />
             </p>
@@ -313,9 +343,11 @@ export function GlobalSearch() {
             <p className="px-3 py-2 text-[11px] text-muted-foreground">
               <UiText
                 text={
-                  mode === "manga"
-                    ? "Serie manga · un risultato per serie, non per volume"
-                    : "Libri · Le copertine alternative sono nella scheda del libro"
+                  mode === "all"
+                    ? "Libri e serie manga"
+                    : mode === "manga"
+                      ? "Serie manga · un risultato per serie, non per volume"
+                      : "Libri · Le copertine alternative sono nella scheda del libro"
                 }
               />
             </p>
@@ -337,6 +369,11 @@ export function GlobalSearch() {
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">{b.title}</span>
                 <span className="block truncate text-xs text-muted-foreground">
+                  {isMangaId(b.id) && (
+                    <>
+                      <UiText text="Serie manga" /> ·{" "}
+                    </>
+                  )}
                   {b.authors.join(", ")}
                   {b.published_year ? ` · ${b.published_year}` : ""}
                 </span>

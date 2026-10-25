@@ -24,3 +24,29 @@ senza tale collegamento vengono escluse per evitare nuove identità duplicate. L
 sono escluse dalla ricerca. Se la chiamata server fallisce, il browser può tentare gli
 stessi cataloghi pubblici, senza token o dati dell'account. La disponibilità delle
 copertine dei singoli volumi resta legata a MangaDex.
+
+### Unified search and compact volume tracking
+
+Search defaults to All, with Books/Manga retained as optional filters. The merge
+prefers an exact series result over its individual volume editions, while preserving
+unrelated books with the same title. Manga results are marked as series. Search
+can return a useful catalogue even if the other catalogue fails.
+
+AniList is now the first manga-search provider, including an explicit creator
+lookup and credited-work filter. Kentaro/Kentarou Miura and either name order
+resolve to the same creator search. Live checks returned Berserk (MAL 2), Giganto
+Maxia, Du-ran-ki, Japan and other credited works. MangaDex fallback includes the
+mature `erotica` content rating so Berserk is not discarded; pornographic titles
+remain outside the included ratings. AniList `isAdult` and novel filters remain.
+
+The tracker is a single horizontal strip with 25-volume ranges, arrow/touch/keyboard
+scrolling, a read count, Save and one jump control. The missing-predecessors dialog
+is retained. Long manga are not labelled with invented seasons. The public gallery
+uses the same horizontal presentation. At most 25 volume cards render at once.
+
+Free-form edition names and manual edition totals have been removed from the form.
+New progress follows catalogue numbering. Existing custom edition/total metadata
+and read ranges are preserved; uncertain legacy numbering does not receive covers
+from another edition. No reliable publisher-edition catalogue was available, so
+this change does not offer a fictitious edition selector. Unknown ongoing totals
+stay unknown; marking published volumes does not complete an ongoing series.

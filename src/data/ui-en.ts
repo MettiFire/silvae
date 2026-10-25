@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Cerca libri, manga e autori": "Search books, manga and authors",
   "Nessuna lista ancora.": "No lists yet.",
   "Il tuo ritmo": "Your reading pace",
   "Il mio": "My",
@@ -1185,4 +1186,19 @@ export const UI_EN: Record<string, string> = {
   ott: "Oct",
   nov: "Nov",
   dic: "Dec",
+  "Lingue dei frammenti": "Fragment languages",
+  "Puoi sceglierne più di una: si alterneranno nei giorni, senza tradurre le citazioni.":
+    "Choose one or more languages. They alternate by day; quotations are not translated.",
+  "Salva preferenze linguistiche": "Save language preferences",
+  Tutto: "All",
+  "Cerca libri, manga, autori…": "Search books, manga, authors…",
+  "Libri e serie manga": "Books and manga series",
+  "Volume da segnare": "Volume to mark",
+  "Intervallo di volumi": "Volume range",
+  "Scorri i volumi indietro": "Scroll volumes back",
+  "Scorri i volumi avanti": "Scroll volumes forward",
+  "Seleziona i volumi e premi Salva.": "Select volumes, then press Save.",
+  "Numerazione personale già salvata: i progressi sono conservati senza abbinare copertine di altre edizioni.":
+    "Your saved personal numbering is preserved; covers from other editions are not assigned.",
+  "Frammento temporaneamente non disponibile.": "Daily fragment temporarily unavailable.",
 };

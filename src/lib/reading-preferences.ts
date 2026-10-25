@@ -1,3 +1,4 @@
+import { parseFragmentLanguages } from "./fragment-languages.ts";
 import { parseBookLanguage } from "./book-language.ts";
 import type { Book } from "./books";
 import type { LibraryItem } from "./library";
@@ -109,6 +110,7 @@ export const READING_GENRES = [
   },
 ] as const;
 export type ReadingPreferences = {
+  fragmentLanguages?: string[] | undefined;
   uiLanguage?: "it" | "en" | "auto" | undefined;
   ebookDevices?: string[] | undefined;
   version: 1;
@@ -138,6 +140,9 @@ export function parsePreferences(raw: unknown): ReadingPreferences | null {
   const liked = list(r["liked"]);
   if (r["status"] === "completed" && !liked.length) return null;
   return {
+    ...(parseFragmentLanguages(r["fragmentLanguages"]).length
+      ? { fragmentLanguages: parseFragmentLanguages(r["fragmentLanguages"]) }
+      : {}),
     ...(Array.isArray(r["ebookDevices"])
       ? {
           ebookDevices: [

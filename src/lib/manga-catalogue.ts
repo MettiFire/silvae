@@ -53,7 +53,7 @@ async function mdSearch(query: string, language: string) {
     "320831a8-4026-470b-94f6-8353740e6f04",
   ])
     params.append("excludedTags[]", tag);
-  for (const rating of ["safe", "suggestive"]) params.append("contentRating[]", rating);
+  for (const rating of ["safe", "suggestive", "erotica"]) params.append("contentRating[]", rating);
   const raw = await request<{ data: MangaDexRecord[] }>(`https://api.mangadex.org/manga?${params}`);
   return (raw.data as MangaDexRecord[])
     .filter(
@@ -88,6 +88,13 @@ export async function fetchMangaCatalogue(data: MangaCatalogueInput) {
       }
     }
     const alias = mangaSearchTitle(data.query);
+    // This provider supports both titles and creators (MangaDex title search does not).
+    try {
+      const results = await aniListCatalogue({ query: alias });
+      if (results.length) return results;
+    } catch {
+      /* Retain the other public providers. */
+    }
     let primary: Book[] = [];
     let primaryError = false;
     try {
@@ -117,12 +124,14 @@ export async function fetchMangaCatalogue(data: MangaCatalogueInput) {
         `https://api.jikan.moe/v4/manga?${new URLSearchParams({ q: alias ?? data.query, limit: "15", sfw: "true" })}`,
         true,
       );
-      return mergeMangaResults(
+      const results = mergeMangaResults(
         primary,
         raw.data
           .filter((r) => ["Manga", "Manhwa", "Manhua", "One-shot"].includes(r.type ?? ""))
           .map(mapJikanManga),
       );
+      if (results.length) return results;
+      return aniListCatalogue({ query: alias });
     } catch {
       try {
         return mergeMangaResults(primary, await aniListCatalogue({ query: alias }));

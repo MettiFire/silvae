@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { gbSearch, gbVolume, gbCovers } from "@/lib/google-books.functions";
 
 export type Book = {
+  author_aliases?: string[] | undefined;
   manga?: MangaDetails;
   content_language?: string | undefined;
   id: string;

@@ -1,3 +1,4 @@
+import { FRAGMENT_LANGUAGES, resolveFragmentLanguages } from "@/lib/fragment-languages";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -12,7 +13,17 @@ export function SiteLanguageSettings() {
   const ui = useUiLanguage();
   const t = useTranslate();
   const qc = useQueryClient();
-  const [choice, setChoice] = useState<UiChoice>(ui.choice);
+  const [draftChoice, setChoice] = useState<UiChoice | null>(null);
+  const choice = draftChoice ?? ui.choice;
+  const [draftFragments, setDraftFragments] = useState<string[] | null>(null);
+  const fragmentLanguages =
+    draftFragments ??
+    resolveFragmentLanguages(
+      parsePreferences(user?.user_metadata[PREFERENCES_FIELD])?.fragmentLanguages,
+      ui.language,
+    );
+  const setFragmentLanguages = (change: (previous: string[]) => string[]) =>
+    setDraftFragments(change(fragmentLanguages));
   const [busy, setBusy] = useState(false);
   return (
     <form
@@ -30,7 +41,8 @@ export function SiteLanguageSettings() {
           await saveReadingPreferences(supabase, user.id, {
             ...current,
             uiLanguage: choice,
-            language: choice,
+            language: choice !== ui.choice ? choice : current.language,
+            fragmentLanguages,
           });
           ui.setChoice(choice);
           await qc.invalidateQueries();
@@ -66,8 +78,33 @@ export function SiteLanguageSettings() {
           "Puoi scegliere un’altra lingua per i libri nei gusti di lettura, senza cambiare l’interfaccia.",
         )}
       </p>
+      <fieldset className="mt-6 border-t border-border pt-5" disabled={busy}>
+        <legend className="text-sm font-medium">{t("Lingue dei frammenti")}</legend>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t(
+            "Puoi sceglierne più di una: si alterneranno nei giorni, senza tradurre le citazioni.",
+          )}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-5">
+          {FRAGMENT_LANGUAGES.map(({ code, label }) => (
+            <label key={code} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={fragmentLanguages.includes(code)}
+                disabled={fragmentLanguages.length === 1 && fragmentLanguages.includes(code)}
+                onChange={(e) =>
+                  setFragmentLanguages((old) =>
+                    e.target.checked ? [...old, code].sort() : old.filter((l) => l !== code),
+                  )
+                }
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <button className="button-ink mt-5" disabled={busy}>
-        {t(busy ? "Salvataggio…" : "Salva lingua")}
+        {t(busy ? "Salvataggio…" : "Salva preferenze linguistiche")}
       </button>
     </form>
   );

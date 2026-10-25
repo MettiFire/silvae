@@ -67,3 +67,16 @@ interleaving, unsafe manifests, unavailable/invalid archives, sourced parsing, e
 commentary, and integrity of every published archive entry. Review the real source pages
 when changing parsing rules or admitting new authors; passing schema checks is not an
 editorial review of every quotation.
+
+## Multiple preferred fragment languages
+
+Settings > Language now stores `fragmentLanguages` independently of interface and
+catalogue preferences. The available archive languages are Italian and English;
+at least one must remain selected. Legacy accounts follow their interface language
+until they save an explicit selection. Choosing both alternates languages by Rome
+calendar date, then advances each language's own rotation by one slot. This prevents
+an even-sized corpus from losing half its works when its language appears every
+other day. With both languages selected and both archives available, the current
+98/392-work pools repeat no sooner than 196/784 calendar days respectively.
+If one selected archive is unavailable, selection uses the other selected archive;
+it never silently opts into a language that the user deselected.

@@ -1,3 +1,5 @@
+import { mangaAuthorMatches } from "./manga-search-names.ts";
+export { mangaAuthorMatches } from "./manga-search-names.ts";
 import { descriptionText } from "./book-metadata.ts";
 import type { Book } from "./books";
 export type AniListManga = {
@@ -5,15 +7,22 @@ export type AniListManga = {
   idMal: number | null;
   title: { romaji?: string; english?: string };
   volumes: number | null;
+  format?: string;
+  isAdult?: boolean;
   status: string;
   description?: string;
   startDate?: { year?: number | null };
   coverImage?: { large?: string };
-  staff?: { edges?: { role: string; node: { name: { full: string } } }[] };
+  staff?: {
+    edges?: {
+      role: string;
+      node: { name: { full: string; native?: string; alternative?: string[] } };
+    }[];
+  };
 };
 export function mapAniListManga(record: AniListManga): Book | null {
   // Reuse the existing MAL identity, so switching providers never duplicates a series.
-  if (!record.idMal) return null;
+  if (!record.idMal || record.format === "NOVEL" || record.isAdult) return null;
   return {
     id: `manga:mal:${record.idMal}`,
     title: record.title.english || record.title.romaji || "Manga",
@@ -22,6 +31,15 @@ export function mapAniListManga(record: AniListManga): Book | null {
         (record.staff?.edges ?? [])
           .filter((e) => /story|art|original|author/i.test(e.role))
           .map((e) => e.node.name.full),
+      ),
+    ],
+    author_aliases: [
+      ...new Set(
+        (record.staff?.edges ?? []).flatMap((e) =>
+          [e.node.name.native, ...(e.node.name.alternative ?? [])].filter(
+            (name): name is string => !!name,
+          ),
+        ),
       ),
     ],
     cover_url: record.coverImage?.large ?? null,
@@ -47,10 +65,10 @@ export async function aniListCatalogue(
   fetcher: typeof fetch = fetch,
 ): Promise<Book[]> {
   const fields =
-    "id idMal title{romaji english} volumes status description startDate{year} coverImage{large} staff(perPage:8){edges{role node{name{full}}}}";
+    "id idMal format isAdult title{romaji english} volumes status description startDate{year} coverImage{large} staff(perPage:8){edges{role node{name{full native alternative}}}}";
   const query = input.malId
     ? `query($id:Int!){Media(idMal:$id,type:MANGA){${fields}}}`
-    : `query($q:String!){Page(perPage:15){media(search:$q,type:MANGA,format_not:NOVEL,isAdult:false){${fields}}}}`;
+    : `query($q:String!){Page(perPage:15){media(search:$q,type:MANGA,format_not:NOVEL,isAdult:false){${fields}}} authors:Page(perPage:3){staff(search:$q){name{full} staffMedia(type:MANGA,sort:POPULARITY_DESC,perPage:20){nodes{${fields}}}}}}`;
   const response = await fetcher("https://graphql.anilist.co", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -62,12 +80,36 @@ export async function aniListCatalogue(
   });
   if (!response.ok) throw Error("Catalogo manga non disponibile. Riprova.");
   const raw = (await response.json()) as {
-    data?: { Media?: AniListManga; Page?: { media: AniListManga[] } };
+    data?: {
+      Media?: AniListManga;
+      Page?: { media: AniListManga[] };
+      authors?: {
+        staff: {
+          name: { full: string; native?: string; alternative?: string[] };
+          staffMedia?: { nodes: AniListManga[] };
+        }[];
+      };
+    };
     errors?: unknown[];
   };
   if (raw.errors?.length || !raw.data) throw Error("Catalogo manga non disponibile. Riprova.");
-  return (raw.data.Media ? [raw.data.Media] : (raw.data.Page?.media ?? [])).flatMap((r) => {
-    const book = mapAniListManga(r);
-    return book ? [book] : [];
-  });
+  const titles = raw.data.Media ? [raw.data.Media] : (raw.data.Page?.media ?? []);
+  const authored = (raw.data.authors?.staff ?? [])
+    .filter((a) => mangaAuthorMatches(a.name.full, input.query ?? ""))
+    .flatMap((a) => a.staffMedia?.nodes ?? [])
+    .filter((r) =>
+      (r.staff?.edges ?? []).some(
+        (e) =>
+          /story|art|original|author/i.test(e.role) &&
+          mangaAuthorMatches(e.node.name.full, input.query ?? ""),
+      ),
+    );
+  return [
+    ...new Map(
+      [...titles, ...authored].flatMap((r) => {
+        const book = mapAniListManga(r);
+        return book ? [[book.id, book] as const] : [];
+      }),
+    ).values(),
+  ].slice(0, 20);
 }
