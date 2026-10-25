@@ -372,22 +372,56 @@ export async function searchBookSuggestions(
       fields:
         "key,title,author_name,first_publish_year,cover_i,isbn,editions,editions.title,editions.cover_i,editions.isbn",
     });
-    const response = await olCatalogueSearch({
-      ...(signal ? { signal } : {}),
-      data: { params: Object.fromEntries(params) },
-    });
+    // Very short titles ("It") drown in prefix matches: also ask for the exact title.
+    const short = clean.length <= 4 && !clean.includes(" ");
+    const exact = short
+      ? new URLSearchParams({
+          q: `title:"${clean.replace(/["\\]/g, "")}"`,
+          limit: "10",
+          sort: "editions",
+          fields: params.get("fields")!,
+          ...(language ? { lang: language } : {}),
+        })
+      : null;
+    const [response, exactResponse] = await Promise.all([
+      olCatalogueSearch({
+        ...(signal ? { signal } : {}),
+        data: { params: Object.fromEntries(params) },
+      }),
+      exact
+        ? olCatalogueSearch({
+            ...(signal ? { signal } : {}),
+            data: { params: Object.fromEntries(exact) },
+          }).catch(() => null)
+        : Promise.resolve(null),
+    ]);
     if (response.status !== 200) throw new Error("Catalogo non disponibile");
-    const { docs = [] } = JSON.parse(response.json) as { docs?: OLDoc[] };
+    const { docs: mainDocs = [] } = JSON.parse(response.json) as { docs?: OLDoc[] };
+    const exactDocs =
+      exactResponse?.status === 200
+        ? ((JSON.parse(exactResponse.json) as { docs?: OLDoc[] }).docs ?? []).filter(
+            (doc) => workTitle(doc.title ?? "") === workTitle(clean),
+          )
+        : [];
+    const docs = [...exactDocs, ...mainDocs];
     const books = docs
       .map((doc) => {
         const edition = doc.editions?.docs?.[0];
         const localized: OLDoc = { ...doc };
-        if (edition?.title) localized.title = edition.title;
+        // Never replace a readable work title with an edition in an unexpected script.
+        if (
+          edition?.title &&
+          !(needsLocalizedTitle(edition.title, language ?? "it") && !needsLocalizedTitle(doc.title ?? "", language ?? "it"))
+        )
+          localized.title = edition.title;
         if (edition?.cover_i) localized.cover_i = edition.cover_i;
         if (edition?.isbn) localized.isbn = edition.isbn;
         return mapOLDoc(localized);
       })
-      .filter((book) => matchesCatalogueCompletion(book, clean));
+      .filter((book) => matchesCatalogueCompletion(book, clean))
+      .map((book, index) => ({ book, index, exact: workTitle(book.title) === workTitle(clean) }))
+      .sort((a, b) => Number(b.exact) - Number(a.exact) || a.index - b.index)
+      .map((item) => item.book);
     if (books.length) return bookSuggestions([...supplementSearch(clean), ...books]);
   } catch (error) {
     if (signal?.aborted) throw error;
