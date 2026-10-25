@@ -1,3 +1,4 @@
+import { useBookGridCapacity } from "./use-book-grid-capacity";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -15,6 +16,8 @@ import {
 import { useBookLanguage } from "@/lib/use-book-language";
 import { nextRecommendationRotation } from "@/lib/recommendation-rotation";
 export function useBookRecommendations() {
+  const recommendationCount = useBookGridCapacity();
+  const pageSize = Math.max(12, recommendationCount);
   const { user, loading: authLoading } = useAuth();
   const {
     data: library = [],
@@ -53,7 +56,7 @@ export function useBookRecommendations() {
     isError: recsError,
     refetch: retryRecs,
   } = useQuery({
-    queryKey: ["recs-v3", planKey, seed, user?.id, language ?? "any"],
+    queryKey: ["recs-v4", planKey, seed, user?.id, language ?? "any", pageSize],
     enabled:
       seed !== null &&
       languageReady &&
@@ -63,10 +66,10 @@ export function useBookRecommendations() {
       const lists = await Promise.allSettled(
         plan.map(async (g, index) => {
           const offset = (((seed ?? 0) + index) % 5) * 12;
-          let books = await searchBooks(g.query, { max: 12, startIndex: offset, language });
+          let books = await searchBooks(g.query, { max: pageSize, startIndex: offset, language });
           // An author with a small bibliography may not have a later page.
           if (!books.length && offset > 0)
-            books = await searchBooks(g.query, { max: 12, startIndex: 0, language });
+            books = await searchBooks(g.query, { max: pageSize, startIndex: 0, language });
           return books
             .filter((book) => !g.author || book.authors.some((a) => sameAuthorName(a, g.author!)))
             .map((book) => ({ book, genreId: g.genreId }));
@@ -75,8 +78,7 @@ export function useBookRecommendations() {
       if (lists.every((r) => r.status === "rejected")) throw new Error("Catalogo non disponibile");
       return lists.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
     },
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 5 * 60 * 1000,
     // Keep refresh/new-visit rotation, but do not repeat catalogue calls on tab focus.
     refetchOnWindowFocus: false,
   });
@@ -92,7 +94,15 @@ export function useBookRecommendations() {
   );
   const libraryReady = !authLoading && (!user || (!libraryLoading && !libraryError));
   const recommended = libraryReady
-    ? rankRecommendations(recs, preferences, library, dismissed, 12, seed ?? 0, identities)
+    ? rankRecommendations(
+        recs,
+        preferences,
+        library,
+        dismissed,
+        recommendationCount,
+        seed ?? 0,
+        identities,
+      )
     : [];
   return {
     user,
@@ -102,6 +112,7 @@ export function useBookRecommendations() {
     languageReady,
     dismissed,
     recommended,
+    recommendationCount,
     recsLoading:
       seed === null ||
       authLoading ||

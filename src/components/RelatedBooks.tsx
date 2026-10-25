@@ -1,3 +1,4 @@
+import { useBookGridCapacity } from "@/lib/use-book-grid-capacity";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -14,6 +15,8 @@ import { sameAuthorName } from "@/lib/work-identity";
 import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 
 export function RelatedBooks({ book }: { book: Book }) {
+  const recommendationCount = useBookGridCapacity(1);
+  const pageSize = Math.max(12, recommendationCount * 2);
   const section = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -37,16 +40,17 @@ export function RelatedBooks({ book }: { book: Book }) {
   const sources = relatedBookSources(book);
   const suggestions = useQuery({
     queryKey: [
-      "related-books",
+      "related-books-v2",
       book.id,
       sources.map((source) => source.query).join("|"),
       language ?? "any",
+      pageSize,
     ],
     enabled: visible && ready && !authLoading && sources.length > 0,
     queryFn: async () => {
       const results = await Promise.allSettled(
         sources.map(async (source) => {
-          const books = await searchBooks(source.query, { max: 12, language });
+          const books = await searchBooks(source.query, { max: pageSize, language });
           return books
             .filter(
               (candidate) =>
@@ -81,6 +85,7 @@ export function RelatedBooks({ book }: { book: Book }) {
         (suggestions.data ?? []).filter((item) => eligibleIds.has(item.book.id)),
         identities,
         preferences?.avoided ?? [],
+        recommendationCount,
       )
     : [];
   const loading =
@@ -118,7 +123,7 @@ export function RelatedBooks({ book }: { book: Book }) {
           aria-label="Caricamento libri simili"
           role="status"
         >
-          {Array.from({ length: 6 }, (_, i) => (
+          {Array.from({ length: recommendationCount }, (_, i) => (
             <div key={i} className="aspect-[2/3] animate-pulse rounded bg-muted" />
           ))}
         </UiElement>

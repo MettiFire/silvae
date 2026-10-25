@@ -21,8 +21,16 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 function Home() {
-  const { user, library, recommended, recsLoading, recsError, retryRecs, refresh } =
-    useBookRecommendations();
+  const {
+    user,
+    library,
+    recommended,
+    recommendationCount,
+    recsLoading,
+    recsError,
+    retryRecs,
+    refresh,
+  } = useBookRecommendations();
   const reading = library.filter((i) => i.status === "reading");
   const finished = library.filter((i) => i.status === "read");
   return (
@@ -184,7 +192,7 @@ function Home() {
             role="status"
             aria-label="Caricamento suggerimenti"
           >
-            {Array.from({ length: 6 }, (_, i) => (
+            {Array.from({ length: recommendationCount }, (_, i) => (
               <div key={i} className="aspect-[2/3] animate-pulse bg-muted" />
             ))}
           </UiElement>
