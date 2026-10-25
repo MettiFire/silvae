@@ -299,7 +299,7 @@ export function GlobalSearch() {
               </button>
             </div>
           )}
-          {(fetching || authors.isFetching) && (
+          {(fetching || authors.isFetching) && options.length === 0 && (
             <p className="px-3 py-3 text-sm text-muted-foreground">
               <UiText text="Ricerca in corso…" />
             </p>
