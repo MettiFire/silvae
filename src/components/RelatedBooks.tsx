@@ -131,7 +131,7 @@ export function RelatedBooks({ book }: { book: Book }) {
         <div className="book-grid grid">
           {related.map(({ book, reason }) => (
             <div key={book.id}>
-              <BookCard book={book} />
+              <BookCard book={book} quickAdd />
               <p className="mt-2 text-xs text-muted-foreground">
                 <UiText text={reason} />
               </p>

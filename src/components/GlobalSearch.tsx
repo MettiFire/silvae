@@ -16,6 +16,7 @@ import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useAuth } from "@/lib/auth";
 import { useBookLanguage } from "@/lib/use-book-language";
 import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
+import { QuickAddBook } from "@/components/QuickAddBook";
 import { BookCover } from "@/components/BookCard";
 
 export function GlobalSearch() {
@@ -216,6 +217,7 @@ export function GlobalSearch() {
         placeholder={mode === "manga" ? "Cerca una serie manga…" : "Cerca libri, manga, autori…"}
         aria-label={mode === "manga" ? "Cerca manga" : "Cerca libri, manga e autori"}
         role="combobox"
+        aria-haspopup="grid"
         aria-autocomplete="list"
         aria-expanded={visible}
         aria-controls="global-search-results"
@@ -270,7 +272,7 @@ export function GlobalSearch() {
         <UiElement
           as="div"
           ref={resultsRef}
-          role="listbox"
+          role="grid"
           id="global-search-results"
           aria-label="Risultati libri e autori"
           style={{ maxHeight: resultHeight, WebkitOverflowScrolling: "touch" }}
@@ -313,27 +315,32 @@ export function GlobalSearch() {
             </p>
           )}
           {authorResults.map((author, index) => (
-            <button
-              key={author.id}
-              id={`book-search-option-${index}`}
-              role="option"
-              aria-selected={active === index}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => choose(index)}
-              className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition hover:bg-accent aria-selected:bg-accent"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <UserRound aria-hidden="true" className="h-4 w-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">{author.name}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  <UiText text="Autore · Vai alla pagina" />
-                  {author.birth ? ` · ${author.birth}` : ""}
-                </span>
-              </span>
-            </button>
+            <div key={author.id} role="row">
+              <div
+                role="gridcell"
+                id={`book-search-option-${index}`}
+                aria-selected={active === index}
+                className="aria-selected:bg-accent"
+              >
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => choose(index)}
+                  className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition hover:bg-accent"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <UserRound aria-hidden="true" className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{author.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      <UiText text="Autore · Vai alla pagina" />
+                      {author.birth ? ` · ${author.birth}` : ""}
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
           ))}
           {visibleResults.length > 0 && (
             <p className="px-3 py-2 text-[11px] text-muted-foreground">
@@ -349,32 +356,40 @@ export function GlobalSearch() {
             </p>
           )}
           {visibleResults.map((b, index) => (
-            <button
-              key={b.id}
-              id={`book-search-option-${index + authorResults.length}`}
-              role="option"
-              aria-selected={active === index + authorResults.length}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => choose(index + authorResults.length)}
-              className="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-accent aria-selected:bg-accent"
-            >
-              <div className="w-8 shrink-0">
-                <BookCover book={b} />
+            <div key={b.id} role="row" className="flex items-center gap-1 pr-3">
+              <div
+                role="gridcell"
+                id={`book-search-option-${index + authorResults.length}`}
+                aria-selected={active === index + authorResults.length}
+                className="min-w-0 flex-1 aria-selected:bg-accent"
+              >
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => choose(index + authorResults.length)}
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-accent"
+                >
+                  <div className="w-8 shrink-0">
+                    <BookCover book={b} />
+                  </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{b.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {isMangaId(b.id) && (
+                        <>
+                          <UiText text="Serie manga" /> ·{" "}
+                        </>
+                      )}
+                      {b.authors.join(", ")}
+                      {b.published_year ? ` · ${b.published_year}` : ""}
+                    </span>
+                  </span>
+                </button>
               </div>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">{b.title}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {isMangaId(b.id) && (
-                    <>
-                      <UiText text="Serie manga" /> ·{" "}
-                    </>
-                  )}
-                  {b.authors.join(", ")}
-                  {b.published_year ? ` · ${b.published_year}` : ""}
-                </span>
-              </span>
-            </button>
+              <div role="gridcell">
+                <QuickAddBook book={b} />
+              </div>
+            </div>
           ))}
         </UiElement>
       )}

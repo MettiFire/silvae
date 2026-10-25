@@ -214,7 +214,7 @@ function Home() {
           <div className="book-grid grid gap-y-8">
             {recommended.map(({ book, reason }) => (
               <div key={book.id}>
-                <BookCard book={book} />
+                <BookCard book={book} quickAdd />
                 <p className="mt-3 border-t pt-2 text-[10px] leading-relaxed text-muted-foreground">
                   <UiText text={reason} />
                 </p>

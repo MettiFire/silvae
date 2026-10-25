@@ -173,7 +173,7 @@ function Discover() {
           <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {recommended.map(({ book: b, reason }) => (
               <div key={b.id} className="relative">
-                <BookCard book={b} />
+                <BookCard book={b} quickAdd />
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                   <UiText text={reason} />
                 </p>
@@ -267,7 +267,7 @@ function Discover() {
       ) : (
         <div className="book-grid grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
           {filtered.map((b) => (
-            <BookCard key={b.id} book={b} />
+            <BookCard key={b.id} book={b} quickAdd />
           ))}
         </div>
       )}

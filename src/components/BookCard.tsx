@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
 import { useResolvedBookCover } from "@/lib/book-cover-state";
 import { displayCoverUrls } from "@/lib/book-metadata";
+import { QuickAddBook } from "@/components/QuickAddBook";
 import { LeafRating } from "@/components/LeafRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
@@ -111,6 +112,7 @@ export function BookCard({
   onToggleFavorite,
   compact,
   footer,
+  quickAdd = false,
 }: {
   book: Book;
   rating?: number | null;
@@ -118,6 +120,7 @@ export function BookCard({
   onToggleFavorite?: () => void;
   compact?: boolean;
   footer?: React.ReactNode;
+  quickAdd?: boolean;
 }) {
   const density = useBookDensity();
   const small = compact ?? density === "compact";
@@ -137,6 +140,7 @@ export function BookCard({
         </h3>
         <p className="line-clamp-1 text-xs text-muted-foreground">{book.authors.join(", ")}</p>
       </Link>
+      {quickAdd && <QuickAddBook book={book} className="absolute left-2 top-2" />}
       {rating != null && <LeafRating value={rating} readOnly size={14} className="mt-1" />}
       {onToggleFavorite && (
         <UiElement

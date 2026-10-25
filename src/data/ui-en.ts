@@ -1,4 +1,7 @@
 export const UI_EN: Record<string, string> = {
+  "Modifica stato di lettura": "Change reading status",
+  "Libreria aggiornata": "Library updated",
+  "Libreria non disponibile": "Library unavailable",
   "Da completare": "To complete",
   "Trova una lettura per questa lettera": "Find a read for this letter",
   "Rimuovi dalla libreria": "Remove from library",
