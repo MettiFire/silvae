@@ -70,6 +70,8 @@ export function useLibrary(userId?: string) {
   return useQuery({
     queryKey: ["library", userId],
     enabled: !!userId,
+    staleTime: 30_000,
+    retry: 1,
     queryFn: async ({ signal }) => {
       const items: LibraryItem[] = [];
       for (let offset = 0; ; offset += 500) {
@@ -95,12 +97,15 @@ export function useLibraryItem(bookId: string) {
   return useQuery({
     queryKey: ["library-item", user?.id, bookId],
     enabled: !!user && !!bookId,
-    queryFn: async () => {
+    staleTime: 30_000,
+    retry: 1,
+    queryFn: async ({ signal }) => {
       const { data, error } = await supabase
         .from("library_items")
         .select(SELECT)
         .eq("user_id", user!.id)
         .eq("book_id", bookId)
+        .abortSignal(signal)
         .maybeSingle();
       if (error) throw error;
       return data ? libraryRows([data])[0]! : null;

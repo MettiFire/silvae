@@ -6,12 +6,14 @@ import { useEffect, useState } from "react";
 import { toast } from "@/lib/localized-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { authDestination } from "@/lib/auth-destination";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { recovery?: boolean; accountDeleted?: boolean } => ({
+  ): { recovery?: boolean; accountDeleted?: boolean; returnTo?: string } => ({
+    ...(search["returnTo"] ? { returnTo: authDestination(search["returnTo"]) } : {}),
     ...(search["recovery"] === true || search["recovery"] === "true" ? { recovery: true } : {}),
     ...(search["accountDeleted"] === true || search["accountDeleted"] === "true"
       ? { accountDeleted: true }
@@ -41,7 +43,8 @@ function messageFor(error: unknown) {
   return message || "Operazione non riuscita. Riprova.";
 }
 function AuthPage() {
-  const { recovery, accountDeleted } = Route.useSearch();
+  const { recovery, accountDeleted, returnTo } = Route.useSearch();
+  const destination = authDestination(returnTo);
   const [mode, setMode] = useState<Mode>(recovery ? "recovery" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,8 +63,9 @@ function AuthPage() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (session && !recovery && mode !== "recovery") void navigate({ to: "/" });
-  }, [session, navigate, mode, recovery]);
+    if (session && !recovery && mode !== "recovery")
+      void navigate({ href: destination, replace: true });
+  }, [session, navigate, mode, recovery, destination]);
   function switchMode(next: Mode) {
     setMode(next);
     setError("");
@@ -91,7 +95,7 @@ function AuthPage() {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         toast.success("Password aggiornata");
-        void navigate({ to: "/" });
+        void navigate({ href: destination, replace: true });
       } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
@@ -99,7 +103,7 @@ function AuthPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        if (data.session) void navigate({ to: "/" });
+        if (data.session) void navigate({ href: destination, replace: true });
         else
           setNotice(
             "Controlla la tua email e apri il link di conferma, poi torna qui per accedere.",
@@ -107,7 +111,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-        void navigate({ to: "/" });
+        void navigate({ href: destination, replace: true });
       }
     } catch (error) {
       setError(messageFor(error));
@@ -121,7 +125,7 @@ function AuthPage() {
     setNotice("");
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth?${new URLSearchParams({ returnTo: destination })}`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
@@ -131,7 +135,7 @@ function AuthPage() {
         throw new Error(
           "Accesso Google non completato. Riprova consentendo la finestra di accesso.",
         );
-      void navigate({ to: "/" });
+      void navigate({ href: destination, replace: true });
     } catch (error) {
       setError(messageFor(error));
     } finally {
@@ -179,7 +183,9 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <BackButton className="mb-8" />
           <div>
-            <h1 className="font-display text-3xl font-normal tracking-tight">{titles[mode]}</h1>
+            <h1 className="font-display text-3xl font-normal tracking-tight">
+              <UiText text={titles[mode]} />
+            </h1>
             {error && (
               <p
                 role="alert"
@@ -307,7 +313,7 @@ function AuthPage() {
             </UiElement>
             {mode !== "recovery" && (
               <p className="mt-5 text-center text-sm text-muted-foreground">
-                {mode === "login" ? "Non hai un account? " : "Hai già un account? "}
+                <UiText text={mode === "login" ? "Non hai un account? " : "Hai già un account? "} />
                 <button
                   disabled={busy}
                   onClick={() => switchMode(mode === "login" ? "signup" : "login")}

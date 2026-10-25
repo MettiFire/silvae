@@ -150,7 +150,6 @@ async function olSearch(
   startIndex = 0,
   order: "relevance" | "newest" = "relevance",
   language?: string,
-  resolveCovers = true,
 ): Promise<Book[]> {
   const params = new URLSearchParams({
     limit: String(max),
@@ -185,37 +184,30 @@ async function olSearch(
     localized.isbn = edition.isbn ?? [];
     return localized;
   });
-  if (!resolveCovers) return docs.map(mapOLDoc);
-  let covers: Record<string, string> = {};
-  try {
-    covers = await gbCovers({ data: { isbns: docs.flatMap((d) => (d.isbn ?? []).slice(0, 3)) } });
-  } catch {
-    /* The original Open Library cover remains available as fallback. */
-  }
-  // Retry additional ISBNs only for books missing in the first batch.
-  const missing = docs.filter((d) => !(d.isbn ?? []).slice(0, 3).some((i) => covers[i]));
-  const more = missing.flatMap((d) => (d.isbn ?? []).slice(3, 10));
-  for (let offset = 0; offset < more.length; offset += 120) {
-    try {
-      Object.assign(covers, await gbCovers({ data: { isbns: more.slice(offset, offset + 120) } }));
-    } catch {
-      /* Keep other providers. */
-    }
-  }
-  return docs.map((d) => {
-    const book = mapOLDoc(d);
-    const candidates = [
-      ...new Set((d.isbn ?? []).map((i) => covers[i]).filter((v): v is string => !!v)),
-    ];
-    if (book.cover_url) candidates.push(book.cover_url);
-    return { ...book, cover_url: candidates[0] ?? null, cover_candidates: candidates };
-  });
+  // Lists render catalogue covers immediately. More providers are resolved lazily
+  // by BookCover only for visible books whose supplied images have failed.
+  return docs.map(mapOLDoc);
 }
 
 async function olGetBook(workId: string, language?: string): Promise<Book> {
-  const res = await fetch(`${OL_API}/works/${encodeURIComponent(workId)}.json`, {
-    signal: AbortSignal.timeout(12000),
-  });
+  const [res, catalogue] = await Promise.all([
+    fetch(`${OL_API}/works/${encodeURIComponent(workId)}.json`, {
+      signal: AbortSignal.timeout(12000),
+    }),
+    (async () => {
+      try {
+        const localized = (
+          await olSearch(`key:"/works/${workId}"`, 1, 0, "relevance", language)
+        )[0];
+        // Work ratings remain useful even when a preferred-language edition is absent.
+        return (
+          localized ?? (language ? (await olSearch(`key:"/works/${workId}"`, 1))[0] : undefined)
+        );
+      } catch {
+        return undefined;
+      }
+    })(),
+  ]);
   if (!res.ok) throw new Error("Libro non trovato");
   const w = (await res.json()) as {
     title?: string;
@@ -224,18 +216,6 @@ async function olGetBook(workId: string, language?: string): Promise<Book> {
     covers?: number[];
     authors?: { author?: { key?: string } }[];
   };
-  let catalogue: Book | undefined;
-  try {
-    catalogue = (await olSearch(`key:"/works/${workId}"`, 1, 0, "relevance", language, false))[0];
-    // Ratings and critic ISBN matching belong to the work even without an edition
-    // in the preferred language. Never discard them because of a language filter.
-    if (!catalogue && language)
-      catalogue = (
-        await olSearch(`key:"/works/${workId}"`, 1, 0, "relevance", undefined, false)
-      )[0];
-  } catch {
-    /* Work details still render. */
-  }
   const translatedTitles = needsLocalizedTitle(w.title ?? "", language)
     ? await localizedWorkTitles([workId], language)
     : new Map<string, string>();
@@ -445,7 +425,7 @@ async function localizedBookEdition(book: Book, language?: string): Promise<Book
   if (!language || book.content_language === language || !book.isbns?.length || isMangaId(book.id))
     return book;
   try {
-    const hits = await olSearch(`isbn:${book.isbns[0]}`, 1, 0, "relevance", language, false);
+    const hits = await olSearch(`isbn:${book.isbns[0]}`, 1, 0, "relevance", language);
     const edition = hits[0];
     if (!edition?.id.startsWith("ol:")) return book;
     const localized = await olGetBook(edition.id.slice(3), language);
@@ -682,13 +662,15 @@ export async function coverCandidates(
   const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
   const urls: string[] = [];
   urls.push(...coverUrls(book));
-  const [g, o] = await Promise.allSettled([
+  const [g, o, thumbnails] = await Promise.allSettled([
     searchBooks(
       `intitle:"${book.title}"${book.authors[0] ? ` inauthor:"${book.authors[0]}"` : ""}`,
-      { max: 12 },
+      { max: 12, language },
     ),
-    olSearch(q, 12),
+    olSearch(q, 12, 0, "relevance", language),
+    gbCovers({ data: { isbns: (book.isbns ?? []).slice(0, 10) } }),
   ]);
+  if (thumbnails.status === "fulfilled") urls.push(...Object.values(thumbnails.value));
   for (const r of [g, o]) {
     if (r.status !== "fulfilled") continue;
     for (const b of r.value) if (b.id === book.id || sameBook(book, b)) urls.push(...coverUrls(b));

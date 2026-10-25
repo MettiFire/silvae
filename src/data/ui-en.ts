@@ -1,4 +1,13 @@
 export const UI_EN: Record<string, string> = {
+  Bentornato: "Welcome back",
+  "Tutti i generi": "All genres",
+  "Qualsiasi anno": "Any year",
+  "Qualsiasi voto": "Any rating",
+  Rilevanza: "Relevance",
+  Novità: "New releases",
+  "Dal 2020": "Since 2020",
+  "Dal 2010": "Since 2010",
+  "Dal 2000": "Since 2000",
   "Cerca libri, manga e autori": "Search books, manga and authors",
   "Nessuna lista ancora.": "No lists yet.",
   "Il tuo ritmo": "Your reading pace",

@@ -57,6 +57,8 @@ function Discover() {
   } = useQuery({
     queryKey: ["discover", genre, year, order, language ?? "any"],
     enabled: languageReady,
+    staleTime: 5 * 60_000,
+    retry: 1,
     queryFn: () => discoverBooks({ genre, year, order, language }),
   });
 
@@ -121,7 +123,11 @@ function Discover() {
                 />
               </p>
               {user && (
-                <Link to="/profile" className="mt-1 inline-block text-xs text-primary">
+                <Link
+                  to="/settings"
+                  search={{ section: "preferences" }}
+                  className="mt-1 inline-block text-xs text-primary"
+                >
                   <UiText
                     text={
                       preferences?.status === "completed"
@@ -286,7 +292,7 @@ function Select({
       >
         {options.map(([v, l]) => (
           <option key={v} value={v}>
-            {l}
+            <UiText text={l} />
           </option>
         ))}
       </select>

@@ -28,18 +28,22 @@ export function BookCover({
   const [visible, setVisible] = useState(priority);
   const [loadedUrl, setLoadedUrl] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const { cover: resolvedCover, remember } = useResolvedBookCover(book.id);
+  const { cover: resolvedCover, remember, language } = useResolvedBookCover(book.id);
   const initial = displayCoverUrls(book, resolvedCover);
   const exhausted = !initial.some((url) => !failed.has(url));
   const { data: alternatives = [] } = useQuery({
-    queryKey: ["cover-fallbacks", book.id, book.cover_url],
-    queryFn: () => coverCandidates(book),
+    queryKey: ["cover-fallbacks", book.id, book.cover_url, language ?? "any"],
+    queryFn: () => coverCandidates(book, false, language),
     enabled: visible && exhausted,
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
   const source = [...new Set([...initial, ...alternatives])].find((url) => !failed.has(url));
   useEffect(() => {
+    if (priority) {
+      setVisible(true);
+      return;
+    }
     if (!ref.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -52,7 +56,7 @@ export function BookCover({
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [book.id]);
+  }, [book.id, priority]);
   useEffect(() => {
     if (!source || !visible || loadedUrl === source) return;
     // Some cover hosts hang instead of returning 404: move to the next edition.
