@@ -19,6 +19,9 @@ import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
 import { hasReadBook } from "@/lib/library-order";
+import { mangaCatalogue } from "@/lib/manga-client";
+import { mangaAuthorMatches } from "@/lib/manga-search-names";
+import { sameAuthorName, sameReadingWork } from "@/lib/work-identity";
 
 export const Route = createFileRoute("/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
@@ -92,6 +95,14 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
     enabled: !!id && languageReady && !!details.data,
     staleTime: 300000,
   });
+  const mangaWorks = useQuery({
+    queryKey: ["author-manga-v1", name, language ?? "it"],
+    queryFn: ({ signal }) =>
+      mangaCatalogue({ signal, data: { query: name, ...(language ? { language } : {}) } }),
+    enabled: languageReady,
+    staleTime: 3600000,
+    retry: false,
+  });
   const followed = parseFollowedAuthors(user?.user_metadata[AUTHORS_FIELD]).some((a) =>
     groupIds.includes(a.id),
   );
@@ -117,7 +128,20 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   const isSupplement = id === SUPPLEMENT_AUTHOR.id;
   const error = candidates.error || details.error || catalogue.error;
   const data = details.data;
-  const books = catalogue.data?.books ?? [];
+  const remote = catalogue.data?.books ?? [];
+  // Works already on Silvae (manga series, library books) that the author catalogue misses.
+  const extra = [
+    ...(mangaWorks.data ?? []),
+    ...library.flatMap((item) => (item.books ? [item.books] : [])),
+  ].filter(
+    (book, index, all) =>
+      book.authors.some(
+        (a) => sameAuthorName(a, name) || (mangaAuthorMatches(a, name) && mangaAuthorMatches(name, a)),
+      ) &&
+      all.findIndex((other) => other.id === book.id) === index &&
+      !remote.some((other) => sameReadingWork(other, book)),
+  );
+  const books = page === 0 ? [...extra, ...remote] : remote;
   return (
     <AppShell>
       <PageHeader
@@ -252,7 +276,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           </div>
         </section>
       )}
-      {id && (
+      {(id || extra.length > 0) && (
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -260,7 +284,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
                 <UiText text="Bibliografia disponibile" />
               </h2>
               <p className="text-sm text-muted-foreground">
-                {catalogue.data?.total ?? "…"}
+                {catalogue.data ? catalogue.data.total + extra.length : "…"}
                 <UiText text=" opere nel catalogo. Le date indicano la prima pubblicazione nota." />
               </p>
             </div>
