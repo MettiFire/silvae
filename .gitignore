@@ -18,6 +18,7 @@ dist-ssr
 *.local
 kindle-session*.json
 kindle-progress*.json
+silvae-device*.json
 
 # Wrangler / Cloudflare
 .wrangler/

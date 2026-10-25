@@ -41,25 +41,79 @@ test("An exact author query excludes conferences merely mentioning the author's 
 });
 
 test("a book query never falls back to unrelated author names; partial personal names still match", () => {
-  const candidates=[author("a","J. R. R. Tolkien","1892",500),author("b","Harry Pot",null,1)];
-  assert.deepEqual(authorSearchResults(candidates,3,"La compagnia dell’anello"),[]);
-  assert.deepEqual(authorSearchResults(candidates,3,"Harry pot"),[]);
-  assert.deepEqual(authorSearchResults(candidates,3,"Tolk").map(a=>a.id),["a"]);
-  assert.deepEqual(authorSearchResults([author("c","Simposio in memoria di Italo Calvino",null,5)],3,"Italo Calv"),[]);
+  const candidates = [
+    author("a", "J. R. R. Tolkien", "1892", 500),
+    author("b", "Harry Pot", null, 1),
+  ];
+  assert.deepEqual(authorSearchResults(candidates, 3, "La compagnia dell’anello"), []);
+  assert.deepEqual(authorSearchResults(candidates, 3, "Harry pot"), []);
+  assert.deepEqual(
+    authorSearchResults(candidates, 3, "Tolk").map((a) => a.id),
+    ["a"],
+  );
+  assert.deepEqual(
+    authorSearchResults(
+      [author("c", "Simposio in memoria di Italo Calvino", null, 5)],
+      3,
+      "Italo Calv",
+    ),
+    [],
+  );
 });
 test("birth date precision and sparse catalogue records do not create false homonyms", async () => {
-  const {groupAuthors}=await import('../src/lib/author-search.ts');
-  const candidates=[author("large","Fiódor Dostoievski","11 November 1821",2800),author("date","Fiodor Dostoievski","1821",10),author("empty","Fiódor Dostoiévski",null,0)];
-  const result=groupAuthors(candidates);
-  assert.equal(result.length,1);assert.equal(result[0].id,"large");
-  assert.deepEqual(new Set(result[0].ids),new Set(["large","date","empty"]));
+  const { groupAuthors } = await import("../src/lib/author-search.ts");
+  const candidates = [
+    author("large", "Fiódor Dostoievski", "11 November 1821", 2800),
+    author("date", "Fiodor Dostoievski", "1821", 10),
+    author("empty", "Fiódor Dostoiévski", null, 0),
+  ];
+  const result = groupAuthors(candidates);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "large");
+  assert.deepEqual(new Set(result[0].ids), new Set(["large", "date", "empty"]));
 });
 test("provider aliases unify script variants while different birth years remain distinct", async () => {
-  const {groupAuthors,authorDisplayName}=await import('../src/lib/author-search.ts');
-  const primary={...author("a","Фёдор Достоевский","1821",2800),alternateNames:["Fiódor Dostoievski"]};
-  assert.equal(authorSearchResults([primary],3,"Fiodor Dostoievski")[0].id,"a");
-  assert.equal(groupAuthors([primary,author("b","Fiódor Dostoievski","1821",10)]).length,1);
-  assert.equal(groupAuthors([primary,author("c","Fiódor Dostoievski","1980",10)]).length,2);
-  assert.equal(authorDisplayName([primary.name,"Fyodor Dostoevsky"],undefined,"it"),"Fyodor Dostoevsky");
-  assert.equal(authorDisplayName([primary.name,"Fyodor Dostoevsky"],undefined,"ru"),primary.name);
+  const { groupAuthors, authorDisplayName } = await import("../src/lib/author-search.ts");
+  const primary = {
+    ...author("a", "Фёдор Достоевский", "1821", 2800),
+    alternateNames: ["Fiódor Dostoievski"],
+  };
+  assert.equal(authorSearchResults([primary], 3, "Fiodor Dostoievski")[0].id, "a");
+  assert.equal(groupAuthors([primary, author("b", "Fiódor Dostoievski", "1821", 10)]).length, 1);
+  assert.equal(groupAuthors([primary, author("c", "Fiódor Dostoievski", "1980", 10)]).length, 2);
+  assert.equal(
+    authorDisplayName([primary.name, "Fyodor Dostoevsky"], undefined, "it"),
+    "Fyodor Dostoevsky",
+  );
+  assert.equal(
+    authorDisplayName([primary.name, "Fyodor Dostoevsky"], undefined, "ru"),
+    primary.name,
+  );
+});
+
+test("Shared catalogue ids unify alias results without relying on their display names", async () => {
+  const { groupAuthors } = await import("../src/lib/author-search.ts");
+  const results = groupAuthors([
+    { ...author("OL1A", "Fyodor Dostoevsky", "1821", 400), ids: ["OL2A"] },
+    author("OL2A", "Fiodor Dostoievski", "1821", 30),
+  ]);
+  assert.equal(results.length, 1);
+  assert.deepEqual(new Set(results[0].ids), new Set(["OL1A", "OL2A"]));
+  assert.ok(results[0].alternateNames.includes("Fiodor Dostoievski"));
+  assert.equal(
+    groupAuthors([
+      { ...author("OL1A", "John Smith", "1950", 400), ids: ["OL2A"] },
+      author("OL2A", "John Smith", "1980", 30),
+    ]).length,
+    2,
+  );
+});
+
+test("Autocomplete treats compact and spaced initials consistently, without matching arbitrary substrings", () => {
+  const candidates = [author("OL1A", "J. R. R. Tolkien", "1892", 400)];
+  for (const query of ["JRR Tolk", "J.R.R. Tolk", "Tolkien, JRR", "j r r tolk"]) {
+    assert.equal(authorSearchResults(candidates, 3, query)[0]?.id, "OL1A", query);
+  }
+  assert.deepEqual(authorSearchResults(candidates, 3, "olk"), []);
+  assert.deepEqual(authorSearchResults(candidates, 3, "Tolk Tolkien"), []);
 });

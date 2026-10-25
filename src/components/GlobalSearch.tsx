@@ -65,11 +65,7 @@ export function GlobalSearch() {
     queryKey: ["author-candidates-v3", debounced.trim(), language ?? "any"],
     placeholderData: () =>
       authorMatchesQuery(SUPPLEMENT_AUTHOR, debounced) ? [SUPPLEMENT_AUTHOR] : [],
-    enabled:
-      mode !== "manga" &&
-      languageReady &&
-      debounced.trim().length >= 3 &&
-      !/^[\d\s-]+$/.test(debounced),
+    enabled: languageReady && debounced.trim().length >= 3 && !/^[\d\s-]+$/.test(debounced),
     queryFn: ({ signal }) => findAuthors(debounced.trim(), language, signal),
     staleTime: 3600000,
     retry: false,
@@ -104,10 +100,9 @@ export function GlobalSearch() {
         : isFetching;
   const searchError =
     mode === "all" ? manga.isError && isError : mode === "manga" ? manga.isError : isError;
-  const authorResults =
-    mode === "manga" || /^[\d\s-]+$/.test(debounced)
-      ? []
-      : authorSearchResults(authors.data ?? [], 3, debounced);
+  const authorResults = /^[\d\s-]+$/.test(debounced)
+    ? []
+    : authorSearchResults(authors.data ?? [], 3, debounced);
   const options = [
     ...authorResults.map((author) => ({ kind: "author" as const, author })),
     ...visibleResults.map((book) => ({ kind: "book" as const, book })),
@@ -302,20 +297,17 @@ export function GlobalSearch() {
               </button>
             </div>
           )}
-          {(fetching || (mode !== "manga" && authors.isFetching)) && (
+          {(fetching || authors.isFetching) && (
             <p className="px-3 py-3 text-sm text-muted-foreground">
               <UiText text="Ricerca in corso…" />
             </p>
           )}
-          {!fetching &&
-            !(mode !== "manga" && authors.isFetching) &&
-            !searchError &&
-            options.length === 0 && (
-              <p className="px-3 py-3 text-sm text-muted-foreground">
-                <UiText text="Nessun risultato" />
-              </p>
-            )}
-          {mode !== "manga" && authors.isError && (
+          {!fetching && !authors.isFetching && !searchError && options.length === 0 && (
+            <p className="px-3 py-3 text-sm text-muted-foreground">
+              <UiText text="Nessun risultato" />
+            </p>
+          )}
+          {authors.isError && (
             <p role="status" className="px-3 py-2 text-xs text-muted-foreground">
               <UiText text="Ricerca autori temporaneamente non disponibile." />
             </p>

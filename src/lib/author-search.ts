@@ -33,7 +33,8 @@ export function groupAuthors(candidates: AuthorCandidate[]) {
       (group) =>
         group.every((other) => compatible(other, candidate)) &&
         group.some((other) => {
-          if (other.id === candidate.id) return true;
+          const ids = new Set([other.id, ...(other.ids ?? [])]);
+          if ([candidate.id, ...(candidate.ids ?? [])].some((id) => ids.has(id))) return true;
           if (!sameName(other, candidate)) return false;
           if (year(other.birth) && year(candidate.birth)) return true;
           if (
@@ -62,21 +63,31 @@ export function groupAuthors(candidates: AuthorCandidate[]) {
     alternateNames: [...new Set(group.flatMap(authorAliases))],
   }));
 }
+/** Collapse consecutive initials, not full names: “J. R. R.” and “JRR” are equivalent. */
+function searchNameParts(name: string) {
+  const ordered = name.includes(",") ? name.split(",").reverse().join(" ") : name;
+  return textKey(ordered)
+    .replace(/\b(?:[a-z] ){1,}[a-z]\b/g, (initials) => initials.replaceAll(" ", ""))
+    .split(" ")
+    .filter(Boolean);
+}
 export function authorMatchesQuery(author: AuthorCandidate, query: string) {
   if (/\b(convegno|simposio|conference|congress|festival|memoria)\b/.test(textKey(author.name)))
     return false;
-  const words = textKey(query.includes(",") ? query.split(",").reverse().join(" ") : query)
-    .split(" ")
-    .filter(Boolean);
+  const words = searchNameParts(query);
   if (!words.length) return false;
   return authorAliases(author).some((name) => {
     if (authorCountryKey(name) === authorCountryKey(query)) return true;
-    const parts = textKey(name.includes(",") ? name.split(",").reverse().join(" ") : name).split(
-      " ",
-    );
-    return words.every((word, index) =>
-      parts.some((part) => (index === words.length - 1 ? part.startsWith(word) : part === word)),
-    );
+    const parts = searchNameParts(name);
+    // Match each query word once, reserving prefix completion for its final word.
+    // Consume exact matches first so “Tolk Tolkien” cannot reuse a single surname.
+    const remaining = [...parts];
+    for (const word of words.slice(0, -1)) {
+      const index = remaining.indexOf(word);
+      if (index < 0) return false;
+      remaining.splice(index, 1);
+    }
+    return remaining.some((part) => part.startsWith(words.at(-1)!));
   });
 }
 export function authorSearchResults(candidates: AuthorCandidate[], limit = 3, query = "") {
