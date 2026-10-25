@@ -1,6 +1,16 @@
-import { olCatalogueSearch } from "./openlibrary.functions";
-import { mangaCovers } from "./manga.functions";
-import { mangaCatalogue } from "./manga.functions";
+import { olCatalogueSearch as serverOlCatalogueSearch } from "./openlibrary.functions";
+import { createOpenLibrarySearch } from "./openlibrary-search";
+const browserOlSearch = createOpenLibrarySearch();
+async function olCatalogueSearch(options: Parameters<typeof serverOlCatalogueSearch>[0]) {
+  try {
+    return await serverOlCatalogueSearch(options);
+  } catch (error) {
+    if (typeof window === "undefined" || options.signal?.aborted) throw error;
+    return browserOlSearch(options.data.params);
+  }
+}
+import { mangaCovers } from "./manga-client";
+import { mangaCatalogue } from "./manga-client";
 import { isMangaId, type MangaDetails } from "./manga-model";
 import { genreQuery } from "./genre-groups.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";

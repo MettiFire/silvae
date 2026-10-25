@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { mangaCovers } from "./manga.functions";
+import { mangaCovers } from "./manga-client";
 import { useBookLanguage } from "./use-book-language";
 import { useAuth } from "./auth";
 import { parsePreferences, PREFERENCES_FIELD } from "./reading-preferences";

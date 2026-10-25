@@ -16,6 +16,7 @@ export function isPublicCatalogueCover(value: unknown): value is string {
         "books.googleusercontent.com",
         "covers.openlibrary.org",
         "cdn.myanimelist.net",
+        "s4.anilist.co",
       ].includes(url.hostname) ||
         (url.hostname === "uploads.mangadex.org" &&
           url.pathname.startsWith("/covers/") &&

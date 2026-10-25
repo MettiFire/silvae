@@ -15,3 +15,12 @@ Il catalogo dichiara il totale dell’edizione originale: le edizioni locali pos
 Verifica: ricerca reale Naruto e scheda della serie con totale 72; modulo reale provato con fixture temporanea, letti 1–12 meno il 6 → 11 letti e prossimo 6; salvataggio e recupero di intervalli, scrittura simulata con account diverso/offline, date e stato di completamento, serie in corso, edizioni omnibus e mancato uso dei volumi come pagine. Griglia a 390px senza overflow. Fixture rimossa. Nessun account reale modificato durante le prove.
 
 Aggiornamento: ricerca di “L’attacco dei giganti” verificata sul catalogo reale con serie principale al primo posto; provate entrambe le scelte del dialogo, annullamento, paginazione, salvataggio locale degli intervalli ed esclusione delle copertine originali con numerazione omnibus. La scheda pubblica mostra i 34 volumi e la galleria a 390px non deborda. Dettagli di lingua, fonti e fallback in `language-and-manga.md`.
+
+### Resilienza del catalogo (25 ottobre 2026)
+
+La ricerca e le schede MAL possono usare AniList quando MangaDex/Jikan non rispondono.
+I risultati AniList riutilizzano l'identificativo MAL verificato dal catalogo; le serie
+senza tale collegamento vengono escluse per evitare nuove identità duplicate. Le novel
+sono escluse dalla ricerca. Se la chiamata server fallisce, il browser può tentare gli
+stessi cataloghi pubblici, senza token o dati dell'account. La disponibilità delle
+copertine dei singoli volumi resta legata a MangaDex.
