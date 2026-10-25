@@ -42,7 +42,7 @@ export function unifiedSearchResults(books: Book[], manga: Book[], query: string
             ? 3.5
             : norm(book.title).startsWith(q)
               ? 3
-              : norm(book.title).includes(q)
+              : ` ${norm(book.title)} `.includes(` ${q}`)
                 ? 2
                 : 1,
     }))

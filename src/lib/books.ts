@@ -15,6 +15,7 @@ import { mangaCatalogue } from "./manga-client";
 import { isMangaId, type MangaDetails } from "./manga-model";
 import { genreQuery } from "./genre-groups.ts";
 import { localizedWorkTitles, needsLocalizedTitle } from "./work-titles.ts";
+import { workTitle } from "./work-identity.ts";
 import {
   bookSuggestions,
   matchesCatalogueCompletion,

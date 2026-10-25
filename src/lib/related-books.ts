@@ -11,6 +11,9 @@ function genresFor(book: Book) {
       genre.aliases.some((alias) => {
         if (genre.id === "fiction" && /non ?fiction/.test(category)) return false;
         if (genre.id === "science" && /science fiction/.test(category)) return false;
+        // "Historical Chronology" or "History" describe essays, not historical novels.
+        if (genre.id === "historical" && !/fiction|novel|romanz|narrativa/.test(category))
+          return false;
         return ` ${category} `.includes(` ${textKey(alias)} `);
       }),
     ),
@@ -33,6 +36,21 @@ export function relatedBookSources(book: Book): RelatedSource[] {
   return sources;
 }
 
+/** Fiction vs essays: a history essay must not suggest Austen or Wilde. */
+export function bookKind(book: Pick<Book, "categories">): "fiction" | "nonfiction" | null {
+  const text = ` ${book.categories.map(textKey).join(" | ")} `;
+  const fiction = /\b(?:fiction|novels?|romanz[oi]|narrativa|fantasy|romance|thriller|mystery|manga|comics)\b/.test(
+    text.replace(/non ?fiction/g, ""),
+  );
+  const essay =
+    /\b(?:non ?fiction|history|historia|storia|science|social science|philosophy|filosofia|biography|biografia|saggistica|saggi|essays|civilization|economics|psychology|politics|human beings)\b/.test(
+      text.replace(/(?:science|historical) fiction/g, ""),
+    );
+  if (fiction && !essay) return "fiction";
+  if (essay && !fiction) return "nonfiction";
+  return null;
+}
+
 export function rankRelatedBooks(
   current: Book,
   candidates: RelatedCandidate[],
@@ -51,6 +69,9 @@ export function rankRelatedBooks(
     )
       continue;
     const sameAuthor = sharedAuthor(current, book);
+    const kind = bookKind(current);
+    const candidateKind = bookKind(book);
+    if (!sameAuthor && kind && candidateKind && kind !== candidateKind) continue;
     const overlap = genres.filter((genre) => currentGenres.has(genre.id));
     const sourceGenre = READING_GENRES.find(
       (genre) => genre.id === source.genreId && currentGenres.has(genre.id),
