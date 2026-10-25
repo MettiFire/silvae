@@ -1,3 +1,4 @@
+import { olCatalogueSearch } from "./openlibrary.functions";
 import { mangaCovers } from "./manga.functions";
 import { mangaCatalogue } from "./manga.functions";
 import { isMangaId, type MangaDetails } from "./manga-model";
@@ -161,11 +162,9 @@ async function olSearch(
   else if (subject) params.set("subject", subject[1]!.trim());
   else params.set("q", query.replace(/intitle:/g, "title:").replace(/inauthor:/g, "author:"));
   applyBookLanguage(params, "openlibrary", language);
-  const res = await fetch(`${OL_API}/search.json?${params}`, {
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!res.ok) throw new Error("Errore nel recupero dei libri");
-  const data = (await res.json()) as { docs?: OLDoc[] };
+  const res = await olCatalogueSearch({ data: { params: Object.fromEntries(params) } });
+  if (res.status !== 200) throw new Error("Errore nel recupero dei libri");
+  const data = JSON.parse(res.json) as { docs?: OLDoc[] };
   const docs = (data.docs ?? []).map((d) => {
     const edition = language ? d.editions?.docs?.[0] : undefined;
     if (!edition) return d;
@@ -363,13 +362,12 @@ export async function searchBookSuggestions(
       fields:
         "key,title,author_name,first_publish_year,cover_i,isbn,editions,editions.title,editions.cover_i,editions.isbn",
     });
-    const response = await fetch(`${OL_API}/search.json?${params}`, {
-      signal: signal
-        ? AbortSignal.any([signal, AbortSignal.timeout(8000)])
-        : AbortSignal.timeout(8000),
+    const response = await olCatalogueSearch({
+      ...(signal ? { signal } : {}),
+      data: { params: Object.fromEntries(params) },
     });
-    if (!response.ok) throw new Error("Catalogo non disponibile");
-    const { docs = [] } = (await response.json()) as { docs?: OLDoc[] };
+    if (response.status !== 200) throw new Error("Catalogo non disponibile");
+    const { docs = [] } = JSON.parse(response.json) as { docs?: OLDoc[] };
     const books = docs
       .map((doc) => {
         const edition = doc.editions?.docs?.[0];

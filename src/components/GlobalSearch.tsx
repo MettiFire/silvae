@@ -46,6 +46,7 @@ export function GlobalSearch() {
     data: results = [],
     isFetching,
     isError,
+    refetch: retryBooks,
   } = useQuery({
     queryKey: ["global-search-works", debounced, language ?? "any"],
     enabled: mode === "books" && languageReady && debounced.trim().length >= 2,
@@ -251,9 +252,21 @@ export function GlobalSearch() {
           className="absolute z-50 mt-2 w-full touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover shadow-paper"
         >
           {searchError && (
-            <p role="alert" className="px-3 py-3 text-sm text-destructive">
-              <UiText text="Ricerca non disponibile. Riprova tra poco." />
-            </p>
+            <div role="alert" className="px-3 py-3 text-sm text-destructive">
+              <p>
+                <UiText text="Ricerca non disponibile. Riprova tra poco." />
+              </p>
+              <button
+                type="button"
+                disabled={fetching}
+                className="mt-2 underline disabled:opacity-50"
+                onClick={() => {
+                  void (mode === "manga" ? manga.refetch() : retryBooks());
+                }}
+              >
+                <UiText text="Riprova" />
+              </button>
+            </div>
           )}
           {(fetching || (mode === "books" && authors.isFetching)) && (
             <p className="px-3 py-3 text-sm text-muted-foreground">
