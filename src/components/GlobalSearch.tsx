@@ -356,7 +356,7 @@ export function GlobalSearch() {
             </p>
           )}
           {visibleResults.map((b, index) => (
-            <div key={b.id} role="row" className="flex items-center gap-1 pr-3">
+            <div key={b.id} role="row" className="quick-add-surface flex items-center gap-1 pr-3">
               <div
                 role="gridcell"
                 id={`book-search-option-${index + authorResults.length}`}

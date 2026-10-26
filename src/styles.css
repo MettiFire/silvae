@@ -1214,3 +1214,31 @@ select:not([multiple]):not([size]) {
 .award-trail { min-width:0; width:100%; max-width:100%; }
 
 html[lang="en"] .home-hero-art:after { content: "Your next story is waiting."; }
+
+
+/* Hover reveals the action on mouse devices; keyboard and touch keep it reachable. */
+@media (hover: hover) and (pointer: fine) {
+  .quick-add-book {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .quick-add-surface:hover .quick-add-book,
+  .quick-add-surface:focus-within .quick-add-book,
+  .quick-add-book:focus-visible,
+  .quick-add-book[data-state="open"],
+  .quick-add-book[aria-busy="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Hybrid devices (such as an iPad with a trackpad) must still work by touch. */
+@media (any-pointer: coarse), (hover: none) {
+  .quick-add-book {
+    opacity: 1;
+    pointer-events: auto;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

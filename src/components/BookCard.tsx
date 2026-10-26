@@ -125,7 +125,7 @@ export function BookCard({
   const density = useBookDensity();
   const small = compact ?? density === "compact";
   return (
-    <div className="book-card group relative">
+    <div className="book-card quick-add-surface group relative">
       <Link to="/book/$bookId" params={{ bookId: book.id }} className="block">
         <div className="cover-wrap relative overflow-hidden">
           <BookCover book={book} />
