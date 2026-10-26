@@ -334,6 +334,12 @@ export type Database = {
         }
         Relationships: []
       }
+      fragment_preferences: {
+        Row: { user_id: string; visibility: string }
+        Insert: { user_id: string; visibility?: string }
+        Update: { user_id?: string; visibility?: string }
+        Relationships: []
+      }
       fragments: {
         Row: {
           book_id: string

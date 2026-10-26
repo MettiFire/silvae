@@ -1,3 +1,4 @@
+import { ProfileFragments } from "./ProfileFragments";
 import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useState } from "react";
@@ -133,6 +134,7 @@ export function ReaderProfile({ username }: { username: string }) {
       void qc.invalidateQueries({ queryKey: ["is-following"] });
       void qc.invalidateQueries({ queryKey: ["follow-counts"] });
       void qc.invalidateQueries({ queryKey: ["following"] });
+      void qc.invalidateQueries({ queryKey: ["profile-fragments"] });
     },
     onError: () => toast.error("Impossibile aggiornare il seguito. Riprova."),
   });
@@ -292,10 +294,9 @@ export function ReaderProfileView({
   listsError?: boolean;
   authorsError?: boolean;
 }) {
-  const [tab, setTab] = useRememberedState<"read" | "wishlist" | "favorites" | "lists" | "authors">(
-    "profile.tab",
-    "read",
-  );
+  const [tab, setTab] = useRememberedState<
+    "read" | "wishlist" | "favorites" | "lists" | "authors" | "fragments"
+  >("profile.tab", "read");
   const [visible, setVisible] = useRememberedState<number>("profile.visible", 20);
   const shelves = profileShelves(items);
   const rows =
@@ -387,6 +388,7 @@ export function ReaderProfileView({
           ["favorites", "Preferiti", shelves.favorites.length],
           ["lists", "Liste", lists.length],
           ["authors", "Autori", authors.length],
+          ["fragments", "Frammenti", ""],
         ].map(([key, label, count]) => (
           <button
             role="tab"
@@ -418,7 +420,9 @@ export function ReaderProfileView({
           aria-labelledby={`profile-tab-${tab}`}
           id="profile-collection"
         >
-          {tab === "lists" ? (
+          {tab === "fragments" ? (
+            <ProfileFragments key={profile.id} userId={profile.id} own={own} />
+          ) : tab === "lists" ? (
             <>
               <SectionHeading title={own ? "Le tue liste" : "Liste di lettura"} number="01">
                 {own && (

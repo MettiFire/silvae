@@ -9,6 +9,7 @@ import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Book } from "@/lib/books";
+import { useLibrary } from "@/lib/library";
 import {
   fragmentError,
   moveFragmentToTrash,
@@ -16,22 +17,26 @@ import {
   type Fragment,
   type FragmentSource,
 } from "@/lib/fragments";
+import { FragmentVisibility } from "./FragmentVisibility";
+import { FragmentText } from "./FragmentText";
 import { FragmentEditor } from "./FragmentEditor";
 import { FragmentImport } from "./FragmentImport";
 import { BookCover } from "./BookCard";
-type WithBook = Fragment & { books: Book | null };
+export type WithBook = Fragment & { books: Book | null };
 export function FragmentCard({
   fragment: f,
   onEdit,
   onTrash,
   onFavorite,
   busy = false,
+  readOnly = false,
 }: {
   fragment: WithBook;
   onEdit: () => void;
   onTrash: () => void;
   onFavorite: () => void;
   busy?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <article className="rounded-2xl border border-border bg-card p-5">
@@ -56,25 +61,27 @@ export function FragmentCard({
             {f.position ? ` · ${f.position}` : ""}
           </p>
         </div>
-        <UiElement
-          as="button"
-          disabled={busy || !!f.deleted_at}
-          aria-label={
-            f.favorite ? "Rimuovi frammento dai preferiti" : "Aggiungi frammento ai preferiti"
-          }
-          aria-pressed={f.favorite}
-          onClick={onFavorite}
-          className="rounded-lg p-1 text-primary disabled:opacity-40"
-        >
-          <Heart className={`h-4 w-4 ${f.favorite ? "fill-current" : ""}`} />
-        </UiElement>
+        {!readOnly && (
+          <UiElement
+            as="button"
+            disabled={busy || !!f.deleted_at}
+            aria-label={
+              f.favorite ? "Rimuovi frammento dai preferiti" : "Aggiungi frammento ai preferiti"
+            }
+            aria-pressed={f.favorite}
+            onClick={onFavorite}
+            className="rounded-lg p-1 text-primary disabled:opacity-40"
+          >
+            <Heart className={`h-4 w-4 ${f.favorite ? "fill-current" : ""}`} />
+          </UiElement>
+        )}
       </div>
       <blockquote className="whitespace-pre-wrap break-words border-l-2 border-primary/40 pl-4 font-display text-base leading-relaxed">
-        {f.quote}
+        <FragmentText text={f.quote} />
       </blockquote>
       {f.note && (
         <p className="mt-4 whitespace-pre-wrap break-words text-sm text-muted-foreground">
-          {f.note}
+          <FragmentText text={f.note} />
         </p>
       )}
       {!!f.tags.length && (
@@ -90,35 +97,37 @@ export function FragmentCard({
         <time className="text-xs text-muted-foreground" dateTime={f.highlighted_at ?? f.created_at}>
           <UiDate value={new Date(f.highlighted_at ?? f.created_at)} />
         </time>
-        <div className="flex gap-3">
-          {!f.deleted_at && (
+        {!readOnly && (
+          <div className="flex gap-3">
+            {!f.deleted_at && (
+              <button
+                disabled={busy}
+                onClick={onEdit}
+                className="inline-flex items-center gap-1 text-xs"
+              >
+                <Pencil className="h-3 w-3" />
+                <UiText text="Modifica" />
+              </button>
+            )}
             <button
               disabled={busy}
-              onClick={onEdit}
-              className="inline-flex items-center gap-1 text-xs"
+              onClick={onTrash}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
             >
-              <Pencil className="h-3 w-3" />
-              <UiText text="Modifica" />
+              {f.deleted_at ? (
+                <>
+                  <RotateCcw className="h-3 w-3" />
+                  <UiText text="Ripristina" />
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3 w-3" />
+                  <UiText text="Sposta nel cestino" />
+                </>
+              )}
             </button>
-          )}
-          <button
-            disabled={busy}
-            onClick={onTrash}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-          >
-            {f.deleted_at ? (
-              <>
-                <RotateCcw className="h-3 w-3" />
-                <UiText text="Ripristina" />
-              </>
-            ) : (
-              <>
-                <Trash2 className="h-3 w-3" />
-                <UiText text="Sposta nel cestino" />
-              </>
-            )}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -126,6 +135,7 @@ export function FragmentCard({
 export function Fragments({ book }: { book?: Book | undefined }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const library = useLibrary(user?.id);
   const [editor, setEditor] = useState<Fragment | null | false>(false);
   const [importing, setImporting] = useState(false);
   const [page, setPage] = useRememberedState<number>("fragments.page", 0);
@@ -181,9 +191,20 @@ export function Fragments({ book }: { book?: Book | undefined }) {
       return { rows: (data ?? []) as unknown as WithBook[], count: count ?? 0 };
     },
   });
+  // Reuse the library query so cover changes invalidate every fragment view too.
+  const personalCovers = new Map(
+    library.data?.map((item) => [item.book_id, item.custom_cover_url]),
+  );
+  const rows = list.data?.rows.map((fragment) => {
+    const cover = personalCovers.get(fragment.book_id);
+    return cover && fragment.books
+      ? { ...fragment, books: { ...fragment.books, cover_url: cover, custom_cover_url: cover } }
+      : fragment;
+  });
   const refresh = async () => {
     await qc.invalidateQueries({ queryKey: ["fragments"] });
     await qc.invalidateQueries({ queryKey: ["fragment-books"] });
+    await qc.invalidateQueries({ queryKey: ["profile-fragments"] });
   };
   const move = async (f: Fragment) => {
     if (!user || busy) return;
@@ -242,7 +263,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             <UiText text={book ? "I tuoi frammenti" : "Le parole che vuoi ritrovare"} />
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            <UiText text="Citazioni, sottolineature e note personali. Visibili solo a te." />
+            <UiText text="Citazioni, sottolineature e note personali. Scegli con chi condividerle." />
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -267,6 +288,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           )}
         </div>
       </div>
+      {!book && <FragmentVisibility key={user.id} />}
       {importing && <FragmentImport close={() => setImporting(false)} />}
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <UiElement
@@ -383,7 +405,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
         </div>
       )}
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        {list.data?.rows.map((f) => (
+        {rows?.map((f) => (
           <FragmentCard
             key={f.id}
             fragment={f}
@@ -421,7 +443,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
       )}
       {editor !== false && (
         <FragmentEditor
-          book={editor ? (list.data?.rows.find((f) => f.id === editor.id)?.books ?? book) : book}
+          book={editor ? (rows?.find((f) => f.id === editor.id)?.books ?? book) : book}
           original={editor ?? undefined}
           close={() => setEditor(false)}
         />

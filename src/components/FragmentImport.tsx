@@ -222,6 +222,7 @@ export function FragmentImport({ close }: { close: () => void }) {
         }
       }
       await qc.invalidateQueries({ queryKey: ["fragments"] });
+      await qc.invalidateQueries({ queryKey: ["profile-fragments"] });
       await qc.invalidateQueries({ queryKey: ["fragment-books"] });
       setRows((r) =>
         r.map((v) => (selected.includes(v) && !failed.has(v.entry) ? { ...v, skip: true } : v)),
@@ -235,6 +236,7 @@ export function FragmentImport({ close }: { close: () => void }) {
       );
     } finally {
       await qc.invalidateQueries({ queryKey: ["fragments"] });
+      await qc.invalidateQueries({ queryKey: ["profile-fragments"] });
       await qc.invalidateQueries({ queryKey: ["fragment-books"] });
       setBusy(false);
     }

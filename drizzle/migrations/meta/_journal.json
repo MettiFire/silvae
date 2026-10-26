@@ -85,6 +85,13 @@
       "when": 1792767160685,
       "tag": "0011_club_members_only_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793035000000,
+      "tag": "0012_fragment_visibility",
+      "breakpoints": true
     }
   ]
 }

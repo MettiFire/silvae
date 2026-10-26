@@ -14,6 +14,7 @@ import { useLibrary } from "@/lib/library";
 import { searchBooks, cacheBook, type Book } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
 import { fragmentError, saveFragment, type Fragment, type FragmentDraft } from "@/lib/fragments";
+import { FragmentTextEditor } from "./FragmentTextEditor";
 export function FragmentEditor({
   book,
   original,
@@ -59,6 +60,7 @@ export function FragmentEditor({
       );
       await qc.invalidateQueries({ queryKey: ["fragments"] });
       await qc.invalidateQueries({ queryKey: ["fragment-books"] });
+      await qc.invalidateQueries({ queryKey: ["profile-fragments"] });
       toast.success(original ? "Frammento aggiornato" : "Frammento salvato");
       close();
     } catch (e) {
@@ -80,7 +82,7 @@ export function FragmentEditor({
             <UiText text={original ? "Modifica frammento" : "Aggiungi un frammento"} />
           </DialogTitle>
           <DialogDescription>
-            <UiText text="Le tue citazioni e note sono private." />{" "}
+            <UiText text="La visibilità segue l’impostazione della tua raccolta Frammenti." />{" "}
             <UiText
               text={
                 selected
@@ -179,22 +181,20 @@ export function FragmentEditor({
               </option>
             </select>
           </label>
-          <label className="block text-sm">
+          <div className="block text-sm">
             <UiText
               text={draft.kind === "quote" ? "La frase che vuoi conservare" : "Il testo della nota"}
             />
-            <UiElement
-              as="textarea"
-              aria-label="Testo del frammento"
+            <FragmentTextEditor
+              label="Testo del frammento"
               required
               maxLength={20000}
               disabled={busy}
               value={draft.quote}
-              onChange={(e) => setDraft({ ...draft, quote: e.target.value })}
+              onChange={(quote) => setDraft({ ...draft, quote })}
               rows={5}
-              className="mt-1 w-full rounded-xl border bg-background p-3 leading-relaxed"
             />
-          </label>
+          </div>
           <label className="block text-sm">
             <UiText text="Pagina, capitolo o posizione digitale" />
             <UiElement
@@ -207,20 +207,20 @@ export function FragmentEditor({
               className="mt-1 w-full rounded-lg border bg-background p-2"
             />
           </label>
-          <label className="block text-sm">
+          <div className="block text-sm">
             <UiText text="La tua riflessione " />
             <span className="text-muted-foreground">
               <UiText text="· facoltativa" />
             </span>
-            <textarea
+            <FragmentTextEditor
+              label="La tua riflessione"
               maxLength={10000}
               disabled={busy}
               value={draft.note}
-              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+              onChange={(note) => setDraft({ ...draft, note })}
               rows={2}
-              className="mt-1 w-full rounded-lg border bg-background p-2"
             />
-          </label>
+          </div>
           <label className="block text-sm">
             <UiText text="Tag separati da virgole" />
             <UiElement
