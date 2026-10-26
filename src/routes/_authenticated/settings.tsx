@@ -21,8 +21,7 @@ import { toast } from "@/lib/localized-toast";
 const SECTIONS = {
   profile: "Profilo pubblico",
   preferences: "Gusti di lettura",
-  appearance: "Aspetto",
-  language: "Lingua",
+  appearance: "Lingua e aspetto",
   devices: "Dispositivi",
   data: "Dati e account",
 } as const;
@@ -30,9 +29,11 @@ type Section = keyof typeof SECTIONS;
 export const Route = createFileRoute("/_authenticated/settings")({
   validateSearch: (search: Record<string, unknown>): { section?: Section } => ({
     section:
-      typeof search["section"] === "string" && Object.hasOwn(SECTIONS, search["section"])
-        ? (search["section"] as Section)
-        : "profile",
+      search["section"] === "language"
+        ? "appearance"
+        : typeof search["section"] === "string" && Object.hasOwn(SECTIONS, search["section"])
+          ? (search["section"] as Section)
+          : "profile",
   }),
   head: () =>
     pageSeo(
@@ -95,38 +96,43 @@ function SettingsPage() {
               <ReadingPreferences />
             </>
           )}
-          {section === "language" && <SiteLanguageSettings key={user?.id} />}
           {section === "appearance" && (
-            <div className="settings-form">
-              <fieldset>
-                <legend>
-                  <UiText text="Interfaccia" />
-                </legend>
-                <label className="flex items-center justify-between gap-4 text-sm">
-                  <UiText text="Tema dell’interfaccia" />
-                  <UiElement
-                    as="select"
-                    aria-label="Tema dell’interfaccia"
-                    className="rounded border bg-background p-2"
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value as typeof theme)}
-                  >
-                    <option value="system">
-                      <UiText text="Segui il dispositivo" />
-                    </option>
-                    <option value="light">
-                      <UiText text="Carta chiara" />
-                    </option>
-                    <option value="dark">
-                      <UiText text="Inchiostro scuro" />
-                    </option>
-                  </UiElement>
-                </label>
-                <div className="mt-6">
-                  <BookGridSizeControl />
-                </div>
-              </fieldset>
-            </div>
+            <section className="space-y-8">
+              <h2 className="font-display text-2xl">
+                <UiText text="Lingua e aspetto" />
+              </h2>
+              <div className="settings-form">
+                <fieldset>
+                  <legend>
+                    <UiText text="Aspetto" />
+                  </legend>
+                  <label className="flex items-center justify-between gap-4 text-sm">
+                    <UiText text="Tema dell’interfaccia" />
+                    <UiElement
+                      as="select"
+                      aria-label="Tema dell’interfaccia"
+                      className="rounded border bg-background p-2"
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value as typeof theme)}
+                    >
+                      <option value="system">
+                        <UiText text="Segui il dispositivo" />
+                      </option>
+                      <option value="light">
+                        <UiText text="Carta chiara" />
+                      </option>
+                      <option value="dark">
+                        <UiText text="Inchiostro scuro" />
+                      </option>
+                    </UiElement>
+                  </label>
+                  <div className="mt-6">
+                    <BookGridSizeControl />
+                  </div>
+                </fieldset>
+              </div>
+              <SiteLanguageSettings key={user?.id} />
+            </section>
           )}
           {section === "devices" && (
             <>
@@ -152,7 +158,7 @@ function SettingsPage() {
                 <UiText text="Sottolineature e note" />
               </h3>
               <p className="my-3 text-sm text-muted-foreground">
-                <UiText text="I tuoi frammenti rimangono privati e si gestiscono nell’archivio dedicato." />
+                <UiText text="Gestisci citazioni e note nell’archivio Frammenti, dove puoi scegliere con chi condividerle." />
               </p>
               <Link to="/fragments" className="button-outline">
                 <UiText text="Apri Frammenti" />

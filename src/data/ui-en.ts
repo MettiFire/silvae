@@ -1,4 +1,8 @@
 export const UI_EN: Record<string, string> = {
+  "Lingua e aspetto": "Language and appearance",
+  "Visibilità dei frammenti": "Fragment visibility",
+  "Visibilità": "Visibility",
+  "Gestisci citazioni e note nell’archivio Frammenti, dove puoi scegliere con chi condividerle.": "Manage quotes and notes in Fragments, where you can choose who can see them.",
   "Formattazione del testo": "Text formatting",
   "Grassetto": "Bold",
   "Corsivo": "Italic",

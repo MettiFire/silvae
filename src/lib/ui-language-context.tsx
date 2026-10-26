@@ -83,7 +83,7 @@ export function UiLanguageSwitch() {
     return (
       <Link
         to="/settings"
-        search={{ section: "language" }}
+        search={{ section: "appearance" }}
         className="text-xs text-muted-foreground"
       >
         {t("Lingua del sito")}

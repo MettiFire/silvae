@@ -56,7 +56,7 @@ export function SiteLanguageSettings() {
         }
       }}
     >
-      <h2 className="font-display text-2xl">{t("Lingua del sito")}</h2>
+      <h3 className="font-display text-xl">{t("Lingua del sito")}</h3>
       <label className="mt-4 block text-sm">
         {t("Interfaccia e lingua predefinita dei libri")}
         <select

@@ -267,6 +267,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {!book && <FragmentVisibility key={user.id} />}
           <button
             onClick={() => setEditor(null)}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
@@ -288,7 +289,6 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           )}
         </div>
       </div>
-      {!book && <FragmentVisibility key={user.id} />}
       {importing && <FragmentImport close={() => setImporting(false)} />}
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <UiElement
