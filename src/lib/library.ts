@@ -70,7 +70,8 @@ export function useLibrary(userId?: string) {
   return useQuery({
     queryKey: ["library", userId],
     enabled: !!userId,
-    staleTime: 30_000,
+    // Library mutations invalidate this shared query immediately. Reuse it on navigation.
+    staleTime: 2 * 60_000,
     retry: 1,
     queryFn: async ({ signal }) => {
       const items: LibraryItem[] = [];

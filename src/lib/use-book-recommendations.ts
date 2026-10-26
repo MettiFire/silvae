@@ -1,6 +1,6 @@
 import { useBookGridCapacity } from "./use-book-grid-capacity";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,10 +12,17 @@ import {
   PREFERENCES_FIELD,
   recommendationSources,
   rankRecommendations,
+  type RecommendationCandidate,
 } from "@/lib/reading-preferences";
 import { useBookLanguage } from "@/lib/use-book-language";
 import { nextRecommendationRotation } from "@/lib/recommendation-rotation";
+const combineSources = (results: UseQueryResult<RecommendationCandidate[]>[]) => ({
+  recs: results.flatMap((source) => source.data ?? []),
+  fetching: results.some((source) => source.isFetching),
+  failed: results.length > 0 && results.every((source) => source.isError),
+});
 export function useBookRecommendations() {
+  const qc = useQueryClient();
   const recommendationCount = useBookGridCapacity();
   const pageSize = Math.max(12, recommendationCount);
   const { user, loading: authLoading } = useAuth();
@@ -49,39 +56,51 @@ export function useBookRecommendations() {
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
   const plan = recommendationSources(preferences, library);
-  const planKey = plan.map((g) => g.id).join("|");
-  const {
-    data: recs = [],
-    isFetching: recsLoading,
-    isError: recsError,
-    refetch: retryRecs,
-  } = useQuery({
-    queryKey: ["recs-v4", planKey, seed, user?.id, language ?? "any", pageSize],
-    enabled:
-      seed !== null &&
-      languageReady &&
-      !authLoading &&
-      (!user || (!libraryLoading && !libraryError)),
-    queryFn: async () => {
-      const lists = await Promise.allSettled(
-        plan.map(async (g, index) => {
-          const offset = (((seed ?? 0) + index) % 5) * 12;
-          let books = await searchBooks(g.query, { max: pageSize, startIndex: offset, language });
-          // An author with a small bibliography may not have a later page.
+  const sourceQueries = useQueries({
+    queries: plan.map((source, index) => {
+      const offset = (((seed ?? 0) + index) % 5) * 12;
+      return {
+        // Cache the actual catalogue page, independently of the visit/rotation counter.
+        queryKey: [
+          "recommendation-source-v1",
+          source.query,
+          source.author,
+          source.genreId,
+          offset,
+          language ?? "any",
+          pageSize,
+        ],
+        enabled:
+          seed !== null &&
+          languageReady &&
+          !authLoading &&
+          (!user || (!libraryLoading && !libraryError)),
+        queryFn: async () => {
+          let books = await searchBooks(source.query, {
+            max: pageSize,
+            startIndex: offset,
+            language,
+          });
           if (!books.length && offset > 0)
-            books = await searchBooks(g.query, { max: pageSize, startIndex: 0, language });
+            books = await searchBooks(source.query, { max: pageSize, startIndex: 0, language });
           return books
-            .filter((book) => !g.author || book.authors.some((a) => sameAuthorName(a, g.author!)))
-            .map((book) => ({ book, genreId: g.genreId }));
-        }),
-      );
-      if (lists.every((r) => r.status === "rejected")) throw new Error("Catalogo non disponibile");
-      return lists.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-    },
-    staleTime: 5 * 60 * 1000,
-    // Keep refresh/new-visit rotation, but do not repeat catalogue calls on tab focus.
-    refetchOnWindowFocus: false,
+            .filter(
+              (book) =>
+                !source.author || book.authors.some((a) => sameAuthorName(a, source.author!)),
+            )
+            .map((book) => ({ book, genreId: source.genreId }));
+        },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        retry: 1,
+      };
+    }),
+    combine: combineSources,
   });
+  // A slow or unavailable provider must not block results from the other sources.
+  const { recs, fetching: recsLoading, failed: recsError } = sourceQueries;
+  const retryRecs = () =>
+    qc.refetchQueries({ queryKey: ["recommendation-source-v1"], type: "active" });
 
   const candidates = useMemo(() => recs.map((r) => r.book), [recs]);
   const excluded = useMemo(
@@ -117,7 +136,7 @@ export function useBookRecommendations() {
       seed === null ||
       authLoading ||
       (!!user && libraryLoading) ||
-      recsLoading ||
+      (recsLoading && !recommended.length) ||
       (!recommended.length && worksVerifying),
     recsError: recsError || libraryError,
     libraryReady,

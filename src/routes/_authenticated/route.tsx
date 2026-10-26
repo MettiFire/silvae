@@ -8,10 +8,12 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   head: () => ({ meta: [{ name: "robots", content: "noindex, follow" }] }),
   beforeLoad: async ({ location }) => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user)
+    // This client-only gate chooses a screen; data access is enforced by RLS
+    // and mutations still verify the current user on the server.
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session?.user)
       throw redirect({ to: "/auth", search: { returnTo: authDestination(location.href) } });
-    return { user: data.user };
+    return { user: data.session.user };
   },
   component: AuthenticatedLayout,
 });
