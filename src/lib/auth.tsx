@@ -74,7 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (previousUser.current) qc.clear();
         previousUser.current = id;
       }
-      setSession(next);
+      // Older accounts can have null metadata; consumers always receive an object.
+      setSession(
+        next
+          ? { ...next, user: { ...next.user, user_metadata: next.user.user_metadata ?? {} } }
+          : null,
+      );
       setLoading(false);
       if (next?.user) {
         setProfileLoading(true);
