@@ -79,12 +79,14 @@ export function FragmentTextEditor({
         className="mt-1 w-full rounded-xl border bg-background p-3 leading-relaxed"
       />
       {value && (
-        <div className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-3 text-sm">
-          <p className="mb-1 text-xs text-muted-foreground">
+        <details className="mt-2 rounded-lg bg-muted/40 p-3 text-sm">
+          <summary className="cursor-pointer text-xs text-muted-foreground">
             <UiText text="Anteprima" />
-          </p>
-          <FragmentText text={value} />
-        </div>
+          </summary>
+          <div className="mt-2 whitespace-pre-wrap break-words">
+            <FragmentText text={value} />
+          </div>
+        </details>
       )}
     </div>
   );
