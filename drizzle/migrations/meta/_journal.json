@@ -92,6 +92,13 @@
       "when": 1793035000000,
       "tag": "0012_fragment_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793035100000,
+      "tag": "0013_fragment_preference_visibility",
+      "breakpoints": true
     }
   ]
 }

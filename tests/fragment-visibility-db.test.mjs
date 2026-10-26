@@ -17,6 +17,7 @@ test("collection sharing is opt-in, follower-aware and never grants write access
     "20260901203401_c217526c-ddb4-42b5-98c0-99f528210932.sql",
     "20261022010000_fragments_and_reading_progress.sql",
     "20261026020000_fragment_visibility.sql",
+    "20261026021000_fragment_preference_visibility.sql",
   ])
     await db.exec(
       await readFile(new URL("../supabase/migrations/" + file, import.meta.url), "utf8"),
