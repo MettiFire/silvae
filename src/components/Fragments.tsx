@@ -404,7 +404,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           </p>
         </div>
       )}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="columns-1 gap-4 lg:columns-2 [&>article]:mb-4 [&>article]:break-inside-avoid">
         {rows?.map((f) => (
           <FragmentCard
             key={f.id}
