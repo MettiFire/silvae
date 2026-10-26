@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ThumbsDown } from "lucide-react";
 import { fragmentDay } from "@/lib/daily-fragment";
 import { searchBooks } from "@/lib/books";
-import { sameAuthorName, workTitle } from "@/lib/work-identity";
+import { findDailyFragmentBook } from "@/lib/daily-fragment-book";
 import { BookCover } from "./BookCard";
 
 export function DailyFragment() {
@@ -25,7 +25,7 @@ export function DailyFragment() {
   const { language } = useBookLanguage(
     parsePreferences(user?.user_metadata[PREFERENCES_FIELD])?.language,
   );
-  const [coverUrl, setCoverUrl] = useState("");
+  const [loadedCover, setLoadedCover] = useState({ bookId: "", url: "" });
   const [day, setDay] = useState<string | null>(null);
   useEffect(() => {
     const update = () => setDay(fragmentDay());
@@ -76,31 +76,36 @@ export function DailyFragment() {
       : fragment.title
     : "";
   const books = useQuery({
-    queryKey: ["daily-fragment-book", fragment?.id, language],
+    queryKey: ["daily-fragment-book-v2", fragment?.author, searchTitle, language],
     enabled: !!fragment,
-    queryFn: () =>
-      searchBooks(`intitle:"${searchTitle}" inauthor:"${fragment!.author}"`, { max: 6, language }),
-    staleTime: 86400000,
+    queryFn: () => findDailyFragmentBook(fragment!, searchTitle, language, searchBooks),
+    staleTime: (query) => (query.state.data ? 86400000 : 5 * 60000),
     retry: false,
   });
-  const candidates = books.data?.filter(
-    (b) =>
-      (workTitle(b.title) === workTitle(fragment!.title) ||
-        workTitle(b.title) === workTitle(searchTitle)) &&
-      b.authors.some((a) => sameAuthorName(a, fragment!.author)),
-  );
-  const book = candidates?.find((b) => b.cover_url) ?? candidates?.[0];
-  useEffect(() => setCoverUrl(""), [book?.id]);
+  const book = books.data;
+  const coverUrl = book?.id === loadedCover.bookId ? loadedCover.url : "";
+  // An unavailable catalogue cover still gets a stable, clearly typographic treatment.
+  const fallbackHue =
+    [...(fragment?.author ?? "Silvae")].reduce((n, c) => n + c.charCodeAt(0), 0) % 360;
+  const fallbackColor = `hsl(${fallbackHue} 28% 48% / 0.18)`;
   const cover = book ? (
     <BookCover
       key={book.id}
       book={book}
       fit="contain"
-      onCoverLoad={setCoverUrl}
+      onCoverLoad={(url) =>
+        setLoadedCover((previous) =>
+          previous.bookId === book.id && previous.url === url ? previous : { bookId: book.id, url },
+        )
+      }
+      priority
       className="!bg-transparent !shadow-none after:!hidden"
     />
   ) : (
-    <div className="flex aspect-[2/3] flex-col items-center justify-center border border-border bg-card px-4 text-center">
+    <div
+      className="flex aspect-[2/3] flex-col items-center justify-center border border-border px-4 text-center"
+      style={{ backgroundColor: fallbackColor }}
+    >
       <span className="font-display text-lg">{fragment?.title}</span>
       <span className="mt-3 text-xs text-muted-foreground">{fragment?.author}</span>
     </div>
@@ -111,6 +116,11 @@ export function DailyFragment() {
       className="relative isolate my-10 min-h-80 overflow-hidden rounded-2xl border border-border/60 bg-muted/25 px-5 py-7 sm:px-10 sm:py-9"
       aria-label="Il frammento del giorno"
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{ backgroundColor: fallbackColor }}
+      />
       {coverUrl && (
         <div
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
@@ -121,6 +131,7 @@ export function DailyFragment() {
             src={coverUrl}
             alt=""
             decoding="async"
+            referrerPolicy="no-referrer"
             width={300}
             height={450}
             className="absolute -inset-[20%] h-[140%] w-[140%] object-cover opacity-30 blur-3xl saturate-150 dark:opacity-25"
