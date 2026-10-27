@@ -139,8 +139,9 @@ function SettingsPage() {
               <h2 className="mb-4 font-display text-2xl">
                 <UiText text="I tuoi dispositivi" />
               </h2>
-              <EbookDevices key={user?.id} />
-              <ReaderConnections />
+              <EbookDevices key={user?.id}>
+                <ReaderConnections />
+              </EbookDevices>
             </>
           )}
           {section === "data" && (

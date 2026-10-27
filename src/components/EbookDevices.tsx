@@ -1,5 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,12 +83,12 @@ export function EbookDeviceFields({
         </UiElement>
       )}
       <p className="text-xs text-muted-foreground">
-        <UiText text="Se scegli No, nascondiamo l’avanzamento ebook nelle schede dei libri. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica." />
+        <UiText text="Se scegli No, nascondiamo l’avanzamento ebook e i collegamenti ai dispositivi. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica." />
       </p>
     </fieldset>
   );
 }
-export function EbookDevices() {
+export function EbookDevices({ children }: { children?: ReactNode }) {
   const { user } = useAuth();
   const prefs = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const [value, setValue] = useState(prefs?.ebookDevices);
@@ -109,11 +109,14 @@ export function EbookDevices() {
     }
   };
   return (
-    <section className="mb-8 space-y-4 rounded-xl border border-border p-5">
-      <EbookDeviceFields value={value} onChange={setValue} disabled={busy} />
-      <button disabled={busy} onClick={() => void save()} className="button-ink">
-        <UiText text={busy ? "Salvataggio…" : "Salva dispositivi"} />
-      </button>
-    </section>
+    <>
+      <section className="mb-8 space-y-4 rounded-xl border border-border p-5">
+        <EbookDeviceFields value={value} onChange={setValue} disabled={busy} />
+        <button disabled={busy} onClick={() => void save()} className="button-ink">
+          <UiText text={busy ? "Salvataggio…" : "Salva dispositivi"} />
+        </button>
+      </section>
+      {value?.length !== 0 && children}
+    </>
   );
 }

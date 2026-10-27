@@ -113,6 +113,21 @@ La prima parte è ora in **Impostazioni → Dispositivi → Kindle · prova di a
 web**. Il client macOS separato è stato rimosso. Nessun nuovo dispositivo viene
 registrato da questa interfaccia.
 
+I link Amazon.it e Amazon.com sono stati verificati in schede autonome del browser
+Codex: raggiungono le pagine di accesso. Amazon restituisce `X-Frame-Options:
+SAMEORIGIN` e `Content-Security-Policy: frame-ancestors 'none'`; il login non può
+essere incorporato nell'anteprima Lovable. **Copia link Amazon** consente di aprire
+l'indirizzo direttamente nella barra di una nuova scheda del browser, mantenendo
+aperta la pagina Silvae con il tentativo in memoria. Se anche gli appunti sono
+bloccati dal riquadro, compare un campo selezionabile per la copia manuale. Il
+fallback è stato provato con la scrittura negli appunti negata da un iframe.
+
+La selezione esplicita di nessun lettore nasconde e smonta tutte le sezioni dei
+collegamenti immediatamente, prima del salvataggio della preferenza. Non rimuove
+i collegamenti già conservati nel database. Scegliendo nuovamente un lettore, i
+controlli tornano visibili. Le preferenze non ancora specificate mantengono il
+comportamento precedente.
+
 La prova web genera un tentativo PKCE distinto, apre il login Amazon in una nuova
 scheda e permette di incollare l'indirizzo finale Amazon. Può comparire il marchio
 Audible, perché il protocollo privato usa quel flusso tecnico. Password e MFA

@@ -1,4 +1,10 @@
 export const UI_EN: Record<string, string> = {
+  "Se scegli No, nascondiamo l’avanzamento ebook e i collegamenti ai dispositivi. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica.": "Choosing No hides ebook progress and device connections. You can change this in Settings → Devices. Selecting a reader does not enable automatic sync.",
+  "Copia link Amazon": "Copy Amazon link",
+  "Link Amazon da copiare": "Amazon link to copy",
+  "Link copiato. Incollalo nella barra degli indirizzi di una nuova scheda del browser.": "Link copied. Paste it into the address bar of a new browser tab.",
+  "Seleziona e copia il link dal campo qui sotto, poi incollalo in una nuova scheda del browser.": "Select and copy the link from the field below, then paste it into a new browser tab.",
+  "Amazon blocca l’accesso nei riquadri incorporati. Nell’anteprima Lovable usa Copia link Amazon e incollalo nella barra degli indirizzi di una nuova scheda, lasciando aperta Silvae.": "Amazon blocks sign-in inside embedded frames. In the Lovable preview, use Copy Amazon link and paste it into the address bar of a new browser tab, keeping Silvae open.",
   "Kindle · prova di accesso web": "Kindle · web sign-in trial",
   "Sperimentale: prepariamo l’accesso Amazon nel browser. La registrazione del dispositivo e la sincronizzazione della lettura non sono ancora attive.": "Experimental: prepare Amazon sign-in in your browser. Device registration and reading sync are not active yet.",
   "Password e verifica in due passaggi vanno inserite solo su Amazon. Il login tecnico può mostrare Audible.": "Enter passwords and two-step verification only on Amazon. The technical sign-in may show Audible branding.",

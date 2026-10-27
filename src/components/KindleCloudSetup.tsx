@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { UiText } from "@/lib/ui-language-context";
 import {
@@ -17,12 +17,15 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [manualCopy, setManualCopy] = useState(false);
+  const copyField = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!attempt) return;
     const timer = setTimeout(
       () => {
         setAttempt(null);
         setReturnUrl("");
+        setMessage("");
         setError("La prova è scaduta. Prepara un nuovo accesso.");
       },
       Math.max(0, attempt.expiresAt - Date.now()),
@@ -35,6 +38,7 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
     setReturnUrl("");
     setMessage("");
     setError("");
+    setManualCopy(false);
   };
   return (
     <section
@@ -99,9 +103,48 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
             <button type="button" className="button-outline min-h-11" onClick={reset}>
               <UiText text="Annulla" />
             </button>
+            <button
+              type="button"
+              className="button-outline min-h-11"
+              onClick={async () => {
+                try {
+                  if (!navigator.clipboard?.writeText) throw Error("Clipboard unavailable");
+                  await navigator.clipboard.writeText(attempt.url);
+                  setMessage(
+                    "Link copiato. Incollalo nella barra degli indirizzi di una nuova scheda del browser.",
+                  );
+                } catch {
+                  setManualCopy(true);
+                  setMessage(
+                    "Seleziona e copia il link dal campo qui sotto, poi incollalo in una nuova scheda del browser.",
+                  );
+                }
+              }}
+            >
+              <UiText text="Copia link Amazon" />
+            </button>
           </>
         )}
       </div>
+      {attempt && (
+        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+          <UiText text="Amazon blocca l’accesso nei riquadri incorporati. Nell’anteprima Lovable usa Copia link Amazon e incollalo nella barra degli indirizzi di una nuova scheda, lasciando aperta Silvae." />
+        </p>
+      )}
+      {attempt && manualCopy && (
+        <label className="mt-3 grid min-w-0 gap-1 text-sm" htmlFor={`${id}-copy`}>
+          <UiText text="Link Amazon da copiare" />
+          <input
+            ref={copyField}
+            id={`${id}-copy`}
+            type="text"
+            readOnly
+            value={attempt.url}
+            onFocus={() => copyField.current?.select()}
+            className="min-h-11 min-w-0 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+        </label>
+      )}
       {attempt && (
         <form
           className="mt-5 grid max-w-3xl gap-3"
