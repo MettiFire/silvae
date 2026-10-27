@@ -351,6 +351,7 @@ export type Database = {
       }
       fragments: {
         Row: {
+          image_path: string | null
           book_id: string
           created_at: string
           dedupe_key: string
@@ -369,6 +370,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          image_path?: string | null
           book_id: string
           created_at?: string
           dedupe_key: string
@@ -387,6 +389,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          image_path?: string | null
           book_id?: string
           created_at?: string
           dedupe_key?: string

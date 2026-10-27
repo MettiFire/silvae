@@ -13,6 +13,7 @@ export const FRAGMENT_SOURCES: Record<FragmentSource, string> = {
   koreader: "KOReader",
 };
 export type FragmentDraft = {
+  image_path?: string | null;
   kind: "quote" | "note";
   quote: string;
   note: string;
@@ -22,7 +23,7 @@ export type FragmentDraft = {
 };
 export function validateFragment(draft: FragmentDraft): FragmentDraft {
   const quote = draft.quote.trim();
-  if (!quote || quote.length > 20000)
+  if ((!quote && !draft.image_path) || quote.length > 20000)
     throw new Error("Inserisci un testo da 1 a 20.000 caratteri.");
   if (draft.note.length > 10000 || draft.position.length > 300)
     throw new Error("La nota o la posizione è troppo lunga.");
@@ -30,6 +31,7 @@ export function validateFragment(draft: FragmentDraft): FragmentDraft {
   if (tags.length > 20 || tags.some((t) => t.length > 50))
     throw new Error("Usa fino a 20 tag di massimo 50 caratteri.");
   return {
+    ...(draft.image_path !== undefined ? { image_path: draft.image_path } : {}),
     kind: draft.kind === "note" ? "note" : "quote",
     quote,
     note: draft.note.trim(),
@@ -76,6 +78,8 @@ export async function saveFragment(
 ) {
   await requireFragmentUser(client, userId);
   const valid = validateFragment(draft);
+  if (valid.image_path && !new RegExp(`^${userId}/[a-f0-9-]{36}\\.webp$`).test(valid.image_path))
+    throw new Error("Foto non valida per questo account.");
   if (original) {
     const { data, error } = await client
       .from("fragments")
@@ -90,16 +94,14 @@ export async function saveFragment(
   }
   const ref = crypto.randomUUID();
   const key = await fragmentKey(bookId, "manual", ref, valid.quote, valid.position);
-  const { error } = await client
-    .from("fragments")
-    .insert({
-      ...valid,
-      user_id: userId,
-      book_id: bookId,
-      source: "manual",
-      source_ref: ref,
-      dedupe_key: key,
-    });
+  const { error } = await client.from("fragments").insert({
+    ...valid,
+    user_id: userId,
+    book_id: bookId,
+    source: "manual",
+    source_ref: ref,
+    dedupe_key: key,
+  });
   if (error) throw error;
 }
 export async function moveFragmentToTrash(

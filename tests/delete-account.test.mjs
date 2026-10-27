@@ -53,9 +53,9 @@ test("Unavailable migration or failed backend never reports successful deletion"
     /Database failure/,
   );
 });
-test("Public profile images are removed only for the verified owner before deleting the account", async () => {
+test("Profile and fragment photos are removed only for the verified owner before deleting the account", async () => {
   const events = [];
-  let listed = false;
+  const listed = new Set();
   const client = {
     ...clientFor("reader", async () => {
       events.push("delete-account");
@@ -63,17 +63,17 @@ test("Public profile images are removed only for the verified owner before delet
     }),
     storage: {
       from: (bucket) => {
-        assert.equal(bucket, "profile-images");
+        assert.ok(["profile-images", "fragment-photos"].includes(bucket));
         return {
           list: async (folder) => {
             assert.equal(folder, "reader");
-            if (listed) return { data: [], error: null };
-            listed = true;
+            if (listed.has(bucket)) return { data: [], error: null };
+            listed.add(bucket);
             return { data: [{ id: "file", name: "avatar.webp" }], error: null };
           },
           remove: async (paths) => {
             assert.deepEqual(paths, ["reader/avatar.webp"]);
-            events.push("remove-images");
+            events.push(`remove-${bucket}`);
             return { error: null };
           },
         };
@@ -81,7 +81,7 @@ test("Public profile images are removed only for the verified owner before delet
     },
   };
   await deleteOwnAccount(client, "reader", "ELIMINA");
-  assert.deepEqual(events, ["remove-images", "delete-account"]);
+  assert.deepEqual(events, ["remove-profile-images", "remove-fragment-photos", "delete-account"]);
 });
 test("Profile image removal failure keeps the account; environments without the new bucket still support deletion", async () => {
   let deleted = false;

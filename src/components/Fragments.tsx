@@ -19,6 +19,7 @@ import {
 } from "@/lib/fragments";
 import { FragmentVisibility } from "./FragmentVisibility";
 import { FragmentText } from "./FragmentText";
+import { FragmentImage } from "./FragmentImage";
 import { FragmentEditor } from "./FragmentEditor";
 import { FragmentImport } from "./FragmentImport";
 import { BookCover } from "./BookCard";
@@ -56,8 +57,10 @@ export function FragmentCard({
           </Link>
           <p className="text-xs text-muted-foreground">{f.books?.authors.join(", ")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            <UiText text={f.kind === "note" ? "Nota personale" : "Citazione"} /> ·{" "}
-            {FRAGMENT_SOURCES[f.source as FragmentSource] ?? f.source}
+            <UiText
+              text={f.image_path ? "Foto" : f.kind === "note" ? "Nota personale" : "Citazione"}
+            />{" "}
+            · {FRAGMENT_SOURCES[f.source as FragmentSource] ?? f.source}
             {f.position ? ` · ${f.position}` : ""}
           </p>
         </div>
@@ -76,9 +79,14 @@ export function FragmentCard({
           </UiElement>
         )}
       </div>
-      <blockquote className="whitespace-pre-wrap break-words border-l-2 border-primary/40 pl-4 font-display text-base leading-relaxed">
-        <FragmentText text={f.quote} />
-      </blockquote>
+      {f.image_path && (
+        <FragmentImage path={f.image_path} alt={f.quote || `Foto · ${f.books?.title ?? "Libro"}`} />
+      )}
+      {f.quote && (
+        <blockquote className="whitespace-pre-wrap break-words border-l-2 border-primary/40 pl-4 font-display text-base leading-relaxed">
+          <FragmentText text={f.quote} />
+        </blockquote>
+      )}
       {f.note && (
         <p className="mt-4 whitespace-pre-wrap break-words text-sm text-muted-foreground">
           <FragmentText text={f.note} />
@@ -272,7 +280,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             onClick={() => setEditor(null)}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
           >
-            <UiText text="Aggiungi frase" />
+            <UiText text="Aggiungi un frammento" />
           </button>
           {!book && (
             <button

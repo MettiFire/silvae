@@ -12,7 +12,7 @@ export function validateProfileImage(file: { type: string; size: number }) {
 }
 
 /** Re-encode decoded pixels, strip embedded metadata and fit the Storage size limit. */
-export async function prepareProfileImage(file: File, kind: ProfileImageKind): Promise<Blob> {
+export async function prepareImageFile(file: File, longest = 1600): Promise<Blob> {
   validateProfileImage(file);
   let bitmap: ImageBitmap;
   try {
@@ -23,7 +23,6 @@ export async function prepareProfileImage(file: File, kind: ProfileImageKind): P
   try {
     if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > 40000000)
       throw Error("Immagine troppo grande. Scegli una versione più piccola.");
-    let longest = kind === "avatar" ? 512 : 1600;
     for (let attempt = 0; attempt < 5; attempt++) {
       const scale = Math.min(1, longest / Math.max(bitmap.width, bitmap.height));
       const canvas = document.createElement("canvas");
@@ -44,6 +43,10 @@ export async function prepareProfileImage(file: File, kind: ProfileImageKind): P
   } finally {
     bitmap.close();
   }
+}
+
+export function prepareProfileImage(file: File, kind: ProfileImageKind) {
+  return prepareImageFile(file, kind === "avatar" ? 512 : 1600);
 }
 
 /** Verify delivery before allowing the URL to be saved in the public profile. */

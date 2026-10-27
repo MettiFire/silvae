@@ -1,4 +1,11 @@
 export const UI_EN: Record<string, string> = {
+  "Foto": "Photo",
+  "Foto del frammento": "Fragment photo",
+  "JPG, PNG o WebP, fino a 8 MB. La foto segue la visibilità della tua raccolta.": "JPG, PNG or WebP, up to 8 MB. The photo follows your collection's visibility.",
+  "Didascalia · facoltativa": "Caption · optional",
+  "Rimuovi foto": "Remove photo",
+  "Foto temporaneamente non disponibile.": "Photo temporarily unavailable.",
+  "Caricamento foto…": "Loading photo…",
   "Frammenti di oggi": "Today's fragments",
   "Frammento precedente": "Previous fragment",
   "Frammento successivo": "Next fragment",
