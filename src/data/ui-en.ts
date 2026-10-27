@@ -1,4 +1,6 @@
 export const UI_EN: Record<string, string> = {
+  "Scegli un titolo dalla raccolta Amazon e conferma il libro corrispondente nella tua libreria.":
+    "Choose a title from your Amazon collection and confirm the matching book in your library.",
   "Aggiorna dalla raccolta Kindle": "Update from your Kindle collection",
   "Per cercare i tuoi titoli, Silvae richiede ad Amazon una sessione web temporanea. Passa solo sui server Silvae/Vercel, non viene salvata né inviata al browser. Tecnicamente può dare accesso anche ad altre sezioni dell’account: Silvae la usa solo per la raccolta Kindle, senza leggere ordini o pagamenti.":
     "To find your titles, Silvae requests a temporary Amazon web session. It stays on Silvae/Vercel servers, is not saved and never reaches your browser. Technically it may access other account sections: Silvae uses it only for the Kindle collection, without reading orders or payments.",

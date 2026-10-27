@@ -188,5 +188,29 @@ dell'account autorizzato. Identificativo, titolo e dati personali non sono nei
 test o nel repository. Resta da verificare un totale attendibile e implementare
 selezione/associazione automatica dei contenuti prima di abilitare la sync.
 
+### Ricerca per titolo e aggiornamento esplicito dello stato
+
+La raccolta Amazon è ora leggibile tramite sessione web ottenuta dal refresh
+token esistente, dopo avviso e consenso separato dell'utente nel pannello
+Dispositivi. La sessione vive soltanto in memoria nel relay Vercel e non viene
+salvata, inviata al frontend o registrata nei log. Le richieste sono limitate
+allo scambio della sessione e ai metadati Kindle: nessun endpoint generico per
+cookie, URL o altre sezioni Amazon. Anche la privacy policy descrive questo uso.
+
+Il pannello cerca per titolo/autore fra documenti Send to Kindle e acquisti,
+fino a 100 contenuti recenti per tipo, segnalando raccolte parziali. L'utente
+conferma il libro corrispondente nella propria libreria e richiede l'aggiornamento.
+Una posizione positiva e datata può segnare il libro come `reading`; non stima
+percentuali o completamento. Libri letti/abbandonati e dati manuali più recenti
+sono conservati. Il salvataggio confronta atomicamente proprietario, sessione di
+lettura e versione della riga, quindi una modifica concorrente non viene persa.
+
+Prova reale riuscita il 27 ottobre 2026: selezione per titolo di un documento
+Send to Kindle e aggiornamento della corrispondente voce Silvae a In lettura,
+senza cambiare la percentuale. Il token CSRF della raccolta è distinto da quello
+della navigazione Amazon: il parser dà precedenza all'assegnazione della pagina
+alla variabile `csrfToken`, con test dedicato. Questa versione aggiorna su
+richiesta; non è una sincronizzazione periodica in background.
+
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.

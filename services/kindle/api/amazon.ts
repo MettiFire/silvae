@@ -162,6 +162,28 @@ export async function handleAmazonRelay(
 }
 export default { fetch: (request: Request) => handleAmazonRelay(request) };
 
+export function collectionCsrf(html: string) {
+  const quoted = "[\"']((?:\\\\.|[^\"'\\\\]){5,4096})[\"']";
+  const raw =
+    new RegExp("(?:window\\.)csrfToken\\s*=\\s*" + quoted).exec(html)?.[1] ??
+    new RegExp("\\b(?:var|let|const)\\s+csrfToken\\s*=\\s*" + quoted).exec(html)?.[1] ??
+    new RegExp("csrfToken[\"']?\\s*[:=]\\s*" + quoted).exec(html)?.[1] ??
+    /name=["']csrfToken["']\s+value=["']([^"']{5,4096})["']/.exec(html)?.[1];
+  if (!raw) return null;
+  let token = raw;
+  try {
+    token = JSON.parse('"' + raw.replace(/\\x([a-f0-9]{2})/gi, "\\u00$1") + '"');
+  } catch {
+    if (raw.includes("\\")) return null;
+  }
+  return token
+    .replace(/&amp;/g, "&")
+    .replace(/&#(x[0-9a-f]+|\d+);/gi, (_match: string, n: string) => {
+      const code = n[0].toLowerCase() === "x" ? parseInt(n.slice(1), 16) : Number(n);
+      return code >= 32 && code <= 126 ? String.fromCharCode(code) : "";
+    });
+}
+
 /** Session cookies exist only inside this invocation and are never returned or logged. */
 export async function readCatalogue(
   region: "it" | "com",
@@ -169,6 +191,7 @@ export async function readCatalogue(
   fetcher: typeof fetch = fetch,
 ) {
   const base = `https://www.amazon.${region}`;
+  const cookies = new Map<string, string>();
   const request = async (url: string, init: RequestInit, max = 2_000_000) => {
     const response = await fetcher(url, {
       ...init,
@@ -186,6 +209,19 @@ export async function readCatalogue(
       response.status,
     );
     if (response.status !== 200) throw Error("Amazon collection unavailable");
+    // Amazon may rotate the web session when issuing its collection CSRF token.
+    for (const header of response.headers.getSetCookie()) {
+      const pair = /^([A-Za-z0-9_-]{1,100})=([^;]*)/.exec(header);
+      const domain = /;\s*domain=([^;]+)/i.exec(header)?.[1]?.toLowerCase();
+      if (
+        !pair ||
+        (domain &&
+          ![`.amazon.${region}`, `amazon.${region}`, `www.amazon.${region}`].includes(domain))
+      )
+        continue;
+      if (!/^[\x21-\x7e]{1,16000}$/.test(pair[2]!) || /[;\\]/.test(pair[2]!)) continue;
+      cookies.set(pair[1]!, pair[2]!);
+    }
     const text = await response.text();
     if (Buffer.byteLength(text) > max) throw Error("Amazon collection unavailable");
     return text;
@@ -210,7 +246,6 @@ export async function readCatalogue(
   );
   const domains = exchanged?.response?.tokens?.cookies;
   if (!domains || typeof domains !== "object") throw Error("Amazon collection unavailable");
-  const cookies = new Map<string, string>();
   for (const [domain, rows] of Object.entries(domains)) {
     if (
       ![`.amazon.${region}`, `amazon.${region}`, `www.amazon.${region}`].includes(domain) ||
@@ -233,10 +268,9 @@ export async function readCatalogue(
   if (cookie.length > 64_000) throw Error("Amazon collection unavailable");
   const page = `${base}/hz/mycd/digital-console/contentlist/pdocs/dateDsc/`;
   const html = await request(page, { method: "GET", headers: { Cookie: cookie } });
-  const csrf =
-    /csrfToken["']?\s*[:=]\s*["']([^"']{5,4096})["']/.exec(html)?.[1] ??
-    /name=["']csrfToken["']\s+value=["']([^"']{5,4096})["']/.exec(html)?.[1];
+  const csrf = collectionCsrf(html);
   if (!csrf) throw Error("Amazon collection unavailable");
+  const clientId = /clientId["']?\s*[:=]\s*["']([A-Za-z0-9._-]{1,200})["']/.exec(html)?.[1];
   const items: { key: string; type: "PDOC" | "EBOK"; title: string; authors: string[] }[] = [];
   let partial = false;
   for (const type of ["PDOC", "EBOK"] as const) {
@@ -245,6 +279,7 @@ export async function readCatalogue(
       contentType: type === "PDOC" ? "KindlePDoc" : "Ebook",
       contentCategoryReference: type === "PDOC" ? "pdocs" : "booksAll",
       itemStatusList: ["Active"],
+      ...(type === "EBOK" ? { originTypes: ["Purchase"] } : {}),
       showSharedContent: false,
       fetchCriteria: {
         sortOrder: "DESCENDING",
@@ -259,14 +294,16 @@ export async function readCatalogue(
       await request(`${base}/hz/mycd/digital-console/ajax`, {
         method: "POST",
         headers: {
-          Cookie: cookie,
+          Cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; "),
           Referer: page,
+          Origin: base,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
           activity: "GetContentOwnershipData",
           activityInput: JSON.stringify(input),
           csrfToken: csrf,
+          ...(clientId ? { clientId } : {}),
         }),
       }),
     );

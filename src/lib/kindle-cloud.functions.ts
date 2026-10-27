@@ -82,6 +82,8 @@ export const kindleCloud = createServerFn({ method: "POST" })
         "Non riesco a leggere il collegamento Kindle. Contatta l’assistenza prima di riconfigurarlo.",
       );
     }
+    // Account status does not need another request to the known-empty device feed.
+    if (data.action === "poll" && previous?.phase === "connected") return publicState(previous);
     if (
       ["poll", "check"].includes(data.action) &&
       (!previous ||

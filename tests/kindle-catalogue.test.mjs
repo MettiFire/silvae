@@ -1,6 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readCatalogue } from "../services/kindle/api/amazon.ts";
+import { readCatalogue, collectionCsrf } from "../services/kindle/api/amazon.ts";
+test("collection CSRF is decoded as the page script sees it and prefers the actual window assignment", () => {
+  assert.equal(
+    collectionCsrf('"csrfToken":"navigation-token"; var csrfToken = "collection-token";'),
+    "collection-token",
+  );
+  assert.equal(
+    collectionCsrf('"csrfToken":"example-value"; window.csrfToken = "real\\u002btoken\\u003d";'),
+    "real+token=",
+  );
+  assert.equal(collectionCsrf('"csrfToken":"token&#x2f;value&#61;"'), "token/value=");
+  assert.equal(collectionCsrf('"csrfToken":"token\\x2fvalue"'), "token/value");
+});
 test("catalogue exchanges credentials only with Amazon and returns no web session or unrelated account data", async () => {
   const calls = [];
   const result = await readCatalogue("it", "private-refresh", async (url, init) => {
@@ -17,9 +29,15 @@ test("catalogue exchanges credentials only with Amazon and returns no web sessio
           },
         },
       });
-    assert.equal(init.headers.Cookie, "session-id=secret-session");
-    if (init.method === "GET") return new Response('"csrfToken":"private-csrf"');
+    if (init.method === "GET") {
+      assert.equal(init.headers.Cookie, "session-id=secret-session");
+      return new Response('"csrfToken":"private-csrf", "clientId":"collection-client"', {
+        headers: { "Set-Cookie": "session-id=rotated-session; Domain=.amazon.it; Path=/; Secure" },
+      });
+    }
+    assert.equal(init.headers.Cookie, "session-id=rotated-session");
     assert.equal(new URLSearchParams(init.body).get("activity"), "GetContentOwnershipData");
+    assert.equal(new URLSearchParams(init.body).get("clientId"), "collection-client");
     return Response.json({
       items: [
         {
