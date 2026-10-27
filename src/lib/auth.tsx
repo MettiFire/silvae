@@ -10,6 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeAuthSession } from "./auth-session";
 
 export type Profile = {
   id: string;
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (previousUser.current) qc.clear();
         previousUser.current = id;
       }
-      setSession(next);
+      setSession(normalizeAuthSession(next));
       setLoading(false);
       if (next?.user) {
         setProfileLoading(true);

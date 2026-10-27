@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Normalize auth-session metadata at the AuthProvider boundary so missing account metadata cannot crash preference consumers.
