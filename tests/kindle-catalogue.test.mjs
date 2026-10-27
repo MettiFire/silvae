@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readCatalogue } from "../services/kindle/lib/catalogue.ts";
+import { readCatalogue } from "../services/kindle/api/amazon.ts";
 test("catalogue exchanges credentials only with Amazon and returns no web session or unrelated account data", async () => {
   const calls = [];
   const result = await readCatalogue("it", "private-refresh", async (url, init) => {
