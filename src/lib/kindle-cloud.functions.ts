@@ -6,8 +6,12 @@ import type { KindleCloudStatus, KindleRegion } from "./kindle-cloud";
 export const kindleCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
-    (input: { owner: string; action: "poll" | "start" | "disconnect"; region?: KindleRegion }) => {
-      if (!input || !["poll", "start", "disconnect"].includes(input.action))
+    (input: {
+      owner: string;
+      action: "poll" | "start" | "disconnect" | "check";
+      region?: KindleRegion;
+    }) => {
+      if (!input || !["poll", "start", "disconnect", "check"].includes(input.action))
         throw Error("Richiesta Kindle non valida.");
       if (input.action === "start" && input.region !== "it" && input.region !== "com")
         throw Error("Account Amazon non valido.");
@@ -55,11 +59,12 @@ export const kindleCloud = createServerFn({ method: "POST" })
       );
     }
     if (
-      data.action === "poll" &&
+      ["poll", "check"].includes(data.action) &&
       (!previous ||
         (previous.phase === "connected" &&
           previous.reading &&
-          previous.reading.checkedAt > Date.now() - 5 * 60_000) ||
+          previous.reading.checkedAt >
+            Date.now() - (data.action === "check" ? 30_000 : 5 * 60_000)) ||
         (previous.phase === "pending" && previous.nextPollAt > Date.now()))
     )
       return publicState(previous);
@@ -91,7 +96,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
           } else state = { ...state, nextPollAt: Date.now() + state.interval };
         }
       }
-      if (data.action === "poll" && state?.phase === "connected")
+      if (["poll", "check"].includes(data.action) && state?.phase === "connected")
         state = { ...state, reading: await probeKindleMetadata(state) };
       const applied = await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,

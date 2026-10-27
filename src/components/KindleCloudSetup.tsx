@@ -28,7 +28,7 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
     refetchIntervalInBackground: false,
   });
   const status = query.data;
-  const change = async (action: "start" | "disconnect") => {
+  const change = async (action: "start" | "disconnect" | "check") => {
     setBusy(true);
     setError("");
     try {
@@ -154,6 +154,16 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
           >
             <UiText text="Scollega Amazon" />
           </button>
+          {status.reading && status.reading.status !== "available" && (
+            <button
+              type="button"
+              className="button-outline ml-2 min-h-11"
+              disabled={busy}
+              onClick={() => void change("check")}
+            >
+              <UiText text={busy ? "Caricamento…" : "Riprova lettura Kindle"} />
+            </button>
+          )}
         </div>
       )}
       {(error || query.error) && (

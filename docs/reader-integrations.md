@@ -153,7 +153,10 @@ Il pannello esegue una prova in sola lettura dei metadati Kindle, al massimo ogn
 cinque minuti durante le visite alle impostazioni. Il servizio ammette soltanto
 un URL fisso `syncMetaData` e firme ADP prodotte dal server. Il contenuto della
 risposta non viene salvato o inviato al browser; conserviamo soltanto l'esito del
-controllo. Il log applicativo contiene solo lo stato HTTP, senza titoli o chiavi.
+controllo. Il log applicativo contiene lo stato HTTP e i nomi degli elementi XML,
+senza valori, titoli o chiavi. I formati sconosciuti non sono trattati come una
+libreria vuota. Riprova lettura Kindle permette una verifica manuale, con almeno
+30 secondi tra le richieste.
 La disponibilità dei metadati non dimostra ancora il recupero del progresso.
 
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)

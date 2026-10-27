@@ -1,4 +1,6 @@
 export const UI_EN: Record<string, string> = {
+  "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.": "Amazon responded, but its Kindle metadata cannot be interpreted yet. Your library has not been modified.",
+  "Riprova lettura Kindle": "Retry Kindle data",
   "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.": "Amazon did not allow Kindle metadata retrieval in this test. Your account remains connected.",
   "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.": "Amazon returned an unsupported reading data format. Your library has not been modified.",
   "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata.": "Amazon provides Kindle metadata. Reading progress retrieval is still being verified; your library has not been modified.",

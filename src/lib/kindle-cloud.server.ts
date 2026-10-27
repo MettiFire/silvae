@@ -330,12 +330,20 @@ export async function probeKindleMetadata(
           "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.",
       };
     const count = [...body.matchAll(/<meta_data(?:\s|>)/g)].length;
+    const tags = [
+      ...new Set(
+        [...body.matchAll(/<\/?([A-Za-z_][A-Za-z0-9_.:-]{0,64})(?:[\s/>])/g)].map(
+          (match) => match[1],
+        ),
+      ),
+    ].slice(0, 40);
+    console.info("[Kindle metadata] XML elements", tags.join(","));
     return {
       checkedAt,
-      status: count ? "available" : "empty",
+      status: count ? "available" : /^\s*<response\s*\/>\s*$/.test(body) ? "empty" : "error",
       message: count
         ? "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata."
-        : "Amazon ha risposto, ma non ha fornito metadati Kindle per il dispositivo collegato. La tua libreria non è stata modificata.",
+        : "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.",
     };
   } catch {
     return {

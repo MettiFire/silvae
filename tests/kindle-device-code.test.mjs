@@ -197,4 +197,9 @@ test("Kindle metadata checks use signed read-only requests and discard book cont
   );
   assert.equal(empty.status, "empty");
   assert.equal(unsafe.status, "error");
+  const unknown = await probeKindleMetadata(
+    state,
+    async () => new Response("<response><unknown_format/></response>"),
+  );
+  assert.equal(unknown.status, "error");
 });
