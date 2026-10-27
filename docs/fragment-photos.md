@@ -6,7 +6,9 @@ Readers can attach a JPG, PNG or WebP photo (up to 8 MB) to a book fragment, wit
 
 Apply `supabase/migrations/20261027093800_fragment_photos.sql` to the **Silvae** backend before publishing the frontend. It adds the optional `fragments.image_path` column, allows photo-only fragments, and creates the private `fragment-photos` bucket with access policies. Text-only fragments remain supported. The project reference is recorded in `supabase/config.toml`; do not apply this migration to an unrelated project.
 
-The Supabase connection available during implementation could not access this Lovable-managed project. The migration has been tested locally with PostgreSQL-compatible PGlite, but has **not** been applied to production and a real upload has **not** been verified there.
+Activated on **2026-10-27** through the project's authenticated Lovable SQL editor, since the external Supabase connection cannot access this Lovable-managed backend. Schema changes and the `20261027093800` entry in `supabase_migrations.schema_migrations` were committed together in a transaction. A follow-up query confirmed the image column, private bucket, 2 MB limit, all three Storage policies, and migration registration. The updated site was then published from Lovable.
+
+A real upload was verified through the published site's fragment editor using Silvae's existing public app icon as a harmless fixture. Image preparation, saving the fragment, and protected Storage download/rendering all succeeded. The account owner chose to move the clearly labeled test fragment to the trash themselves.
 
 ## Access and lifecycle
 
@@ -18,4 +20,4 @@ The Supabase connection available during implementation could not access this Lo
 
 ## Verification
 
-Tests cover private/public/follower access, trash revocation, foreign attachment rejection, upload failures, cleanup on failed saves, and account deletion across both image buckets. After applying the migration, verify uploading from desktop and mobile, caption-only edits, replacing/removing a photo, and viewing the public collection from another account.
+Tests cover private/public/follower access, trash revocation, foreign attachment rejection, upload failures, cleanup on failed saves, and account deletion across both image buckets. The full suite passed 261 tests, alongside TypeScript, targeted lint and the production build. Desktop upload and rendering have been checked on the live site; mobile uploads, caption-only edits, replacing/removing a photo, and access from another real account still require live-device verification.
