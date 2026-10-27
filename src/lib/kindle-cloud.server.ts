@@ -241,7 +241,10 @@ export function sealState(state: KindleState, owner: string, key: string) {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
   cipher.setAAD(Buffer.from(`silvae-kindle-v1:${owner}`));
-  const encrypted = Buffer.concat([cipher.update(JSON.stringify(state)), cipher.final()]);
+  const encrypted = Buffer.concat([
+    cipher.update(Buffer.from(JSON.stringify(state), "utf8")),
+    cipher.final(),
+  ]);
   return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString("base64");
 }
 export function openState(ciphertext: string, owner: string, key: string): KindleState {

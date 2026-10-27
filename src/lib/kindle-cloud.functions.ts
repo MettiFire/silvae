@@ -92,9 +92,15 @@ export const kindleCloud = createServerFn({ method: "POST" })
     } catch (failure) {
       const retryState =
         state?.phase === "pending" ? { ...state, nextPollAt: Date.now() + 60_000 } : state;
+      let retryCiphertext = claim.ciphertext;
+      try {
+        retryCiphertext = retryState ? sealState(retryState, context.userId, key) : null;
+      } catch {
+        // Keep the original encrypted state if the runtime cannot encrypt it.
+      }
       await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,
-        p_ciphertext: retryState ? sealState(retryState, context.userId, key) : null,
+        p_ciphertext: retryCiphertext,
       }).catch(() => undefined);
       if (
         failure instanceof Error &&

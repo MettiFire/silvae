@@ -131,13 +131,15 @@ scadenza 600 s). Questo prova la generazione, non l'accesso al progresso.
 Una vera registrazione richiede l'approvazione dell'utente su Amazon.
 La sincronizzazione resta disabilitata finché non è verificata.
 
-**Blocco emerso nel test pubblico:** il worker Lovable non raggiunge l'endpoint
-Amazon, anche se la stessa chiamata funziona da Node locale. La migrazione e il
-segreto di cifratura sono stati attivati e verificati, ma il collegamento reale
-non è ancora riuscito. `services/kindle` prepara un trasporto Node separato con
-richieste firmate Ed25519 e destinazioni fisse; non è stato distribuito o abilitato.
-L'attivazione su Vercel attende l'approvazione dell'operatrice. Non inviare codici
-personali e credenziali a quel servizio finché non è autorizzato e configurato.
+**Prova pubblica e attivazione:** la prima richiesta del worker Lovable falliva;
+sono emerse differenze rispetto a Node nella gestione dei redirect e degli input
+alla cifratura. I redirect ora sono manuali e gli stati HTTP non riusciti vengono
+rifiutati: nessuna credenziale segue un redirect. La cifratura riceve buffer UTF-8
+espliciti. L'operatrice ha autorizzato e configurato `services/kindle` su Vercel
+(Francoforte), con destinazioni fisse e firme Ed25519. La chiave di firma privata
+resta su Lovable e quella pubblica su Vercel; la chiave di cifratura non è condivisa.
+Il servizio rifiuta richieste prive di firma con HTTP 401. La generazione di un
+codice non equivale all'autorizzazione dell'account e al recupero della lettura.
 
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
 documenta richieste firmate al sidecar CDE. Una posizione non assicura una
