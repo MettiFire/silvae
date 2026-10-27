@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { loadFragmentArchive } from "./fragment-archive";
+import { loadFragmentArchives } from "./fragment-archive";
 import { useUiLanguage } from "./use-ui-language";
 import { useAuth } from "./auth";
 import { parsePreferences, PREFERENCES_FIELD } from "./reading-preferences";
@@ -14,12 +14,7 @@ export function useFragmentArchive() {
   const query = useQuery({
     queryKey: ["fragment-archive-v2", languages.join("|")],
     enabled: ready && !loading,
-    queryFn: async () => {
-      const results = await Promise.allSettled(languages.map((l) => loadFragmentArchive(l)));
-      const pool = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-      if (!pool.length) throw Error("Fragment archive unavailable");
-      return pool;
-    },
+    queryFn: () => loadFragmentArchives(languages),
     staleTime: 3600000,
     gcTime: 86400000,
     retry: false,

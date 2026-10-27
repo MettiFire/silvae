@@ -4,7 +4,7 @@ import { unifiedSearchResults, preferOwnedManga } from "@/lib/unified-search";
 import { isMangaId } from "@/lib/manga-model";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { mangaCatalogue } from "@/lib/manga-client";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ScanBarcode, UserRound } from "lucide-react";
@@ -12,12 +12,15 @@ import { toast } from "@/lib/localized-toast";
 import { authorSearchResults, authorMatchesQuery } from "@/lib/author-search";
 import { findAuthors, type AuthorCandidate } from "@/lib/authors";
 import { searchBookSuggestions, searchByIsbn, type Book } from "@/lib/books";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { normalizeSearchQuery, searchProviders, ownedBookSuggestions } from "@/lib/search-policy";
+import { bookSuggestions } from "@/lib/search-suggestions";
 import { useAuth } from "@/lib/auth";
 import { useBookLanguage } from "@/lib/use-book-language";
 import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { QuickAddBook } from "@/components/QuickAddBook";
 import { BookCover } from "@/components/BookCard";
+
+const BarcodeScanner = lazy(() => import("@/components/BarcodeScanner").then((module) => ({ default: module.BarcodeScanner })));
 
 export function GlobalSearch() {
   const [term, setTerm] = useState("");
@@ -34,9 +37,14 @@ export function GlobalSearch() {
   const { data: library = [] } = useLibrary(user?.id);
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
+  const query = normalizeSearchQuery(debounced);
+  const providers = searchProviders(mode, query, languageReady && open && normalizeSearchQuery(term) === query);
+  const owned = library.flatMap((item) => item.books ? [item.books] : []);
+  const localBooks = ownedBookSuggestions(owned, query, false);
+  const localManga = ownedBookSuggestions(owned, query, true);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(term), 300);
+    const t = setTimeout(() => setDebounced(normalizeSearchQuery(term)), 300);
     return () => clearTimeout(t);
   }, [term]);
 
@@ -54,45 +62,42 @@ export function GlobalSearch() {
     isError,
     refetch: retryBooks,
   } = useQuery<Book[]>({
-    queryKey: ["global-search-works-v2", debounced, language ?? "any"],
-    placeholderData: () => supplementSearch(debounced),
-    enabled: mode !== "manga" && languageReady && debounced.trim().length >= 2,
-    queryFn: ({ signal }) => searchBookSuggestions(debounced, signal, language),
+    queryKey: ["global-search-works-v3", query, language ?? "any"],
+    placeholderData: () => supplementSearch(query),
+    enabled: providers.books,
+    queryFn: ({ signal }) => searchBookSuggestions(query, signal, language),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
   const authors = useQuery<AuthorCandidate[]>({
-    queryKey: ["author-candidates-v3", debounced.trim(), language ?? "any"],
+    queryKey: ["author-candidates-v3", query, language ?? "any"],
     placeholderData: () =>
-      authorMatchesQuery(SUPPLEMENT_AUTHOR, debounced) ? [SUPPLEMENT_AUTHOR] : [],
-    enabled: languageReady && debounced.trim().length >= 3 && !/^[\d\s-]+$/.test(debounced),
-    queryFn: ({ signal }) => findAuthors(debounced.trim(), language, signal),
+      authorMatchesQuery(SUPPLEMENT_AUTHOR, query) ? [SUPPLEMENT_AUTHOR] : [],
+    enabled: providers.authors,
+    queryFn: ({ signal }) => findAuthors(query, language, signal),
     staleTime: 3600000,
     retry: false,
   });
   const manga = useQuery({
-    queryKey: ["manga-search-v3", debounced, language ?? "it"],
-    enabled:
-      mode !== "books" &&
-      languageReady &&
-      debounced.trim().length >= 2 &&
-      !/^[\d\s-]+$/.test(debounced),
+    queryKey: ["manga-search-v3", query, language ?? "it"],
+    enabled: providers.manga,
     queryFn: ({ signal }) =>
-      mangaCatalogue({ signal, data: { query: debounced, ...(language ? { language } : {}) } }),
+      mangaCatalogue({ signal, data: { query, ...(language ? { language } : {}) } }),
     staleTime: 3600000,
     retry: false,
   });
   const mangaResults = preferOwnedManga(
-    manga.data ?? [],
-    library.flatMap((item) => (item.books ? [item.books] : [])),
+    [...new Map([...localManga, ...(manga.data ?? [])].map(book => [book.id, book])).values()],
+    owned,
   );
+  const bookResults = bookSuggestions([...localBooks, ...results], 8);
   const visibleResults =
     mode === "all"
-      ? unifiedSearchResults(results, mangaResults, debounced)
+      ? unifiedSearchResults(bookResults, mangaResults, query)
       : mode === "manga"
         ? mangaResults
-        : results;
+        : bookResults;
   const fetching =
     mode === "all"
       ? manga.isFetching || isFetching
@@ -101,14 +106,14 @@ export function GlobalSearch() {
         : isFetching;
   const searchError =
     mode === "all" ? manga.isError && isError : mode === "manga" ? manga.isError : isError;
-  const authorResults = /^[\d\s-]+$/.test(debounced)
+  const authorResults = mode === "manga" || /^[\d\s-]+$/.test(query)
     ? []
-    : authorSearchResults(authors.data ?? [], 3, debounced);
+    : authorSearchResults(authors.data ?? [], 3, query);
   const options = [
     ...authorResults.map((author) => ({ kind: "author" as const, author })),
     ...visibleResults.map((book) => ({ kind: "book" as const, book })),
   ];
-  const current = debounced.trim().length >= 2 && term.trim() === debounced.trim();
+  const current = query.length >= 2 && normalizeSearchQuery(term) === query;
   const visible = open && current;
   const optionIds = options
     .map((option) => (option.kind === "author" ? `a:${option.author.id}` : `b:${option.book.id}`))
@@ -266,7 +271,9 @@ export function GlobalSearch() {
         </UiElement>
       )}
       {scanning && (
-        <BarcodeScanner onDetected={(c) => void handleScan(c)} onClose={() => setScanning(false)} />
+        <Suspense fallback={null}>
+          <BarcodeScanner onDetected={(c) => void handleScan(c)} onClose={() => setScanning(false)} />
+        </Suspense>
       )}
       {visible && (
         <UiElement

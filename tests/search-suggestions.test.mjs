@@ -38,6 +38,13 @@ test("provider fallbacks must match the partial title instead of showing unrelat
   assert.equal(matchesTitleCompletion("Dune: Messiah", " *** "), false);
 });
 
+test("It matches a whole word, never Italian or items", () => {
+  assert.equal(matchesTitleCompletion("It", "It"), true);
+  assert.equal(matchesTitleCompletion("It Ends with Us", "It"), true);
+  assert.equal(matchesTitleCompletion("Harry Potter Italian Edition", "It"), false);
+  assert.equal(matchesTitleCompletion("Items", "It"), false);
+});
+
 test("series and volume prefixes on duplicate records collapse without merging sequels", () => {
   const result = bookSuggestions([
     book("ol:OL27513W", "La compagnia dell’anello", "J. R. R. Tolkien"),

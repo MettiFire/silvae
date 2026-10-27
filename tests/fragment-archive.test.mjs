@@ -5,8 +5,23 @@ import {
   archiveWorkOrder,
   fragmentWorkKey,
   validArchive,
+  loadFragmentArchives,
 } from "../src/lib/fragment-archive.ts";
 import { parseWikiquote } from "../scripts/fragments/wikiquote-parser.mjs";
+
+test("multiple languages share one manifest and tolerate a failed language", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const calls = [];
+  const pool = await loadFragmentArchives(["it", "en", "it"], async path => {
+    calls.push(path);
+    if (path.startsWith("/fragments/en-")) return new Response("unavailable", { status: 503 });
+    return new Response(await readFile(new URL(`../public${path}`, import.meta.url)));
+  });
+  assert.equal(calls.filter(path => path === "/fragments/manifest.json").length, 1);
+  assert.equal(calls.length, 3);
+  assert.ok(pool.length > 30);
+  assert.ok(pool.every(entry => entry.language === "it"));
+});
 const entry = (id, author, title) => ({ id, author, title });
 test("archive chooses works, not quotes, and spaces all books across cycle boundaries", () => {
   const pool = Array.from({ length: 210 }, (_, i) =>
