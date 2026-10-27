@@ -159,6 +159,14 @@ libreria vuota. Riprova lettura Kindle permette una verifica manuale, con almeno
 30 secondi tra le richieste.
 La disponibilità dei metadati non dimostra ancora il recupero del progresso.
 
+**Esito con l'account reale:** autorizzazione e registrazione riuscite; la richiesta
+firmata `syncMetaData` ha risposto HTTP 200 con i campi di controllo del protocollo,
+`add_update_list` e `removal_list`, senza elementi libro. Il collegamento è attivo,
+ma questo feed del dispositivo software non espone ancora la lettura corrente.
+Non equivale a una libreria Amazon vuota e non prova che altri endpoint non
+possano esporre il progresso. L'interfaccia distingue questo esito dai formati
+sconosciuti e conserva la sincronizzazione dei progressi disattivata.
+
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
 documenta richieste firmate al sidecar CDE. Una posizione non assicura una
 percentuale: serve un totale documentato nella stessa unità. Non usare dimensione

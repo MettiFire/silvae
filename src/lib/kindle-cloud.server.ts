@@ -338,12 +338,20 @@ export async function probeKindleMetadata(
       ),
     ].slice(0, 40);
     console.info("[Kindle metadata] XML elements", tags.join(","));
+    const emptyFeed =
+      /^\s*<response\s*\/>\s*$/.test(body) ||
+      (/<add_update_list(?:\s[^>]*)?\/>|<add_update_list(?:\s[^>]*)?>\s*<\/add_update_list>/.test(
+        body,
+      ) &&
+        /<removal_list(?:\s[^>]*)?\/>|<removal_list(?:\s[^>]*)?>\s*<\/removal_list>/.test(body));
     return {
       checkedAt,
-      status: count ? "available" : /^\s*<response\s*\/>\s*$/.test(body) ? "empty" : "error",
+      status: count ? "available" : emptyFeed ? "empty" : "error",
       message: count
         ? "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata."
-        : "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.",
+        : emptyFeed
+          ? "Amazon ha accettato il collegamento, ma il feed del dispositivo software non contiene libri o avanzamenti. La sincronizzazione della lettura non è ancora attiva."
+          : "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.",
     };
   } catch {
     return {

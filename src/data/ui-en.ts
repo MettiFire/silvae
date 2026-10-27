@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Amazon ha accettato il collegamento, ma il feed del dispositivo software non contiene libri o avanzamenti. La sincronizzazione della lettura non è ancora attiva.": "Amazon accepted the connection, but the software device feed contains no books or reading progress. Reading synchronization is not active yet.",
   "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.": "Amazon responded, but its Kindle metadata cannot be interpreted yet. Your library has not been modified.",
   "Riprova lettura Kindle": "Retry Kindle data",
   "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.": "Amazon did not allow Kindle metadata retrieval in this test. Your account remains connected.",

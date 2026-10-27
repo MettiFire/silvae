@@ -202,4 +202,13 @@ test("Kindle metadata checks use signed read-only requests and discard book cont
     async () => new Response("<response><unknown_format/></response>"),
   );
   assert.equal(unknown.status, "error");
+  const deviceFeed = await probeKindleMetadata(
+    state,
+    async () =>
+      new Response(
+        "<response><sync_time>synthetic</sync_time><add_update_list/><removal_list/></response>",
+      ),
+  );
+  assert.equal(deviceFeed.status, "empty");
+  assert.ok(deviceFeed.message.includes("feed"));
 });
