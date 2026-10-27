@@ -88,6 +88,12 @@ function Privacy() {
         richieste al rispettivo fornitore, che riceve i dati tecnici della connessione.
       </p>
       <p>
+        Per il catalogo manga vengono consultati MangaDex, Jikan/MyAnimeList e AniList. Le richieste
+        ai metadati MangaDex passano attraverso un servizio Silvae ospitato su Vercel, che riceve
+        gli identificativi delle serie o i termini di ricerca e i dati tecnici della connessione,
+        senza credenziali dell’account o progressi di lettura.
+      </p>
+      <p>
         I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. Supabase e
         Lovable descrivono nei propri accordi sul trattamento le garanzie applicabili, incluse le
         clausole contrattuali standard ove necessarie. Puoi chiedere al titolare informazioni sulla

@@ -34,8 +34,15 @@ async function request<T>(url: string, mal = false): Promise<T> {
   if (mal) malQueue = slot;
   else mdQueue = slot;
   return slot.then(async () => {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(mal ? 4000 : 7000),
+    const source = new URL(url);
+    const endpoint = mal ? source : new URL("https://silvae-catalogue.vercel.app/api/mangadex");
+    if (!mal) {
+      endpoint.search = source.search;
+      endpoint.searchParams.set("resource", source.pathname);
+    }
+    const response = await fetch(endpoint.href, {
+      signal: AbortSignal.timeout(mal ? 4000 : 10000),
+      credentials: "omit",
       headers: { Accept: "application/json" },
     });
     if (!response.ok) throw Error("Catalogo manga non disponibile. Riprova.");

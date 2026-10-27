@@ -1,6 +1,26 @@
 # Manga volume cover audit — 2026-10-27
 
-The production catalogue function was exercised directly against MangaDex with MyAnimeList identities and Italian as the preferred language. All numbered volumes were present in the ten standard series below (532 volumes in total). This checks catalogue coverage; it is not a guarantee of every publisher's edition or every future CDN response.
+## Production-path correction
+
+The first audit below verified the catalogue locally and did not establish that
+Lovable's runtime could retrieve it. A subsequent check reproduced the live
+failure: the server function returned a catalogue error, and MangaDex's direct
+responses had no browser CORS permission, so retrying the browser fallback could
+not recover.
+
+MangaDex metadata now goes through the dedicated Node.js service in
+`services/catalogue`, deployed at `silvae-catalogue.vercel.app`. Both server and
+browser paths use it. Live service GETs returned HTTP 200 with CORS permission;
+the updated catalogue retrieved 22 covers for 20th Century Boys, 43 for Berserk,
+and 31 for Slam Dunk. The full local application was then exercised in Codex's
+browser against this deployed service: 20th Century Boys rendered its volume
+images, and decoded image dimensions confirmed they loaded. This supersedes the
+earlier assumption that local catalogue success implied production success.
+The main Lovable application still needs Publish after the code is synced.
+
+## Initial catalogue coverage
+
+The catalogue implementation was exercised locally against MangaDex with MyAnimeList identities and Italian as the preferred language. All numbered volumes were present in the ten standard series below (532 volumes in total). This checks catalogue coverage; it is not a guarantee of every publisher's edition or every future CDN response.
 
 | Series | Numbered volume covers | Missing numbered volumes | Italian covers |
 | --- | ---: | ---: | ---: |

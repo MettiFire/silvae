@@ -1,6 +1,7 @@
 import { mangaCatalogue as serverCatalogue, mangaCovers as serverCovers } from "./manga.functions";
 
-// These providers expose public metadata with CORS; no account or API key is sent.
+// Public metadata only: MangaDex goes through our CORS-enabled metadata service;
+// AniList/Jikan support direct browser requests. No account or API key is sent.
 // Some hosting environments reject server-function routes with HTTP 403.
 export async function mangaCatalogue(options: Parameters<typeof serverCatalogue>[0]) {
   try {

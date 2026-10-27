@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": { "api/mangadex.ts": { "maxDuration": 15 } }
+}

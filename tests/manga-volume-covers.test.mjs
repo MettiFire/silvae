@@ -45,6 +45,8 @@ test("the catalogue reads past 400 records and shares concurrent requests", asyn
   });
   const offsets = [];
   globalThis.fetch = async (url) => {
+    assert.equal(new URL(url).hostname, "silvae-catalogue.vercel.app");
+    assert.equal(new URL(url).searchParams.get("resource"), "/cover");
     const offset = Number(new URL(url).searchParams.get("offset"));
     offsets.push(offset);
     return Response.json({
@@ -87,7 +89,7 @@ test("translated titles resolve with canonical aliases and empty results do not 
   let found = false;
   globalThis.fetch = async (url) => {
     const parsed = new URL(url);
-    if (parsed.pathname === "/manga") {
+    if (parsed.searchParams.get("resource") === "/manga") {
       assert.equal(parsed.searchParams.get("title"), "Attack on Titan");
       return Response.json({
         data: found

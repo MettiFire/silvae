@@ -15,6 +15,7 @@ dist-ssr
 .vinxi
 .tanstack/**
 .nitro
+.vercel/
 *.local
 kindle-session*.json
 kindle-progress*.json
