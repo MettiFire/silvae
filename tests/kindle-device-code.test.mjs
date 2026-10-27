@@ -123,3 +123,30 @@ test("encrypted state rejects another owner, tampering and a different server ke
   assert.throws(() => openState(cipher.slice(0, -4) + "AAAA", "owner-one", key));
   assert.equal(publicState(pair, 601000).phase, "disconnected");
 });
+
+test("disconnection refreshes expired bearer credentials using form encoding and never revokes other devices", async () => {
+  const requests = [];
+  await deregister(
+    {
+      phase: "connected",
+      region: "com",
+      serial: "s",
+      connectedAt: 0,
+      adpToken: "a",
+      privateKey: "unused",
+      accessToken: "expired",
+      refreshToken: "private-refresh",
+      tokenExpiresAt: 0,
+    },
+    async (url, init) => {
+      requests.push({ url, init });
+      return requests.length === 1
+        ? Response.json({ access_token: "new-access" })
+        : Response.json({ success: true });
+    },
+  );
+  assert.equal(requests[0].init.headers["Content-Type"], "application/x-www-form-urlencoded");
+  assert.equal(new URLSearchParams(requests[0].init.body).get("source_token"), "private-refresh");
+  assert.equal(requests[1].init.headers["x-amz-access-token"], "new-access");
+  assert.equal(JSON.parse(requests[1].init.body).deregister_all_existing_accounts, false);
+});

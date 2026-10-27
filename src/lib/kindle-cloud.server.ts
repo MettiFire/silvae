@@ -214,9 +214,9 @@ export async function deregister(state: Connected, fetcher: Fetcher = fetch) {
     const response = await fetcher(`${regionHost(state.region)}/auth/token`, {
       method: "POST",
       redirect: "error",
-      headers: headers(state.region),
+      headers: { ...headers(state.region), "Content-Type": "application/x-www-form-urlencoded" },
       signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify({
+      body: new URLSearchParams({
         app_name: "Audible",
         app_version: "4.60",
         source_token: state.refreshToken,
@@ -233,7 +233,7 @@ export async function deregister(state: Connected, fetcher: Fetcher = fetch) {
   const response = await fetcher(`${regionHost(state.region)}/auth/deregister`, {
     method: "POST",
     redirect: "error",
-    headers: { ...headers(state.region), Authorization: `Bearer ${access}` },
+    headers: { ...headers(state.region), "x-amz-access-token": access },
     signal: AbortSignal.timeout(15_000),
     body: JSON.stringify({ deregister_all_existing_accounts: false }),
   });
