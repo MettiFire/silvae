@@ -34,6 +34,8 @@ test("one Open Library work cannot appear repeatedly under translated edition na
 test("provider fallbacks must match the partial title instead of showing unrelated books", () => {
   assert.equal(matchesTitleCompletion("La compagnia dell’anello", "La compagnia dell an"), true);
   assert.equal(matchesTitleCompletion("Harry Potter and the Philosopher’s Stone", "Harry pot"), true);
+  assert.equal(matchesTitleCompletion("Harry Potter", "Harry p"), true);
+  assert.equal(matchesTitleCompletion("Items from Italy", "Harry it"), false);
   assert.equal(matchesTitleCompletion("The book of the courtier", "La compagnia dell an"), false);
   assert.equal(matchesTitleCompletion("Dune: Messiah", " *** "), false);
 });
@@ -43,6 +45,7 @@ test("It matches a whole word, never Italian or items", () => {
   assert.equal(matchesTitleCompletion("It Ends with Us", "It"), true);
   assert.equal(matchesTitleCompletion("Harry Potter Italian Edition", "It"), false);
   assert.equal(matchesTitleCompletion("Items", "It"), false);
+  assert.equal(matchesTitleCompletion("Italy", "it"), false);
 });
 
 test("series and volume prefixes on duplicate records collapse without merging sequels", () => {
