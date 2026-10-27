@@ -126,9 +126,10 @@ automatically change reading status or dates.
 Connections are managed in **Settings → Devices**. The repository includes a local
 USB bridge, an experimental KOReader integration, and export tools.
 **Native automatic Wi-Fi synchronization with Kindle or Kobo accounts is not available.**
-An experimental Amazon device-code connection is available in Settings → Devices.
-It stores device credentials encrypted on the server; reading progress retrieval
-is still being validated and does not update the app’s library.
+An experimental Amazon device-code connection is implemented in Settings → Devices.
+Production activation is pending an Amazon network transport: the Lovable worker
+could not reach Amazon in the live test. Credentials use server-side encryption;
+reading progress retrieval is still being validated and does not update the library.
 
 Requirements, limitations, and instructions are documented in
 [`docs/reader-integrations.md`](docs/reader-integrations.md) (Italian).

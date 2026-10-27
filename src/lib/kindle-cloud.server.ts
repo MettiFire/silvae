@@ -27,6 +27,60 @@ type Connected = {
 export type KindleState = Pending | Connected;
 const DEVICE_TYPE = "A2CZJZGLK2JJVM";
 type Fetcher = typeof fetch;
+/** Optional authenticated transport for hosts the Lovable worker cannot reach. */
+export async function amazonFetch(
+  input: string | URL | Request,
+  init?: RequestInit,
+): Promise<Response> {
+  const key = process.env["KINDLE_RELAY_PRIVATE_KEY"];
+  if (!key) return fetch(input, init);
+  const url = new URL(
+    typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
+  );
+  if (
+    url.protocol !== "https:" ||
+    !["api.amazon.it", "api.amazon.com"].includes(url.host) ||
+    url.username ||
+    url.password ||
+    url.search ||
+    !["/auth/create/codepair", "/auth/register", "/auth/token", "/auth/deregister"].includes(
+      url.pathname,
+    ) ||
+    init?.method !== "POST"
+  )
+    throw Error("Richiesta Amazon non valida.");
+  const body = JSON.stringify({
+    region: url.hostname.endsWith(".it") ? "it" : "com",
+    path: url.pathname,
+    headers: Object.fromEntries(new Headers(init.headers)),
+    body: String(init.body ?? ""),
+  });
+  const timestamp = String(Date.now());
+  const signingKey = await crypto.subtle.importKey(
+    "pkcs8",
+    new Uint8Array(Buffer.from(key, "base64")),
+    "Ed25519",
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "Ed25519",
+    signingKey,
+    new TextEncoder().encode(`${timestamp}\n${body}`),
+  );
+  return fetch("https://silvae-kindle.vercel.app/api/amazon", {
+    method: "POST",
+    redirect: "error",
+    credentials: "omit",
+    headers: {
+      "Content-Type": "application/json",
+      "x-silvae-time": timestamp,
+      "x-silvae-signature": Buffer.from(signature).toString("base64"),
+    },
+    body,
+    signal: AbortSignal.timeout(20_000),
+  });
+}
 function regionHost(region: KindleRegion) {
   if (region !== "it" && region !== "com") throw Error("Account Amazon non valido.");
   return `https://api.amazon.${region}`;
@@ -52,7 +106,7 @@ async function json(response: Response): Promise<Record<string, any>> {
 }
 export async function createCodePair(
   region: KindleRegion,
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = amazonFetch,
   now = Date.now(),
 ): Promise<Pending> {
   const host = regionHost(region);
@@ -100,7 +154,7 @@ export async function createCodePair(
 }
 export async function registerCodePair(
   state: Pending,
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = amazonFetch,
 ): Promise<Connected | null> {
   const response = await fetcher(`${regionHost(state.region)}/auth/register`, {
     method: "POST",
@@ -211,7 +265,7 @@ export function signedHeaders(state: Connected, path: string, date = new Date().
     "x-adp-signature": `${signature}:${date}`,
   };
 }
-export async function deregister(state: Connected, fetcher: Fetcher = fetch) {
+export async function deregister(state: Connected, fetcher: Fetcher = amazonFetch) {
   let access = state.accessToken;
   if (Date.now() >= state.tokenExpiresAt - 30_000) {
     const response = await fetcher(`${regionHost(state.region)}/auth/token`, {

@@ -1,0 +1,8 @@
+{
+  "name": "silvae-kindle",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  }
+}

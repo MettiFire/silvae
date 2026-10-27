@@ -131,6 +131,14 @@ scadenza 600 s). Questo prova la generazione, non l'accesso al progresso.
 Una vera registrazione richiede l'approvazione dell'utente su Amazon.
 La sincronizzazione resta disabilitata finché non è verificata.
 
+**Blocco emerso nel test pubblico:** il worker Lovable non raggiunge l'endpoint
+Amazon, anche se la stessa chiamata funziona da Node locale. La migrazione e il
+segreto di cifratura sono stati attivati e verificati, ma il collegamento reale
+non è ancora riuscito. `services/kindle` prepara un trasporto Node separato con
+richieste firmate Ed25519 e destinazioni fisse; non è stato distribuito o abilitato.
+L'attivazione su Vercel attende l'approvazione dell'operatrice. Non inviare codici
+personali e credenziali a quel servizio finché non è autorizzato e configurato.
+
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
 documenta richieste firmate al sidecar CDE. Una posizione non assicura una
 percentuale: serve un totale documentato nella stessa unità. Non usare dimensione
