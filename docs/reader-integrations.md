@@ -145,7 +145,16 @@ codice non equivale all'autorizzazione dell'account e al recupero della lettura.
 il servizio autorizzato, salvato lo stato cifrato e ripreso lo stesso tentativo
 dopo un hard reload. L'interfaccia attende la conferma dell'account direttamente
 su `amazon.it/code`. Nessun codice personale è riportato in questa documentazione.
-L'autorizzazione dell'account e l'accesso ai dati Kindle restano da verificare.
+L'operatrice ha autorizzato l'account e Silvae ha mostrato il collegamento riuscito
+anche dopo un ricaricamento. Le credenziali sono quindi registrate e conservate,
+non si tratta più di un controllo del formato di un link.
+
+Il pannello esegue una prova in sola lettura dei metadati Kindle, al massimo ogni
+cinque minuti durante le visite alle impostazioni. Il servizio ammette soltanto
+un URL fisso `syncMetaData` e firme ADP prodotte dal server. Il contenuto della
+risposta non viene salvato o inviato al browser; conserviamo soltanto l'esito del
+controllo. Il log applicativo contiene solo lo stato HTTP, senza titoli o chiavi.
+La disponibilità dei metadati non dimostra ancora il recupero del progresso.
 
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
 documenta richieste firmate al sidecar CDE. Una posizione non assicura una

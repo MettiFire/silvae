@@ -1,7 +1,7 @@
 // Server-only. Import dynamically inside server function handlers.
 import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign } from "node:crypto";
 import { Buffer } from "node:buffer";
-import type { KindleCloudStatus, KindleRegion } from "./kindle-cloud.ts";
+import type { KindleCloudStatus, KindleRegion, KindleReadingCheck } from "./kindle-cloud.ts";
 
 type Pending = {
   phase: "pending";
@@ -23,6 +23,7 @@ type Connected = {
   accessToken: string;
   refreshToken: string;
   tokenExpiresAt: number;
+  reading?: KindleReadingCheck;
 };
 export type KindleState = Pending | Connected;
 const DEVICE_TYPE = "A2CZJZGLK2JJVM";
@@ -37,23 +38,27 @@ export async function amazonFetch(
   const url = new URL(
     typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
   );
+  const metadata =
+    url.href === "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000" &&
+    init?.method === "GET";
   if (
-    url.protocol !== "https:" ||
-    !["api.amazon.it", "api.amazon.com"].includes(url.host) ||
-    url.username ||
-    url.password ||
-    url.search ||
-    !["/auth/create/codepair", "/auth/register", "/auth/token", "/auth/deregister"].includes(
-      url.pathname,
-    ) ||
-    init?.method !== "POST"
+    !metadata &&
+    (url.protocol !== "https:" ||
+      !["api.amazon.it", "api.amazon.com"].includes(url.host) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      !["/auth/create/codepair", "/auth/register", "/auth/token", "/auth/deregister"].includes(
+        url.pathname,
+      ) ||
+      init?.method !== "POST")
   )
     throw Error("Richiesta Amazon non valida.");
   const body = JSON.stringify({
     region: url.hostname.endsWith(".it") ? "it" : "com",
-    path: url.pathname,
-    headers: Object.fromEntries(new Headers(init.headers)),
-    body: String(init.body ?? ""),
+    path: metadata ? "/kindle/metadata" : url.pathname,
+    headers: Object.fromEntries(new Headers(init?.headers)),
+    body: String(init?.body ?? ""),
   });
   const timestamp = String(Date.now());
   let signature: ArrayBuffer;
@@ -268,9 +273,18 @@ export function publicState(state: KindleState | null, now = Date.now()): Kindle
       expiresAt: state.expiresAt,
       nextPollAt: state.nextPollAt,
     };
-  return { phase: "connected", region: state.region, connectedAt: state.connectedAt };
+  return {
+    phase: "connected",
+    region: state.region,
+    connectedAt: state.connectedAt,
+    ...(state.reading ? { reading: state.reading } : {}),
+  };
 }
-export function signedHeaders(state: Connected, path: string, date = new Date().toISOString()) {
+export function signedHeaders(
+  state: Connected,
+  path: string,
+  date = new Date().toISOString().replace("Z", "000+00:00Z"),
+) {
   const signature = sign(
     "RSA-SHA256",
     Buffer.from(`GET\n${path}\n${date}\n\n${state.adpToken}`),
@@ -281,6 +295,56 @@ export function signedHeaders(state: Connected, path: string, date = new Date().
     "x-adp-alg": "SHA256withRSA:1.0",
     "x-adp-signature": `${signature}:${date}`,
   };
+}
+export async function probeKindleMetadata(
+  state: Connected,
+  fetcher: Fetcher = amazonFetch,
+): Promise<KindleReadingCheck> {
+  const checkedAt = Date.now();
+  const path = "/FionaTodoListProxy/syncMetaData?item_count=1000";
+  try {
+    const response = await fetcher(`https://todo-ta-g7g.amazon.com${path}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, path),
+      signal: AbortSignal.timeout(20_000),
+    });
+    console.info("[Kindle metadata] HTTP", response.status);
+    if (!response.ok)
+      return {
+        checkedAt,
+        status: response.status === 401 || response.status === 403 ? "blocked" : "error",
+        message:
+          "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.",
+      };
+    const body = await response.text();
+    if (
+      Buffer.byteLength(body) > 1_000_000 ||
+      !body.trimStart().startsWith("<") ||
+      /<!DOCTYPE|<!ENTITY/i.test(body)
+    )
+      return {
+        checkedAt,
+        status: "error",
+        message:
+          "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.",
+      };
+    const count = [...body.matchAll(/<meta_data(?:\s|>)/g)].length;
+    return {
+      checkedAt,
+      status: count ? "available" : "empty",
+      message: count
+        ? "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata."
+        : "Amazon ha risposto, ma non ha fornito metadati Kindle per il dispositivo collegato. La tua libreria non è stata modificata.",
+    };
+  } catch {
+    return {
+      checkedAt,
+      status: "error",
+      message:
+        "Non è stato possibile recuperare i dati Kindle. Il collegamento Amazon rimane attivo.",
+    };
+  }
 }
 export async function deregister(state: Connected, fetcher: Fetcher = amazonFetch) {
   let access = state.accessToken;

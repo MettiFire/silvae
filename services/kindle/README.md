@@ -8,8 +8,9 @@ Unsigned live requests are rejected with HTTP 401. A complete account registrati
 still requires the account holder's authorization on Amazon.
 
 The Lovable worker could not reach Amazon's code-pair endpoint in the live test.
-This independent Node 24 function forwards only four fixed Amazon authentication
-endpoints for Italy/US. Every request requires a fresh Ed25519 signature; no CORS,
+This independent Node 24 function forwards four fixed Amazon authentication
+endpoints for Italy/US and one fixed, read-only Kindle metadata endpoint.
+Every request requires a fresh Ed25519 signature; no CORS,
 cookies, arbitrary target URL, credential persistence, or request body logging.
 Responses are never cached. It has no access to the database or encryption key.
 

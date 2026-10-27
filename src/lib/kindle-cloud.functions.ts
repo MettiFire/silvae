@@ -22,8 +22,15 @@ export const kindleCloud = createServerFn({ method: "POST" })
         phase: "unavailable",
         message: "Il collegamento Kindle non è ancora configurato sul server.",
       };
-    const { createCodePair, registerCodePair, openState, sealState, publicState, deregister } =
-      await import("./kindle-cloud.server");
+    const {
+      createCodePair,
+      registerCodePair,
+      openState,
+      sealState,
+      publicState,
+      deregister,
+      probeKindleMetadata,
+    } = await import("./kindle-cloud.server");
     const db = context.supabase as unknown as SupabaseClient;
     const rpc = async (name: string, args?: Record<string, unknown>) => {
       const result = await db.rpc(name, args);
@@ -49,7 +56,11 @@ export const kindleCloud = createServerFn({ method: "POST" })
     }
     if (
       data.action === "poll" &&
-      (!previous || previous.phase === "connected" || previous.nextPollAt > Date.now())
+      (!previous ||
+        (previous.phase === "connected" &&
+          previous.reading &&
+          previous.reading.checkedAt > Date.now() - 5 * 60_000) ||
+        (previous.phase === "pending" && previous.nextPollAt > Date.now()))
     )
       return publicState(previous);
     const claim = (await rpc("kindle_cloud_claim", { p_start: data.action === "start" })) as {
@@ -80,6 +91,8 @@ export const kindleCloud = createServerFn({ method: "POST" })
           } else state = { ...state, nextPollAt: Date.now() + state.interval };
         }
       }
+      if (data.action === "poll" && state?.phase === "connected")
+        state = { ...state, reading: await probeKindleMetadata(state) };
       const applied = await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,
         p_ciphertext: state ? sealState(state, context.userId, key) : null,

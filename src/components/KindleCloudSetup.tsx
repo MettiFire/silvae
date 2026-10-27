@@ -139,7 +139,12 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
             <UiText text="Account Amazon collegato" /> · Amazon.{status.region}
           </p>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            <UiText text="Autorizzazione riuscita. Il recupero del progresso Kindle è ancora in verifica: la tua libreria non viene modificata." />
+            <UiText
+              text={
+                status.reading?.message ??
+                "Autorizzazione riuscita. Il recupero del progresso Kindle è ancora in verifica: la tua libreria non viene modificata."
+              }
+            />
           </p>
           <button
             type="button"

@@ -1,4 +1,9 @@
 export const UI_EN: Record<string, string> = {
+  "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.": "Amazon did not allow Kindle metadata retrieval in this test. Your account remains connected.",
+  "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.": "Amazon returned an unsupported reading data format. Your library has not been modified.",
+  "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata.": "Amazon provides Kindle metadata. Reading progress retrieval is still being verified; your library has not been modified.",
+  "Amazon ha risposto, ma non ha fornito metadati Kindle per il dispositivo collegato. La tua libreria non è stata modificata.": "Amazon responded without Kindle metadata for the connected device. Your library has not been modified.",
+  "Non è stato possibile recuperare i dati Kindle. Il collegamento Amazon rimane attivo.": "Kindle data could not be retrieved. Your Amazon account remains connected.",
   "Collega il tuo account autorizzando un codice direttamente su Amazon.": "Connect your account by authorizing a code directly on Amazon.",
   "Collega Amazon": "Connect Amazon",
   "Apri Amazon e inserisci questo codice:": "Open Amazon and enter this code:",

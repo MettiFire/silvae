@@ -140,3 +140,38 @@ test("transport failures distinguish signing from networking without exposing up
     else process.env.KINDLE_RELAY_PRIVATE_KEY = previousKey;
   }
 });
+
+test("Kindle metadata is a fixed read-only target with device signing headers", async () => {
+  let sent;
+  const metadata = {
+    region: "it",
+    path: "/kindle/metadata",
+    headers: {
+      "x-adp-token": "device-token",
+      "x-adp-alg": "SHA256withRSA:1.0",
+      "x-adp-signature": "signed-request",
+    },
+    body: "",
+  };
+  const response = await handleAmazonRelay(request(metadata), verifyKey, async (url, init) => {
+    sent = { url, init };
+    return new Response("<response/>");
+  });
+  assert.equal(response.status, 200);
+  assert.equal(
+    sent.url,
+    "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000",
+  );
+  assert.equal(sent.init.method, "GET");
+  assert.equal(sent.init.body, undefined);
+  assert.equal(sent.init.headers.get("x-adp-token"), "device-token");
+  assert.equal(
+    (
+      await handleAmazonRelay(
+        request({ ...metadata, path: "/kindle/metadata?url=https://evil.test" }),
+        verifyKey,
+      )
+    ).status,
+    400,
+  );
+});

@@ -6,12 +6,16 @@ const paths = new Set([
   "/auth/register",
   "/auth/token",
   "/auth/deregister",
+  "/kindle/metadata",
 ]);
 const allowedHeaders = new Set([
   "content-type",
   "accept",
   "x-amzn-identity-auth-domain",
   "x-amz-access-token",
+  "x-adp-token",
+  "x-adp-alg",
+  "x-adp-signature",
 ]);
 const responseHeaders = {
   "Content-Type": "application/json",
@@ -84,27 +88,43 @@ export async function handleAmazonRelay(
       return failure(400);
     headers.set(name, value);
   }
+  const metadata = data.path === "/kindle/metadata";
   if (
+    metadata &&
+    (data.body !== "" ||
+      !headers.get("x-adp-token") ||
+      headers.get("x-adp-alg") !== "SHA256withRSA:1.0" ||
+      !headers.get("x-adp-signature"))
+  )
+    return failure(400);
+  if (
+    !metadata &&
     !["application/json", "application/x-www-form-urlencoded"].includes(
       headers.get("Content-Type") ?? "",
     )
   )
     return failure(400);
-  headers.set("x-amzn-identity-auth-domain", `api.amazon.${data.region}`);
+  if (!metadata) headers.set("x-amzn-identity-auth-domain", `api.amazon.${data.region}`);
   try {
-    const response = await fetcher(`https://api.amazon.${data.region}${data.path}`, {
-      method: "POST",
+    const target = metadata
+      ? "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000"
+      : `https://api.amazon.${data.region}${data.path}`;
+    const response = await fetcher(target, {
+      method: metadata ? "GET" : "POST",
       headers,
-      body: data.body,
-      redirect: "error",
+      ...(metadata ? {} : { body: data.body }),
+      redirect: metadata ? "manual" : "error",
       credentials: "omit",
       signal: AbortSignal.timeout(15_000),
     });
     const body = await response.text();
-    if (Buffer.byteLength(body) > 150_000) return failure(502);
+    if (Buffer.byteLength(body) > (metadata ? 1_000_000 : 150_000)) return failure(502);
     return new Response(response.status === 204 ? null : body, {
       status: response.status,
-      headers: responseHeaders,
+      headers: {
+        ...responseHeaders,
+        "Content-Type": metadata ? "application/xml" : "application/json",
+      },
     });
   } catch {
     return failure(502);

@@ -128,8 +128,9 @@ USB bridge, an experimental KOReader integration, and export tools.
 **Native automatic Wi-Fi synchronization with Kindle or Kobo accounts is not available.**
 An experimental Amazon device-code connection is implemented in Settings → Devices.
 An authenticated, fixed-destination transport runs on the owner's Vercel account.
-Credentials use server-side encryption; actual account authorization and reading
-progress retrieval are still being validated and do not update the library.
+Account authorization and encrypted server-side credential persistence have been
+verified. Kindle metadata access and reading progress retrieval are experimental
+and do not update the library.
 
 Requirements, limitations, and instructions are documented in
 [`docs/reader-integrations.md`](docs/reader-integrations.md) (Italian).

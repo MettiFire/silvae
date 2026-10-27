@@ -9,6 +9,7 @@ import {
   publicState,
   signedHeaders,
   deregister,
+  probeKindleMetadata,
 } from "../src/lib/kindle-cloud.server.ts";
 
 const key = randomBytes(32).toString("hex");
@@ -159,4 +160,41 @@ test("disconnection refreshes expired bearer credentials using form encoding and
   assert.equal(new URLSearchParams(requests[0].init.body).get("source_token"), "private-refresh");
   assert.equal(requests[1].init.headers["x-amz-access-token"], "new-access");
   assert.equal(JSON.parse(requests[1].init.body).deregister_all_existing_accounts, false);
+});
+
+test("Kindle metadata checks use signed read-only requests and discard book contents", async () => {
+  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const state = {
+    phase: "connected",
+    region: "it",
+    serial: "s",
+    connectedAt: 0,
+    adpToken: "private-device",
+    privateKey: privateKey.export({ type: "pkcs8", format: "pem" }),
+    accessToken: "a",
+    refreshToken: "r",
+    tokenExpiresAt: 0,
+  };
+  let sent;
+  const result = await probeKindleMetadata(state, async (url, init) => {
+    sent = { url, init };
+    return new Response("<response><meta_data><title>Private title</title></meta_data></response>");
+  });
+  assert.equal(result.status, "available");
+  assert.equal(sent.init.method, "GET");
+  assert.equal(sent.init.headers["x-adp-token"], state.adpToken);
+  assert.ok(!JSON.stringify(result).includes("Private title"));
+  assert.ok(!JSON.stringify(result).includes(state.adpToken));
+  assert.equal(
+    (await probeKindleMetadata(state, async () => new Response("private failure", { status: 401 })))
+      .status,
+    "blocked",
+  );
+  const empty = await probeKindleMetadata(state, async () => new Response("<response/>"));
+  const unsafe = await probeKindleMetadata(
+    state,
+    async () => new Response("<!DOCTYPE response><response/>"),
+  );
+  assert.equal(empty.status, "empty");
+  assert.equal(unsafe.status, "error");
 });

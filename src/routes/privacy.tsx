@@ -100,11 +100,11 @@ function Privacy() {
         senza credenziali dell’account o progressi di lettura.
       </p>
       <p>
-        Se colleghi Amazon, le richieste di autorizzazione passano dal backend Silvae attraverso un
-        servizio dedicato ospitato su Vercel. Questo servizio inoltra i codici e le credenziali
-        necessari ad Amazon, senza salvarli o registrarli nei log applicativi. Le credenziali
-        conservate da Silvae restano cifrate nel database; la chiave di cifratura rimane sul server
-        Lovable.
+        Se colleghi Amazon, le richieste di autorizzazione e lettura Kindle passano dal backend
+        Silvae attraverso un servizio dedicato ospitato su Vercel. Questo servizio inoltra i codici
+        e le credenziali necessari ad Amazon, senza salvarli o registrarli nei log applicativi. Le
+        credenziali conservate da Silvae restano cifrate nel database; la chiave di cifratura rimane
+        sul server Lovable.
       </p>
       <p>
         I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. Supabase e
