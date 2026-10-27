@@ -207,17 +207,14 @@ export function FragmentEditor({
             }}
           />
           <div className="block text-sm">
-            <UiText
-              text={
+            <FragmentTextEditor
+              label={
                 photo || draft.image_path
                   ? "Didascalia · facoltativa"
                   : draft.kind === "quote"
                     ? "La frase che vuoi conservare"
                     : "Il testo della nota"
               }
-            />
-            <FragmentTextEditor
-              label="Testo del frammento"
               required={!photo && !draft.image_path}
               maxLength={20000}
               disabled={busy}
@@ -239,12 +236,8 @@ export function FragmentEditor({
             />
           </label>
           <div className="block text-sm">
-            <UiText text="La tua riflessione " />
-            <span className="text-muted-foreground">
-              <UiText text="· facoltativa" />
-            </span>
             <FragmentTextEditor
-              label="La tua riflessione"
+              label="La tua riflessione · facoltativa"
               maxLength={10000}
               disabled={busy}
               value={draft.note}

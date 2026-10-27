@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "La tua riflessione · facoltativa": "Your thoughts · optional",
   "Copertine dei volumi temporaneamente non disponibili.": "Volume covers are temporarily unavailable.",
   "Alcune copertine non sono disponibili nel catalogo.": "Some covers are unavailable in the catalogue.",
   "Usa le frecce per spostare il ritaglio": "Use the arrow keys to move the crop",

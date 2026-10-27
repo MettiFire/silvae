@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { Bold, Italic } from "lucide-react";
 import { UiText } from "@/lib/ui-language-context";
 import { useTranslate } from "@/lib/use-ui-language";
@@ -23,6 +23,7 @@ export function FragmentTextEditor({
   required?: boolean;
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
+  const id = useId();
   const t = useTranslate();
   const format = (marker: "*" | "**") => {
     const field = input.current;
@@ -36,32 +37,38 @@ export function FragmentTextEditor({
     });
   };
   return (
-    <div className="mt-1">
-      <div className="flex gap-1" role="group" aria-label={t("Formattazione del testo")}>
-        <button
-          type="button"
-          disabled={disabled}
-          title={t("Grassetto")}
-          aria-label={t("Grassetto")}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => format("**")}
-          className="rounded-lg border p-2 disabled:opacity-40"
-        >
-          <Bold size={16} />
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          title={t("Corsivo")}
-          aria-label={t("Corsivo")}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => format("*")}
-          className="rounded-lg border p-2 disabled:opacity-40"
-        >
-          <Italic size={16} />
-        </button>
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <label htmlFor={id} className="min-w-0 text-sm">
+          <UiText text={label} />
+        </label>
+        <div className="flex shrink-0 gap-1" role="group" aria-label={t("Formattazione del testo")}>
+          <button
+            type="button"
+            disabled={disabled}
+            title={t("Grassetto")}
+            aria-label={t("Grassetto")}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => format("**")}
+            className="flex size-11 items-center justify-center rounded-lg border disabled:opacity-40"
+          >
+            <Bold size={16} />
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            title={t("Corsivo")}
+            aria-label={t("Corsivo")}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => format("*")}
+            className="flex size-11 items-center justify-center rounded-lg border disabled:opacity-40"
+          >
+            <Italic size={16} />
+          </button>
+        </div>
       </div>
       <textarea
+        id={id}
         ref={input}
         aria-label={t(label)}
         required={required}
