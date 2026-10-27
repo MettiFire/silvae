@@ -18,6 +18,9 @@ import { fragmentDay } from "@/lib/daily-fragment";
 import { searchBooks } from "@/lib/books";
 import { findDailyFragmentBook } from "@/lib/daily-fragment-book";
 import { BookCover } from "./BookCard";
+import { FragmentText } from "./FragmentText";
+import { supabase } from "@/integrations/supabase/client";
+import { isFriendsFragmentDay, loadFriendsDailyFragment } from "@/lib/friends-daily-fragment";
 
 export function DailyFragment() {
   const t = useTranslate();
@@ -41,7 +44,7 @@ export function DailyFragment() {
   const feedback = useFragmentFeedback();
   // Keep the bundled collection as a network-failure fallback; no third-party
   // quote API is contacted while rendering the home page.
-  const fragment = day
+  const editorialFragment = day
     ? archive.data?.length
       ? selectMultilingualFragment(
           day,
@@ -52,6 +55,21 @@ export function DailyFragment() {
         ? selectDailyFragment(day, preferredFragmentPool(DAILY_FRAGMENTS, feedback.feedback, day))
         : null
     : null;
+  const friends = useQuery({
+    queryKey: ["friends-daily-fragment", user?.id, day],
+    enabled: !!user && !!day && isFriendsFragmentDay(day),
+    queryFn: () => loadFriendsDailyFragment(supabase, user!.id, day!),
+    staleTime: 0,
+    gcTime: 0,
+    refetchInterval: 60000,
+    retry: false,
+  });
+  // Hide the previous shared text while visibility is checked again, including on focus.
+  const shared =
+    day && isFriendsFragmentDay(day) && !friends.isFetching && !friends.isError
+      ? friends.data
+      : null;
+  const fragment = shared ?? editorialFragment;
   const englishTitles: Record<string, string> = {
     "collodi-pinocchio": "Pinocchio",
     "verga-malavoglia": "The House by the Medlar Tree",
@@ -70,19 +88,19 @@ export function DailyFragment() {
     "tigri-mompracem": "The Tigers of Mompracem",
     "corsaro-nero": "The Black Corsair",
   };
-  const searchTitle = fragment
+  const searchTitle = editorialFragment
     ? language === "en"
-      ? (englishTitles[fragment.id] ?? fragment.title)
-      : fragment.title
+      ? (englishTitles[editorialFragment.id] ?? editorialFragment.title)
+      : editorialFragment.title
     : "";
   const books = useQuery({
-    queryKey: ["daily-fragment-book-v2", fragment?.author, searchTitle, language],
-    enabled: !!fragment,
-    queryFn: () => findDailyFragmentBook(fragment!, searchTitle, language, searchBooks),
+    queryKey: ["daily-fragment-book-v2", editorialFragment?.author, searchTitle, language],
+    enabled: !!editorialFragment && !shared,
+    queryFn: () => findDailyFragmentBook(editorialFragment!, searchTitle, language, searchBooks),
     staleTime: (query) => (query.state.data ? 86400000 : 5 * 60000),
     retry: false,
   });
-  const book = books.data;
+  const book = shared?.book ?? books.data;
   const coverUrl = book?.id === loadedCover.bookId ? loadedCover.url : "";
   // An unavailable catalogue cover still gets a stable, clearly typographic treatment.
   const fallbackHue =
@@ -158,24 +176,40 @@ export function DailyFragment() {
           <div className="min-w-0">
             <figure>
               <blockquote className="max-w-3xl whitespace-pre-line font-display text-2xl leading-relaxed md:text-3xl">
-                «{fragment.quote}
+                «{shared ? <FragmentText text={fragment.quote} /> : fragment.quote}
                 {/[,;]$/.test(fragment.quote) ? " […]" : ""}»
               </blockquote>
               <figcaption className="mt-5 text-sm text-muted-foreground">
                 {fragment.author} ·{" "}
                 <cite className="font-medium not-italic text-foreground">
-                  <a
-                    href={fragment.source}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`${"sourceName" in fragment ? fragment.sourceName : "Wikisource"} · CC BY-SA ${fragment.license}`}
-                    className="hover:underline"
-                  >
-                    {fragment.title}
-                  </a>
+                  {shared
+                    ? shared.title
+                    : editorialFragment && (
+                        <a
+                          href={editorialFragment.source}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`${"sourceName" in editorialFragment ? editorialFragment.sourceName : "Wikisource"} · CC BY-SA ${editorialFragment.license}`}
+                          className="hover:underline"
+                        >
+                          {fragment.title}
+                        </a>
+                      )}
                 </cite>
               </figcaption>
             </figure>
+            {shared && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                <UiText text="Condiviso da" />{" "}
+                <Link
+                  to="/u/$username"
+                  params={{ username: shared.sharedBy.username }}
+                  className="underline underline-offset-4"
+                >
+                  {shared.sharedBy.name}
+                </Link>
+              </p>
+            )}
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
               {book ? (
                 <Link
@@ -188,7 +222,7 @@ export function DailyFragment() {
                 </Link>
               ) : (
                 <a
-                  href={fragment.source}
+                  href={editorialFragment?.source}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary"
@@ -224,24 +258,26 @@ export function DailyFragment() {
                 <UiText text="Mostra meno di questo autore" />
               </button>
             </div>
-            <div className="sr-only">
-              <a
-                href={fragment.source}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-4"
-              >
-                {"sourceName" in fragment ? fragment.sourceName : "Wikisource"}
-              </a>
-              <a
-                href={`https://creativecommons.org/licenses/by-sa/${fragment.license}/deed.it`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <UiText text="Trascrizione: CC BY-SA " />
-                {fragment.license}
-              </a>
-            </div>
+            {!shared && editorialFragment && (
+              <div className="sr-only">
+                <a
+                  href={editorialFragment.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {"sourceName" in editorialFragment ? editorialFragment.sourceName : "Wikisource"}
+                </a>
+                <a
+                  href={`https://creativecommons.org/licenses/by-sa/${editorialFragment.license}/deed.it`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <UiText text="Trascrizione: CC BY-SA " />
+                  {editorialFragment.license}
+                </a>
+              </div>
+            )}
           </div>
         </div>
       ) : (

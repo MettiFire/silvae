@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Condiviso da": "Shared by",
   "Lingua e aspetto": "Language and appearance",
   "Visibilità dei frammenti": "Fragment visibility",
   "Visibilità": "Visibility",
