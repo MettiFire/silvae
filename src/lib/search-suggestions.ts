@@ -16,7 +16,7 @@ export function matchesTitleCompletion(title: string, query: string) {
     words.length > 0 &&
     words.every((word, i) =>
       titleWords.some((candidate) =>
-        i === words.length - 1 ? candidate.startsWith(word) : candidate === word,
+        i === words.length - 1 && word.length > 2 ? candidate.startsWith(word) : candidate === word,
       ),
     )
   );
