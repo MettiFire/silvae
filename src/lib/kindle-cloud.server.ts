@@ -65,6 +65,8 @@ export async function createCodePair(
       code_data: { device_serial: serial, device_type: DEVICE_TYPE, domain: "Device" },
       code_properties: { code_duration: "600", code_length: "5" },
     }),
+  }).catch(() => {
+    throw Error("Amazon non è raggiungibile dal server di Silvae.");
   });
   if (!response.ok)
     throw Error("Amazon non ha potuto preparare il collegamento. Riprova più tardi.");
