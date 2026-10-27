@@ -1,4 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
+import { KindleCloudSetup } from "./KindleCloudSetup";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,6 +147,7 @@ export function ReaderConnections() {
   }
   return (
     <div className="space-y-8">
+      <KindleCloudSetup key={user?.id} owner={user?.id ?? ""} />
       <p className="max-w-3xl text-sm text-muted-foreground">
         <UiText text="Collega il lettore per ricevere i dati nel tuo account. Non chiediamo password Amazon o Kobo. Ogni collegamento ha una chiave personale che puoi revocare." />
       </p>

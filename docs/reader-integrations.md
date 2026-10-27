@@ -109,9 +109,27 @@ I suoi test descrivono limiti del percorso web per i PDOC e l'assenza di un tota
 posizioni affidabile per calcolare una percentuale esatta. Queste osservazioni
 sono del progetto upstream e non sono state validate con Silvae.
 
-Questo percorso non è implementato né attivato: richiederebbe un'autorizzazione
-esplicita per registrare il dispositivo software e conservare localmente le sue
-credenziali. Non richiede modifiche al firmware Kindle. Una futura prova deve
-riguardare un documento scelto, confrontare posizione e timestamp su due letture,
-e non inventare una percentuale dalla sola posizione grezza.
+La prima parte è ora in **Impostazioni → Dispositivi → Kindle · prova di accesso
+web**. Il client macOS separato è stato rimosso. Nessun nuovo dispositivo viene
+registrato da questa interfaccia.
+
+La prova web genera un tentativo PKCE distinto, apre il login Amazon in una nuova
+scheda e permette di incollare l'indirizzo finale Amazon. Può comparire il marchio
+Audible, perché il protocollo privato usa quel flusso tecnico. Password e MFA
+rimangono esclusivamente su Amazon. Il verifier PKCE è temporaneo e resta nella
+memoria del componente, come in un public client OAuth; non è una credenziale
+Amazon, un token permanente o una chiave condivisa del servizio. Non viene salvato
+in cache, localStorage, sessionStorage, URL, log o database.
+
+Il controllo di ritorno verifica solo formato, host, percorso, regione, account
+Silvae corrente e scadenza del tentativo (dieci minuti). **Non prova la validità
+del codice presso Amazon e non equivale a un account collegato.** L'indirizzo
+incollato viene svuotato dopo il controllo e il codice non viene conservato.
+Annullamento, cambio account e uscita dalla pagina eliminano il tentativo locale.
+
+Registrazione, scambio del codice, custodia cifrata delle credenziali sul server e
+polling del progresso non sono ancora implementati. Richiederanno una transazione
+server autenticata e verificata; il controllo client non deve diventare una prova
+di autorizzazione. Le API private potrebbero rifiutare il flusso web, e il limite
+sulla percentuale dei documenti personali rimane da verificare.
 
