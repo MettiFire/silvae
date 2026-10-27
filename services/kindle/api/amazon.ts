@@ -279,7 +279,24 @@ export async function readCatalogue(
       contentType: type === "PDOC" ? "KindlePDoc" : "Ebook",
       contentCategoryReference: type === "PDOC" ? "pdocs" : "booksAll",
       itemStatusList: ["Active"],
-      ...(type === "EBOK" ? { originTypes: ["Purchase"] } : {}),
+      ...(type === "EBOK"
+        ? {
+            originTypes: [
+              "Purchase",
+              "PublicLibraryLending",
+              "PersonalLending",
+              "KOLL",
+              "RFFLending",
+              "Pottermore",
+              "Prime",
+              "Rental",
+              "FreeTrial",
+              "KindleUnlimited",
+              "Comixology",
+              "ComicsUnlimited",
+            ],
+          }
+        : {}),
       showSharedContent: false,
       fetchCriteria: {
         sortOrder: "DESCENDING",

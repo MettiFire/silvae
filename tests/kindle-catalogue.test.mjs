@@ -38,6 +38,12 @@ test("catalogue exchanges credentials only with Amazon and returns no web sessio
     assert.equal(init.headers.Cookie, "session-id=rotated-session");
     assert.equal(new URLSearchParams(init.body).get("activity"), "GetContentOwnershipData");
     assert.equal(new URLSearchParams(init.body).get("clientId"), "collection-client");
+    const input = JSON.parse(new URLSearchParams(init.body).get("activityInput"));
+    if (input.contentType === "Ebook") {
+      assert.ok(input.originTypes.includes("Purchase"));
+      assert.ok(input.originTypes.includes("KindleUnlimited"));
+      assert.ok(!input.originTypes.includes("DeviceRegistration"));
+    }
     return Response.json({
       items: [
         {
