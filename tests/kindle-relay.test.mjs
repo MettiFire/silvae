@@ -85,6 +85,7 @@ test("Silvae signs relay requests without forwarding its private signing key", a
   try {
     globalThis.fetch = async (url, init) => {
       assert.equal(url, "https://silvae-kindle.vercel.app/api/amazon");
+      assert.equal(init.redirect, "manual");
       assert.ok(!init.body.includes(encoded));
       return handleAmazonRelay(new Request(url, init), verifyKey, async () =>
         Response.json({ public_code: "ABCDE" }),
@@ -97,6 +98,42 @@ test("Silvae signs relay requests without forwarding its private signing key", a
     });
     assert.equal(result.status, 200);
     assert.equal((await result.json()).public_code, "ABCDE");
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey === undefined) delete process.env.KINDLE_RELAY_PRIVATE_KEY;
+    else process.env.KINDLE_RELAY_PRIVATE_KEY = previousKey;
+  }
+});
+
+test("transport failures distinguish signing from networking without exposing upstream errors", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousKey = process.env.KINDLE_RELAY_PRIVATE_KEY;
+  process.env.KINDLE_RELAY_PRIVATE_KEY = privateKey
+    .export({ type: "pkcs8", format: "der" })
+    .toString("base64");
+  try {
+    globalThis.fetch = async () => {
+      throw Error("private upstream diagnostic");
+    };
+    await assert.rejects(
+      () =>
+        amazonFetch("https://api.amazon.it/auth/create/codepair", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        }),
+      /Amazon: servizio di collegamento non raggiungibile/,
+    );
+    process.env.KINDLE_RELAY_PRIVATE_KEY = "invalid";
+    await assert.rejects(
+      () =>
+        amazonFetch("https://api.amazon.it/auth/create/codepair", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        }),
+      /Amazon: firma del collegamento non disponibile/,
+    );
   } finally {
     globalThis.fetch = previousFetch;
     if (previousKey === undefined) delete process.env.KINDLE_RELAY_PRIVATE_KEY;

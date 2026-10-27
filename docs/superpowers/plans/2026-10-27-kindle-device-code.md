@@ -15,4 +15,7 @@ The user explicitly requested direct implementation without additional design in
 Private upstream device authentication is experimental, not official Kindle OAuth. Amazon may reject registration or Kindle endpoints. A last-read position without a documented total is not an exact reading percentage. Do not modify library progress until a trustworthy event can be established.
 
 Follow-up: an optional signed, fixed-destination Node transport is prepared in
-`services/kindle`. Deployment and activation await the owner's Vercel approval.
+`services/kindle`. The owner approved Vercel processing on 27 October 2026;
+the Frankfurt service is deployed and rejects unsigned requests. The signing
+private key is configured only in Lovable; Vercel holds only its public key.
+Live authorization and Kindle data retrieval remain to be validated.

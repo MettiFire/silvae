@@ -1,7 +1,11 @@
 # Silvae Amazon transport
 
-Prepared, **not deployed or enabled**. Activation requires the owner's approval
-to process Amazon authorization requests on their Vercel account.
+Deployed with the owner's approval on 27 October 2026. Production:
+https://silvae-kindle.vercel.app/api/amazon
+
+Project `prj_dLJVvWAgz7rCMrxu0beDbPs4SvnJ`, Frankfurt (`fra1`), Node 24.
+Unsigned live requests are rejected with HTTP 401. A complete account registration
+still requires the account holder's authorization on Amazon.
 
 The Lovable worker could not reach Amazon's code-pair endpoint in the live test.
 This independent Node 24 function forwards only four fixed Amazon authentication
@@ -18,6 +22,9 @@ key is public. The request signing key differs from `KINDLE_CLOUD_KEY`.
 The app only uses this transport when the signing secret is configured.
 Deploy production as `silvae-kindle.vercel.app`; keep preview deployments protected.
 No new storage, scheduled jobs or paid integrations are required.
+
+Deployments use the Vercel connector with these tracked files as the source;
+Git metadata alone is not a configured automatic deployment trigger.
 
 Run `node --experimental-strip-types --test tests/kindle-relay.test.mjs` from the
 repository root. Tests cover signature expiry/tampering, fixed targets, cookie

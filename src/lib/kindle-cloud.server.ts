@@ -56,21 +56,26 @@ export async function amazonFetch(
     body: String(init.body ?? ""),
   });
   const timestamp = String(Date.now());
-  const signingKey = await crypto.subtle.importKey(
-    "pkcs8",
-    new Uint8Array(Buffer.from(key, "base64")),
-    "Ed25519",
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign(
-    "Ed25519",
-    signingKey,
-    new TextEncoder().encode(`${timestamp}\n${body}`),
-  );
+  let signature: ArrayBuffer;
+  try {
+    const signingKey = await crypto.subtle.importKey(
+      "pkcs8",
+      new Uint8Array(Buffer.from(key, "base64")),
+      "Ed25519",
+      false,
+      ["sign"],
+    );
+    signature = await crypto.subtle.sign(
+      "Ed25519",
+      signingKey,
+      new TextEncoder().encode(`${timestamp}\n${body}`),
+    );
+  } catch {
+    throw Error("Amazon: firma del collegamento non disponibile.");
+  }
   return fetch("https://silvae-kindle.vercel.app/api/amazon", {
     method: "POST",
-    redirect: "error",
+    redirect: "manual",
     credentials: "omit",
     headers: {
       "Content-Type": "application/json",
@@ -79,6 +84,8 @@ export async function amazonFetch(
     },
     body,
     signal: AbortSignal.timeout(20_000),
+  }).catch(() => {
+    throw Error("Amazon: servizio di collegamento non raggiungibile.");
   });
 }
 function regionHost(region: KindleRegion) {
@@ -113,14 +120,21 @@ export async function createCodePair(
   const serial = randomBytes(20).toString("hex");
   const response = await fetcher(`${host}/auth/create/codepair`, {
     method: "POST",
-    redirect: "error",
+    redirect: "manual",
     headers: headers(region),
     signal: AbortSignal.timeout(15_000),
     body: JSON.stringify({
       code_data: { device_serial: serial, device_type: DEVICE_TYPE, domain: "Device" },
       code_properties: { code_duration: "600", code_length: "5" },
     }),
-  }).catch(() => {
+  }).catch((failure) => {
+    if (
+      failure instanceof Error &&
+      /^Amazon: (firma del collegamento non disponibile|servizio di collegamento non raggiungibile)\.$/.test(
+        failure.message,
+      )
+    )
+      throw failure;
     throw Error("Amazon non è raggiungibile dal server di Silvae.");
   });
   if (!response.ok)
@@ -158,7 +172,7 @@ export async function registerCodePair(
 ): Promise<Connected | null> {
   const response = await fetcher(`${regionHost(state.region)}/auth/register`, {
     method: "POST",
-    redirect: "error",
+    redirect: "manual",
     headers: headers(state.region),
     signal: AbortSignal.timeout(15_000),
     body: JSON.stringify({
@@ -270,7 +284,7 @@ export async function deregister(state: Connected, fetcher: Fetcher = amazonFetc
   if (Date.now() >= state.tokenExpiresAt - 30_000) {
     const response = await fetcher(`${regionHost(state.region)}/auth/token`, {
       method: "POST",
-      redirect: "error",
+      redirect: "manual",
       headers: { ...headers(state.region), "Content-Type": "application/x-www-form-urlencoded" },
       signal: AbortSignal.timeout(15_000),
       body: new URLSearchParams({
@@ -289,7 +303,7 @@ export async function deregister(state: Connected, fetcher: Fetcher = amazonFetc
   }
   const response = await fetcher(`${regionHost(state.region)}/auth/deregister`, {
     method: "POST",
-    redirect: "error",
+    redirect: "manual",
     headers: { ...headers(state.region), "x-amz-access-token": access },
     signal: AbortSignal.timeout(15_000),
     body: JSON.stringify({ deregister_all_existing_accounts: false }),

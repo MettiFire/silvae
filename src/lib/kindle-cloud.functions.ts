@@ -98,7 +98,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
       }).catch(() => undefined);
       if (
         failure instanceof Error &&
-        /^(Amazon |Risposta Amazon|Il collegamento|Collegamento)/.test(failure.message)
+        /^(Amazon(?::| )|Risposta Amazon|Il collegamento|Collegamento)/.test(failure.message)
       )
         throw failure;
       throw Error("Amazon non è raggiungibile. Riprova tra poco.");
