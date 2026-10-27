@@ -13,8 +13,9 @@ import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ThumbsDown } from "lucide-react";
-import { fragmentDay } from "@/lib/daily-fragment";
+import { ArrowRight, ChevronLeft, ChevronRight, ThumbsDown } from "lucide-react";
+import { fragmentDay, fragmentSlotDay } from "@/lib/daily-fragment";
+import { fragmentWorkKey } from "@/lib/fragment-archive";
 import { searchBooks } from "@/lib/books";
 import { findDailyFragmentBook } from "@/lib/daily-fragment-book";
 import { BookCover } from "./BookCard";
@@ -30,6 +31,7 @@ export function DailyFragment() {
   );
   const [loadedCover, setLoadedCover] = useState({ bookId: "", url: "" });
   const [day, setDay] = useState<string | null>(null);
+  const [slot, setSlot] = useState(0);
   useEffect(() => {
     const update = () => setDay(fragmentDay());
     update();
@@ -42,19 +44,6 @@ export function DailyFragment() {
   }, []);
   const archive = useFragmentArchive();
   const feedback = useFragmentFeedback();
-  // Keep the bundled collection as a network-failure fallback; no third-party
-  // quote API is contacted while rendering the home page.
-  const editorialFragment = day
-    ? archive.data?.length
-      ? selectMultilingualFragment(
-          day,
-          preferredFragmentPool(archive.data, feedback.feedback, day),
-          archive.languages,
-        )
-      : archive.isError && archive.languages.includes("it")
-        ? selectDailyFragment(day, preferredFragmentPool(DAILY_FRAGMENTS, feedback.feedback, day))
-        : null
-    : null;
   const friends = useQuery({
     queryKey: ["friends-daily-fragment", user?.id, day],
     enabled: !!user && !!day && isFriendsFragmentDay(day),
@@ -64,10 +53,33 @@ export function DailyFragment() {
     refetchInterval: 60000,
     retry: false,
   });
-  // Hide the previous shared text while visibility is checked again, including on focus.
-  const shared =
+  const availableShared =
     day && isFriendsFragmentDay(day) && !friends.isFetching && !friends.isError
       ? friends.data
+      : null;
+  const shared = slot === 0 ? availableShared : null;
+  const rotationDay = day ? fragmentSlotDay(day, slot) : null;
+  const sharedWork = availableShared
+    ? fragmentWorkKey(availableShared.author, availableShared.title)
+    : null;
+  // Keep the bundled collection as a network-failure fallback; no third-party
+  // quote API is contacted while rendering the home page.
+  const editorialFragment =
+    day && rotationDay
+      ? archive.data?.length
+        ? selectMultilingualFragment(
+            rotationDay,
+            preferredFragmentPool(archive.data, feedback.feedback, day).filter(
+              (entry) => !sharedWork || fragmentWorkKey(entry.author, entry.title) !== sharedWork,
+            ),
+            archive.languages,
+          )
+        : archive.isError && archive.languages.includes("it")
+          ? selectDailyFragment(
+              rotationDay,
+              preferredFragmentPool(DAILY_FRAGMENTS, feedback.feedback, day),
+            )
+          : null
       : null;
   const fragment = shared ?? editorialFragment;
   const englishTitles: Record<string, string> = {
@@ -134,6 +146,27 @@ export function DailyFragment() {
       className="relative isolate my-10 min-h-80 overflow-hidden rounded-2xl border border-border/60 bg-muted/25 px-5 py-7 sm:px-10 sm:py-9"
       aria-label="Il frammento del giorno"
     >
+      <nav className="mb-5 flex items-center justify-end gap-3" aria-label={t("Frammenti di oggi")}>
+        <button
+          type="button"
+          onClick={() => setSlot((slot + 2) % 3)}
+          aria-label={t("Frammento precedente")}
+          className="flex size-11 items-center justify-center rounded-full border border-border hover:bg-background/50"
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+        <span className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
+          {slot + 1} / 3
+        </span>
+        <button
+          type="button"
+          onClick={() => setSlot((slot + 1) % 3)}
+          aria-label={t("Frammento successivo")}
+          className="flex size-11 items-center justify-center rounded-full border border-border hover:bg-background/50"
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </nav>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"

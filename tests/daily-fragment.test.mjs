@@ -1,4 +1,21 @@
 import test from "node:test";
+import { fragmentSlotDay } from "../src/lib/daily-fragment.ts";
+
+test("three daily slots advance consecutively across days and reject invalid input", () => {
+  const slots = ["2026-10-26", "2026-10-27"].flatMap((day) =>
+    [0, 1, 2].map((slot) => fragmentSlotDay(day, slot)),
+  );
+  assert.deepEqual(slots, [
+    "2026-10-26",
+    "2026-10-27",
+    "2026-10-28",
+    "2026-10-29",
+    "2026-10-30",
+    "2026-10-31",
+  ]);
+  assert.throws(() => fragmentSlotDay("2026-02-31", 0));
+  assert.throws(() => fragmentSlotDay("2026-10-27", 3));
+});
 import assert from "node:assert/strict";
 import { dailyFragment, fragmentDay } from "../src/lib/daily-fragment.ts";
 import { DAILY_FRAGMENTS } from "../src/data/daily-fragments.ts";
@@ -25,8 +42,7 @@ test("Daily selection covers the full pool per cycle and never repeats on adjace
   }
   assert.ok(
     DAILY_FRAGMENTS.every(
-      (q) =>
-        new URL(q.source).hostname === "it.wikisource.org" && q.author && q.title && q.section,
+      (q) => new URL(q.source).hostname === "it.wikisource.org" && q.author && q.title && q.section,
     ),
   );
 });
@@ -36,7 +52,7 @@ test("Every rolling window contains distinct works, including rotation boundarie
   const seen = new Map();
   const start = Date.parse("2026-10-24T00:00:00Z");
   for (let i = 0; i < 1000; i++) {
-    const fragment = dailyFragment(new Date(start + i * 86400000).toISOString().slice(0,10));
+    const fragment = dailyFragment(new Date(start + i * 86400000).toISOString().slice(0, 10));
     const key = `${fragment.author}:${fragment.title}`;
     if (seen.has(key)) assert.ok(i - seen.get(key) >= n);
     seen.set(key, i);
@@ -47,12 +63,15 @@ test("Every rolling window contains distinct works, including rotation boundarie
 test("Adding multiple excerpts does not give a book more days in the rotation", async () => {
   const { selectDailyFragment } = await import("../src/lib/daily-fragment.ts");
   const pool = [
-    { id:"a1", title:"Un libro", author:"Autore" },
-    { id:"b", title:"Altro libro", author:"Altra autrice" },
-    { id:"a2", title:"Un líbro!", author:"AUTORE" },
-    { id:"c", title:"Terzo libro", author:"Terza autrice" },
+    { id: "a1", title: "Un libro", author: "Autore" },
+    { id: "b", title: "Altro libro", author: "Altra autrice" },
+    { id: "a2", title: "Un líbro!", author: "AUTORE" },
+    { id: "c", title: "Terzo libro", author: "Terza autrice" },
   ];
-  const ids = Array.from({ length: 6 }, (_, i) => selectDailyFragment(`2026-10-${24+i}`, pool).id);
+  const ids = Array.from(
+    { length: 6 },
+    (_, i) => selectDailyFragment(`2026-10-${24 + i}`, pool).id,
+  );
   assert.deepEqual(ids, ["a1", "b", "c", "a2", "b", "c"]);
   assert.throws(() => selectDailyFragment("2026-10-24", []));
 });

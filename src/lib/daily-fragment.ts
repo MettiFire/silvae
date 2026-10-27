@@ -9,6 +9,20 @@ export function fragmentDay(now = new Date()) {
   const part = (name: string) => parts.find((p) => p.type === name)!.value;
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
+/** Three consecutive rotation slots per calendar day, without skipping works. */
+export function fragmentSlotDay(day: string, slot: number) {
+  const date = Date.parse(`${day}T00:00:00Z`);
+  if (
+    !Number.isInteger(slot) ||
+    slot < 0 ||
+    slot > 2 ||
+    !Number.isFinite(date) ||
+    new Date(date).toISOString().slice(0, 10) !== day
+  )
+    throw Error("Giorno non valido");
+  const epoch = Date.parse("2026-10-26T00:00:00Z");
+  return new Date(epoch + (date - epoch) * 3 + slot * 86400000).toISOString().slice(0, 10);
+}
 const EPOCH = Date.parse("2026-10-24T00:00:00Z") / 86400000;
 type FragmentWork = { id: string; title: string; author: string };
 const normalized = (text: string) =>

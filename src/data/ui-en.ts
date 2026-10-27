@@ -1,4 +1,7 @@
 export const UI_EN: Record<string, string> = {
+  "Frammenti di oggi": "Today's fragments",
+  "Frammento precedente": "Previous fragment",
+  "Frammento successivo": "Next fragment",
   "Condiviso da": "Shared by",
   "Lingua e aspetto": "Language and appearance",
   "Visibilità dei frammenti": "Fragment visibility",
