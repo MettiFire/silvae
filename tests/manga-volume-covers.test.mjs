@@ -1,9 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { fetchMangaCovers } from "../src/lib/manga-catalogue.ts";
-import { mangaVolumeCovers } from "../src/lib/manga-model.ts";
+import { mangaVolumeCovers, usesPersonalMangaNumbering } from "../src/lib/manga-model.ts";
 const record = (volume, fileName = `${volume}.jpg`, locale = "ja") => ({
   attributes: { volume: String(volume), fileName, locale },
+});
+
+test("legacy edition labels do not hide covers when catalogue numbering agrees", () => {
+  const manga = { totalVolumes: 22, status: "completed", source: "mal" };
+  const progress = { total: 22, edition: "Italiana", ranges: [[1, 22]], updatedAt: "2026-10-27" };
+  assert.equal(usesPersonalMangaNumbering(progress, manga), false);
+  assert.equal(usesPersonalMangaNumbering({ ...progress, total: 11 }, manga), true);
+  assert.equal(usesPersonalMangaNumbering({ ...progress, total: null }, manga), true);
+  assert.equal(usesPersonalMangaNumbering({ ...progress, total: null, edition: "" }, manga), false);
 });
 
 test("volume images retain alternate files and sizes without borrowing another volume's cover", () => {

@@ -117,9 +117,7 @@ export function MangaVolumeStrip({
             ))}
           </UiElement>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            <UiText text="Volumi della serie" />
-          </span>
+          <span />
         )}
         <div className="flex gap-2">
           <UiElement
@@ -181,6 +179,14 @@ export function MangaVolumeStrip({
               <figcaption className="mt-1 text-xs">
                 <UiText text="Volume " />
                 {n}
+                {readSet.has(n) && (
+                  <span className="ml-1 text-primary">
+                    ✓{" "}
+                    <span className="sr-only">
+                      <UiText text="Letto" />
+                    </span>
+                  </span>
+                )}
               </figcaption>
             </figure>
           ),

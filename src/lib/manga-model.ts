@@ -39,6 +39,12 @@ export type MangaProgress = {
   edition: string;
   updatedAt: string;
 };
+export function usesPersonalMangaNumbering(progress: MangaProgress, manga: MangaDetails) {
+  if (progress.total !== null && manga.totalVolumes !== null)
+    return progress.total !== manga.totalVolumes;
+  // Without comparable totals, a legacy edition cannot safely be matched by volume number.
+  return !!progress.edition.trim();
+}
 export const MANGA_FIELD = "manga_progress_v1";
 export const MAX_MANGA_VOLUMES = 2000;
 export function isMangaId(id: string) {

@@ -3,7 +3,7 @@ import { UiText, UiElement } from "@/lib/ui-language-context";
 import { MangaVolumeStrip, MangaVolumeGallery, MangaCoverStatus } from "./MangaVolumeCover";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ProgressBar } from "./ProgressBar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/localized-toast";
@@ -21,6 +21,7 @@ import {
   volumeNumber,
   mangaCompletion,
   mangaLibraryPatch,
+  usesPersonalMangaNumbering,
   type MangaProgress,
 } from "@/lib/manga-model";
 export function MangaVolumeForm({
@@ -34,7 +35,11 @@ export function MangaVolumeForm({
   onSave: (progress: MangaProgress) => Promise<void>;
   busy?: boolean;
 }) {
+  const [editing, setEditing] = useState(false);
   const [volumes, setVolumes] = useState(() => readVolumes(initial));
+  useEffect(() => {
+    if (!editing) setVolumes(readVolumes(initial));
+  }, [initial, editing]);
   const [jump, setJump] = useState("");
   const [focusVolume, setFocusVolume] = useState(1);
   const [focusTick, setFocusTick] = useState(0);
@@ -49,9 +54,7 @@ export function MangaVolumeForm({
     updatedAt: new Date().toISOString(),
   };
   const progress = mangaCompletion(state, manga);
-  const customNumbering =
-    (state.total !== null && manga.totalVolumes !== null && state.total !== manga.totalVolumes) ||
-    !!initial?.edition;
+  const customNumbering = usesPersonalMangaNumbering(initial ?? state, manga);
   const count = Math.min(
     2000,
     Math.max(
@@ -67,33 +70,65 @@ export function MangaVolumeForm({
     else setVolumes((old) => selectMangaVolume(old, n));
   };
   return (
-    <section className="mt-6 min-w-0 rounded-xl border border-border bg-card p-4">
+    <section
+      className={`mt-6 min-w-0 ${editing ? "rounded-xl border border-border bg-card p-4" : ""}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-xl">
             <UiText text="I tuoi volumi" />
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {progress.count}
-            {progress.total ? ` / ${progress.total}` : ""} <UiText text="volumi letti" />
-            {progress.complete && (
-              <>
-                {" "}
-                · <UiText text="Serie completata" />
-              </>
-            )}
-          </p>
+          {editing && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {progress.count}
+              {progress.total ? ` / ${progress.total}` : ""} <UiText text="volumi letti" />
+              {progress.complete && (
+                <>
+                  {" "}
+                  · <UiText text="Serie completata" />
+                </>
+              )}
+            </p>
+          )}
         </div>
-        <button
-          type="button"
-          className="button-ink"
-          disabled={busy}
-          onClick={() => void onSave(state)}
-        >
-          <UiText text={busy ? "Salvataggio…" : "Salva"} />
-        </button>
+        {!editing ? (
+          <button type="button" className="button-outline" onClick={() => setEditing(true)}>
+            <UiText text="Modifica" />
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="button-outline"
+              disabled={busy}
+              onClick={() => {
+                setVolumes(readVolumes(initial));
+                setJump("");
+                setPendingVolume(null);
+                setEditing(false);
+              }}
+            >
+              <UiText text="Annulla" />
+            </button>
+            <button
+              type="button"
+              className="button-ink"
+              disabled={busy}
+              onClick={async () => {
+                try {
+                  await onSave(state);
+                  setEditing(false);
+                } catch {
+                  // The owner reports save errors; retain the draft for retry.
+                }
+              }}
+            >
+              <UiText text={busy ? "Salvataggio…" : "Salva"} />
+            </button>
+          </div>
+        )}
       </div>
-      {progress.total && (
+      {editing && progress.total && (
         <ProgressBar
           className="mt-3"
           current={progress.count}
@@ -154,50 +189,52 @@ export function MangaVolumeForm({
         count={count}
         covers={customNumbering ? [] : (covers.data ?? [])}
         read={volumes}
-        onToggle={change}
+        {...(editing ? { onToggle: change } : {})}
         disabled={busy}
         focusVolume={focusVolume}
         focusTick={focusTick}
       />
       {!customNumbering && <MangaCoverStatus query={covers} total={progress.total} />}
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-        <label className="flex items-center gap-2">
-          <UiText text="Vai al volume" />
-          <UiElement
-            as="input"
-            aria-label="Volume da segnare"
-            type="number"
-            min={1}
-            max={progress.total ?? 2000}
-            value={jump}
-            disabled={busy}
-            onChange={(e) => setJump(e.target.value)}
-            className="w-20 rounded border border-border bg-background px-2 py-1"
-          />
-        </label>
-        <button
-          type="button"
-          className="button-outline"
-          disabled={
-            busy ||
-            !volumeNumber(jump) ||
-            (progress.total !== null && Number(jump) > progress.total)
-          }
-          onClick={() => {
-            const n = volumeNumber(jump);
-            if (n) {
-              setFocusVolume(n);
-              setFocusTick((old) => old + 1);
-              change(n);
+      {editing && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <label className="flex items-center gap-2">
+            <UiText text="Vai al volume" />
+            <UiElement
+              as="input"
+              aria-label="Volume da segnare"
+              type="number"
+              min={1}
+              max={progress.total ?? 2000}
+              value={jump}
+              disabled={busy}
+              onChange={(e) => setJump(e.target.value)}
+              className="w-20 rounded border border-border bg-background px-2 py-1"
+            />
+          </label>
+          <button
+            type="button"
+            className="button-outline"
+            disabled={
+              busy ||
+              !volumeNumber(jump) ||
+              (progress.total !== null && Number(jump) > progress.total)
             }
-          }}
-        >
-          <UiText text="Segna / deseleziona" />
-        </button>
-        <p className="text-xs text-muted-foreground">
-          <UiText text="Seleziona i volumi e premi Salva." />
-        </p>
-      </div>
+            onClick={() => {
+              const n = volumeNumber(jump);
+              if (n) {
+                setFocusVolume(n);
+                setFocusTick((old) => old + 1);
+                change(n);
+              }
+            }}
+          >
+            <UiText text="Segna / deseleziona" />
+          </button>
+          <p className="text-xs text-muted-foreground">
+            <UiText text="Seleziona i volumi e premi Salva." />
+          </p>
+        </div>
+      )}
       {customNumbering && (
         <p className="mt-3 text-xs text-muted-foreground">
           <UiText text="Numerazione personale già salvata: i progressi sono conservati senza abbinare copertine di altre edizioni." />
@@ -257,17 +294,10 @@ export function MangaTracker({ book, item }: { book: Book; item: LibraryItem | n
       toast.success(patch.status === "read" ? "Serie completata!" : "Volumi aggiornati");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Avanzamento non salvato. Riprova.");
+      throw e;
     } finally {
       setBusy(false);
     }
   };
-  return (
-    <MangaVolumeForm
-      key={`${book.id}:${initial?.updatedAt ?? "new"}`}
-      book={book}
-      initial={initial}
-      onSave={save}
-      busy={busy}
-    />
-  );
+  return <MangaVolumeForm key={book.id} book={book} initial={initial} onSave={save} busy={busy} />;
 }
