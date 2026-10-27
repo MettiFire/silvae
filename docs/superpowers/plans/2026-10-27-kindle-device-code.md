@@ -19,3 +19,7 @@ Follow-up: an optional signed, fixed-destination Node transport is prepared in
 the Frankfurt service is deployed and rejects unsigned requests. The signing
 private key is configured only in Lovable; Vercel holds only its public key.
 Live authorization and Kindle data retrieval remain to be validated.
+
+Public-site proof: a code was generated via the authenticated relay, persisted
+encrypted and restored after a hard reload. The Amazon authorization page was
+handed to the account holder; no Amazon credentials were entered by the agent.

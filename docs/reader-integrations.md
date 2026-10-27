@@ -141,6 +141,12 @@ resta su Lovable e quella pubblica su Vercel; la chiave di cifratura non è cond
 Il servizio rifiuta richieste prive di firma con HTTP 401. La generazione di un
 codice non equivale all'autorizzazione dell'account e al recupero della lettura.
 
+**Verifica sul sito pubblico:** Silvae ha generato un codice Amazon valido tramite
+il servizio autorizzato, salvato lo stato cifrato e ripreso lo stesso tentativo
+dopo un hard reload. L'interfaccia attende la conferma dell'account direttamente
+su `amazon.it/code`. Nessun codice personale è riportato in questa documentazione.
+L'autorizzazione dell'account e l'accesso ai dati Kindle restano da verificare.
+
 Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
 documenta richieste firmate al sidecar CDE. Una posizione non assicura una
 percentuale: serve un totale documentato nella stessa unità. Non usare dimensione
