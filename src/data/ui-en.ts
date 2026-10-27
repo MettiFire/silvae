@@ -2,93 +2,139 @@ export const UI_EN: Record<string, string> = {
   "Verifica un singolo libro · sperimentale": "Check one book · experimental",
   "Tipo di contenuto": "Content type",
   "Identificativo Amazon del libro": "Amazon book identifier",
-  "Test tecnico con l’identificativo del contenuto Amazon. Recupera solo la posizione più avanzata; non aggiorna la libreria Silvae.": "Technical test using the Amazon content identifier. Retrieves only the furthest-read position; does not update your Silvae library.",
+  "Test tecnico con l’identificativo del contenuto Amazon. Recupera solo la posizione più avanzata; non aggiorna la libreria Silvae.":
+    "Technical test using the Amazon content identifier. Retrieves only the furthest-read position; does not update your Silvae library.",
   "Verifica posizione": "Check reading position",
   "Posizione più avanzata": "Furthest-read position",
   "Ultimo aggiornamento Amazon": "Last Amazon update",
-  "Posizione più avanzata recuperata da Amazon. Il totale del libro non è disponibile: nessuna percentuale è stata stimata e la libreria non è stata modificata.": "Furthest-read position retrieved from Amazon. The book total is unavailable: no percentage was estimated and your library has not been modified.",
-  "Amazon non ha consentito la lettura della posizione di questo libro.": "Amazon did not allow this book’s reading position to be retrieved.",
-  "Amazon non ha restituito una posizione per questo libro.": "Amazon returned no reading position for this book.",
-  "Non è presente una posizione di lettura sincronizzata per questo libro.": "There is no synced reading position for this book.",
-  "La posizione di questo libro non è al momento leggibile. Il collegamento Amazon rimane attivo.": "This book’s reading position cannot currently be read. Your Amazon account remains connected.",
-  "Amazon ha accettato il collegamento, ma il feed del dispositivo software non contiene libri o avanzamenti. La sincronizzazione della lettura non è ancora attiva.": "Amazon accepted the connection, but the software device feed contains no books or reading progress. Reading synchronization is not active yet.",
-  "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.": "Amazon responded, but its Kindle metadata cannot be interpreted yet. Your library has not been modified.",
+  "Posizione più avanzata recuperata da Amazon. Il totale del libro non è disponibile: nessuna percentuale è stata stimata e la libreria non è stata modificata.":
+    "Furthest-read position retrieved from Amazon. The book total is unavailable: no percentage was estimated and your library has not been modified.",
+  "Amazon non ha consentito la lettura della posizione di questo libro.":
+    "Amazon did not allow this book’s reading position to be retrieved.",
+  "Amazon non ha restituito una posizione per questo libro.":
+    "Amazon returned no reading position for this book.",
+  "Non è presente una posizione di lettura sincronizzata per questo libro.":
+    "There is no synced reading position for this book.",
+  "La posizione di questo libro non è al momento leggibile. Il collegamento Amazon rimane attivo.":
+    "This book’s reading position cannot currently be read. Your Amazon account remains connected.",
+  "Amazon ha accettato il collegamento, ma il feed del dispositivo software non contiene libri o avanzamenti. La sincronizzazione della lettura non è ancora attiva.":
+    "Amazon accepted the connection, but the software device feed contains no books or reading progress. Reading synchronization is not active yet.",
+  "Amazon ha risposto, ma i metadati Kindle non sono ancora interpretabili. La tua libreria non è stata modificata.":
+    "Amazon responded, but its Kindle metadata cannot be interpreted yet. Your library has not been modified.",
   "Riprova lettura Kindle": "Retry Kindle data",
-  "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.": "Amazon did not allow Kindle metadata retrieval in this test. Your account remains connected.",
-  "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.": "Amazon returned an unsupported reading data format. Your library has not been modified.",
-  "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata.": "Amazon provides Kindle metadata. Reading progress retrieval is still being verified; your library has not been modified.",
-  "Amazon ha risposto, ma non ha fornito metadati Kindle per il dispositivo collegato. La tua libreria non è stata modificata.": "Amazon responded without Kindle metadata for the connected device. Your library has not been modified.",
-  "Non è stato possibile recuperare i dati Kindle. Il collegamento Amazon rimane attivo.": "Kindle data could not be retrieved. Your Amazon account remains connected.",
-  "Collega il tuo account autorizzando un codice direttamente su Amazon.": "Connect your account by authorizing a code directly on Amazon.",
+  "Amazon non ha consentito il recupero dei metadati Kindle in questa prova. Il collegamento dell’account rimane attivo.":
+    "Amazon did not allow Kindle metadata retrieval in this test. Your account remains connected.",
+  "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.":
+    "Amazon returned an unsupported reading data format. Your library has not been modified.",
+  "Amazon rende disponibili i metadati Kindle. Il recupero del progresso è ancora in verifica; la tua libreria non è stata modificata.":
+    "Amazon provides Kindle metadata. Reading progress retrieval is still being verified; your library has not been modified.",
+  "Amazon ha risposto, ma non ha fornito metadati Kindle per il dispositivo collegato. La tua libreria non è stata modificata.":
+    "Amazon responded without Kindle metadata for the connected device. Your library has not been modified.",
+  "Non è stato possibile recuperare i dati Kindle. Il collegamento Amazon rimane attivo.":
+    "Kindle data could not be retrieved. Your Amazon account remains connected.",
+  "Collega il tuo account autorizzando un codice direttamente su Amazon.":
+    "Connect your account by authorizing a code directly on Amazon.",
   "Collega Amazon": "Connect Amazon",
   "Apri Amazon e inserisci questo codice:": "Open Amazon and enter this code:",
   "Autorizza su Amazon": "Authorize on Amazon",
   "In attesa dell’autorizzazione Amazon…": "Waiting for Amazon authorization…",
-  "Il codice scade dopo 10 minuti. Lascia aperta Silvae: il collegamento verrà confermato automaticamente.": "The code expires after 10 minutes. Keep Silvae open: the connection will be confirmed automatically.",
+  "Il codice scade dopo 10 minuti. Lascia aperta Silvae: il collegamento verrà confermato automaticamente.":
+    "The code expires after 10 minutes. Keep Silvae open: the connection will be confirmed automatically.",
   "Account Amazon collegato": "Amazon account connected",
   "Scollega Amazon": "Disconnect Amazon",
-  "Autorizzazione riuscita. Il recupero del progresso Kindle è ancora in verifica: la tua libreria non viene modificata.": "Authorization succeeded. Kindle reading progress retrieval is still being verified: your library is not modified.",
-  "Sperimentale: Amazon può identificare il dispositivo software come Audible. Password e verifica in due passaggi rimangono su Amazon; non vengono attivati abbonamenti.": "Experimental: Amazon may identify the software device as Audible. Passwords and two-step verification stay on Amazon; no subscriptions are activated.",
-  "Il collegamento Kindle non è ancora configurato sul server.": "The Kindle connection has not been configured on the server yet.",
-  "Il collegamento Kindle richiede l’attivazione del database.": "The Kindle connection requires database setup.",
-  "Amazon non è raggiungibile. Riprova tra poco.": "Amazon could not be reached. Try again shortly.",
-  "Amazon ha rifiutato il collegamento. Prepara un nuovo codice.": "Amazon rejected the connection. Generate a new code.",
-  "Collegamento in corso. Riprova tra qualche secondo.": "Connection in progress. Try again in a few seconds.",
+  "Autorizzazione riuscita. Il recupero del progresso Kindle è ancora in verifica: la tua libreria non viene modificata.":
+    "Authorization succeeded. Kindle reading progress retrieval is still being verified: your library is not modified.",
+  "Sperimentale: Amazon può identificare il dispositivo software come Audible. Password e verifica in due passaggi rimangono su Amazon; non vengono attivati abbonamenti.":
+    "Experimental: Amazon may identify the software device as Audible. Passwords and two-step verification stay on Amazon; no subscriptions are activated.",
+  "Il collegamento Kindle non è ancora configurato sul server.":
+    "The Kindle connection has not been configured on the server yet.",
+  "Il collegamento Kindle richiede l’attivazione del database.":
+    "The Kindle connection requires database setup.",
+  "Amazon non è raggiungibile. Riprova tra poco.":
+    "Amazon could not be reached. Try again shortly.",
+  "Amazon ha rifiutato il collegamento. Prepara un nuovo codice.":
+    "Amazon rejected the connection. Generate a new code.",
+  "Collegamento in corso. Riprova tra qualche secondo.":
+    "Connection in progress. Try again in a few seconds.",
   "Amazon è occupato. Riprova tra poco.": "Amazon is busy. Try again shortly.",
-  "Amazon non ha confermato la revoca. Riprova più tardi.": "Amazon did not confirm disconnection. Try again later.",
-  "Password e verifica in due passaggi vanno inserite solo su Amazon. Il prototipo usa un flusso tecnico Amazon/Audible: non è un collegamento Kindle ufficiale e Silvae non attiva abbonamenti.": "Enter passwords and two-step verification only on Amazon. This prototype uses a technical Amazon/Audible flow: it is not an official Kindle connection, and Silvae does not activate subscriptions.",
-  "Dopo il login, la pagina finale Amazon può mostrare 404 anche quando ha restituito il codice. Copia comunque l’indirizzo completo dalla barra del browser e incollalo qui: controlliamo la presenza del codice, non la pagina di errore. Questa prova verifica solo il formato e non attiva il collegamento.": "After sign-in, the final Amazon page may show 404 even when a code was returned. Copy the full address from the browser address bar and paste it here: we check for the code, not the error page. This trial only checks the format and does not activate the connection.",
-  "L’indirizzo contiene un codice temporaneo: incollalo soltanto in questo campo.": "The address contains a temporary code: paste it only in this field.",
-  "Nell’indirizzo manca il codice Amazon. Ripeti l’accesso: la pagina 404 da sola non conferma il risultato.": "The address has no Amazon code. Sign in again: a 404 page alone does not confirm the result.",
-  "La chiave smetterà subito di funzionare. Libri e frammenti già ricevuti rimangono nel tuo account.": "The key will stop working immediately. Books and fragments already received will remain in your account.",
-  "Se scegli No, nascondiamo l’avanzamento ebook e i collegamenti ai dispositivi. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica.": "Choosing No hides ebook progress and device connections. You can change this in Settings → Devices. Selecting a reader does not enable automatic sync.",
+  "Amazon non ha confermato la revoca. Riprova più tardi.":
+    "Amazon did not confirm disconnection. Try again later.",
+  "Password e verifica in due passaggi vanno inserite solo su Amazon. Il prototipo usa un flusso tecnico Amazon/Audible: non è un collegamento Kindle ufficiale e Silvae non attiva abbonamenti.":
+    "Enter passwords and two-step verification only on Amazon. This prototype uses a technical Amazon/Audible flow: it is not an official Kindle connection, and Silvae does not activate subscriptions.",
+  "Dopo il login, la pagina finale Amazon può mostrare 404 anche quando ha restituito il codice. Copia comunque l’indirizzo completo dalla barra del browser e incollalo qui: controlliamo la presenza del codice, non la pagina di errore. Questa prova verifica solo il formato e non attiva il collegamento.":
+    "After sign-in, the final Amazon page may show 404 even when a code was returned. Copy the full address from the browser address bar and paste it here: we check for the code, not the error page. This trial only checks the format and does not activate the connection.",
+  "L’indirizzo contiene un codice temporaneo: incollalo soltanto in questo campo.":
+    "The address contains a temporary code: paste it only in this field.",
+  "Nell’indirizzo manca il codice Amazon. Ripeti l’accesso: la pagina 404 da sola non conferma il risultato.":
+    "The address has no Amazon code. Sign in again: a 404 page alone does not confirm the result.",
+  "La chiave smetterà subito di funzionare. Libri e frammenti già ricevuti rimangono nel tuo account.":
+    "The key will stop working immediately. Books and fragments already received will remain in your account.",
+  "Se scegli No, nascondiamo l’avanzamento ebook e i collegamenti ai dispositivi. Puoi cambiare scelta in Impostazioni → Dispositivi. Indicare il lettore non attiva la sincronizzazione automatica.":
+    "Choosing No hides ebook progress and device connections. You can change this in Settings → Devices. Selecting a reader does not enable automatic sync.",
   "Copia link Amazon": "Copy Amazon link",
   "Link Amazon da copiare": "Amazon link to copy",
-  "Link copiato. Incollalo nella barra degli indirizzi di una nuova scheda del browser.": "Link copied. Paste it into the address bar of a new browser tab.",
-  "Seleziona e copia il link dal campo qui sotto, poi incollalo in una nuova scheda del browser.": "Select and copy the link from the field below, then paste it into a new browser tab.",
-  "Amazon blocca l’accesso nei riquadri incorporati. Nell’anteprima Lovable usa Copia link Amazon e incollalo nella barra degli indirizzi di una nuova scheda, lasciando aperta Silvae.": "Amazon blocks sign-in inside embedded frames. In the Lovable preview, use Copy Amazon link and paste it into the address bar of a new browser tab, keeping Silvae open.",
+  "Link copiato. Incollalo nella barra degli indirizzi di una nuova scheda del browser.":
+    "Link copied. Paste it into the address bar of a new browser tab.",
+  "Seleziona e copia il link dal campo qui sotto, poi incollalo in una nuova scheda del browser.":
+    "Select and copy the link from the field below, then paste it into a new browser tab.",
+  "Amazon blocca l’accesso nei riquadri incorporati. Nell’anteprima Lovable usa Copia link Amazon e incollalo nella barra degli indirizzi di una nuova scheda, lasciando aperta Silvae.":
+    "Amazon blocks sign-in inside embedded frames. In the Lovable preview, use Copy Amazon link and paste it into the address bar of a new browser tab, keeping Silvae open.",
   "Kindle · prova di accesso web": "Kindle · web sign-in trial",
-  "Sperimentale: prepariamo l’accesso Amazon nel browser. La registrazione del dispositivo e la sincronizzazione della lettura non sono ancora attive.": "Experimental: prepare Amazon sign-in in your browser. Device registration and reading sync are not active yet.",
-  "Password e verifica in due passaggi vanno inserite solo su Amazon. Il login tecnico può mostrare Audible.": "Enter passwords and two-step verification only on Amazon. The technical sign-in may show Audible branding.",
+  "Sperimentale: prepariamo l’accesso Amazon nel browser. La registrazione del dispositivo e la sincronizzazione della lettura non sono ancora attive.":
+    "Experimental: prepare Amazon sign-in in your browser. Device registration and reading sync are not active yet.",
+  "Password e verifica in due passaggi vanno inserite solo su Amazon. Il login tecnico può mostrare Audible.":
+    "Enter passwords and two-step verification only on Amazon. The technical sign-in may show Audible branding.",
   "Account Amazon": "Amazon account",
   "Preparazione…": "Preparing…",
   "Prepara accesso Amazon": "Prepare Amazon sign-in",
   "Apri Amazon": "Open Amazon",
-  "Dopo l’accesso, copia l’indirizzo completo della pagina finale Amazon e incollalo qui. La prova controlla soltanto il formato e scarta il codice; non verifica ancora l’autorizzazione sul server.": "After signing in, copy the full address of the final Amazon page and paste it here. This trial only checks the format and discards the code; it does not verify authorization on the server yet.",
+  "Dopo l’accesso, copia l’indirizzo completo della pagina finale Amazon e incollalo qui. La prova controlla soltanto il formato e scarta il codice; non verifica ancora l’autorizzazione sul server.":
+    "After signing in, copy the full address of the final Amazon page and paste it here. This trial only checks the format and discards the code; it does not verify authorization on the server yet.",
   "Indirizzo finale Amazon": "Final Amazon address",
   "Controlla indirizzo di ritorno": "Check return address",
-  "Formato dell’indirizzo riconosciuto. Il codice è stato scartato: il collegamento e la sincronizzazione non sono ancora attivi.": "Address format recognized. The code was discarded: the connection and sync are not active yet.",
+  "Formato dell’indirizzo riconosciuto. Il codice è stato scartato: il collegamento e la sincronizzazione non sono ancora attivi.":
+    "Address format recognized. The code was discarded: the connection and sync are not active yet.",
   "La prova è scaduta. Prepara un nuovo accesso.": "This trial expired. Prepare a new sign-in.",
   "Incolla l’indirizzo finale della pagina Amazon.": "Paste the final Amazon page address.",
-  "Questo non è l’indirizzo finale previsto. Completa l’accesso su Amazon.": "This is not the expected final address. Finish signing in on Amazon.",
+  "Questo non è l’indirizzo finale previsto. Completa l’accesso su Amazon.":
+    "This is not the expected final address. Finish signing in on Amazon.",
   "Amazon non ha restituito un codice utilizzabile.": "Amazon did not return a usable code.",
   "Non è stato possibile preparare l’accesso. Riprova.": "Could not prepare sign-in. Try again.",
-  "Mostro la libreria salvata. Aggiornamento non riuscito.": "Showing your saved library. Refresh failed.",
+  "Mostro la libreria salvata. Aggiornamento non riuscito.":
+    "Showing your saved library. Refresh failed.",
   "La tua riflessione · facoltativa": "Your thoughts · optional",
-  "Copertine dei volumi temporaneamente non disponibili.": "Volume covers are temporarily unavailable.",
-  "Alcune copertine non sono disponibili nel catalogo.": "Some covers are unavailable in the catalogue.",
+  "Copertine dei volumi temporaneamente non disponibili.":
+    "Volume covers are temporarily unavailable.",
+  "Alcune copertine non sono disponibili nel catalogo.":
+    "Some covers are unavailable in the catalogue.",
   "Usa le frecce per spostare il ritaglio": "Use the arrow keys to move the crop",
-  "Ridimensiona dall’angolo in alto a sinistra": "Resize from the top left corner with the arrow keys",
+  "Ridimensiona dall’angolo in alto a sinistra":
+    "Resize from the top left corner with the arrow keys",
   "Ridimensiona dal bordo superiore": "Resize from the top edge with the arrow keys",
-  "Ridimensiona dall’angolo in alto a destra": "Resize from the top right corner with the arrow keys",
+  "Ridimensiona dall’angolo in alto a destra":
+    "Resize from the top right corner with the arrow keys",
   "Ridimensiona dal bordo destro": "Resize from the right edge with the arrow keys",
-  "Ridimensiona dall’angolo in basso a destra": "Resize from the bottom right corner with the arrow keys",
+  "Ridimensiona dall’angolo in basso a destra":
+    "Resize from the bottom right corner with the arrow keys",
   "Ridimensiona dal bordo inferiore": "Resize from the bottom edge with the arrow keys",
-  "Ridimensiona dall’angolo in basso a sinistra": "Resize from the bottom left corner with the arrow keys",
+  "Ridimensiona dall’angolo in basso a sinistra":
+    "Resize from the bottom left corner with the arrow keys",
   "Ridimensiona dal bordo sinistro": "Resize from the left edge with the arrow keys",
   "Trascina qui una foto o scegli un file": "Drop a photo here or choose a file",
   "Scegli una sola foto alla volta.": "Choose one photo at a time.",
   "Ritaglia e ruota": "Crop and rotate",
-  "Trascina i bordi per ritagliare. Puoi usare anche touch o tastiera.": "Drag the edges to crop. Touch and keyboard also work.",
+  "Trascina i bordi per ritagliare. Puoi usare anche touch o tastiera.":
+    "Drag the edges to crop. Touch and keyboard also work.",
   "Ruota a sinistra": "Rotate left",
   "Ruota a destra": "Rotate right",
   "Ripristina foto": "Reset photo",
   "Preparazione foto…": "Preparing photo…",
   "Usa questa foto": "Use this photo",
   "Anteprima della foto": "Photo preview",
-  "Foto": "Photo",
+  Foto: "Photo",
   "Foto del frammento": "Fragment photo",
-  "JPG, PNG o WebP, fino a 8 MB. La foto segue la visibilità della tua raccolta.": "JPG, PNG or WebP, up to 8 MB. The photo follows your collection's visibility.",
+  "JPG, PNG o WebP, fino a 8 MB. La foto segue la visibilità della tua raccolta.":
+    "JPG, PNG or WebP, up to 8 MB. The photo follows your collection's visibility.",
   "Didascalia · facoltativa": "Caption · optional",
   "Rimuovi foto": "Remove photo",
   "Foto temporaneamente non disponibile.": "Photo temporarily unavailable.",
@@ -99,22 +145,26 @@ export const UI_EN: Record<string, string> = {
   "Condiviso da": "Shared by",
   "Lingua e aspetto": "Language and appearance",
   "Visibilità dei frammenti": "Fragment visibility",
-  "Visibilità": "Visibility",
-  "Gestisci citazioni e note nell’archivio Frammenti, dove puoi scegliere con chi condividerle.": "Manage quotes and notes in Fragments, where you can choose who can see them.",
+  Visibilità: "Visibility",
+  "Gestisci citazioni e note nell’archivio Frammenti, dove puoi scegliere con chi condividerle.":
+    "Manage quotes and notes in Fragments, where you can choose who can see them.",
   "Formattazione del testo": "Text formatting",
-  "Grassetto": "Bold",
-  "Corsivo": "Italic",
-  "Anteprima": "Preview",
+  Grassetto: "Bold",
+  Corsivo: "Italic",
+  Anteprima: "Preview",
   "Visibilità aggiornata": "Visibility updated",
   "Chi può vedere i tuoi frammenti?": "Who can see your fragments?",
   "Solo io": "Only me",
   "I miei follower": "My followers",
-  "La scelta vale per tutti i frammenti, comprese le note personali e i tag. I frammenti nel cestino restano privati.": "This applies to all fragments, including personal notes and tags. Trashed fragments remain private.",
+  "La scelta vale per tutti i frammenti, comprese le note personali e i tag. I frammenti nel cestino restano privati.":
+    "This applies to all fragments, including personal notes and tags. Trashed fragments remain private.",
   "Salva visibilità": "Save visibility",
   "Gestisci i frammenti e la loro visibilità": "Manage fragments and their visibility",
   "Nessun frammento visibile.": "No visible fragments.",
-  "La visibilità segue l’impostazione della tua raccolta Frammenti.": "Visibility follows your Fragments collection setting.",
-  "Citazioni, sottolineature e note personali. Scegli con chi condividerle.": "Quotes, highlights and personal notes. Choose who can see them.",
+  "La visibilità segue l’impostazione della tua raccolta Frammenti.":
+    "Visibility follows your Fragments collection setting.",
+  "Citazioni, sottolineature e note personali. Scegli con chi condividerle.":
+    "Quotes, highlights and personal notes. Choose who can see them.",
   "Modifica stato di lettura": "Change reading status",
   "Libreria aggiornata": "Library updated",
   "Libreria non disponibile": "Library unavailable",
