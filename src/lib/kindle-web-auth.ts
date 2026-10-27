@@ -80,6 +80,10 @@ export function inspectKindleReturn(
   )
     throw Error("Questo non è l’indirizzo finale previsto. Completa l’accesso su Amazon.");
   const codes = url.searchParams.getAll("openid.oa2.authorization_code");
+  if (!codes.length)
+    throw Error(
+      "Nell’indirizzo manca il codice Amazon. Ripeti l’accesso: la pagina 404 da sola non conferma il risultato.",
+    );
   if (
     input.length > 16000 ||
     codes.length !== 1 ||

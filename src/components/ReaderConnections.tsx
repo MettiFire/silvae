@@ -3,7 +3,7 @@ import { KindleCloudSetup } from "./KindleCloudSetup";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cable, Wifi, RefreshCw, Unplug, Download } from "lucide-react";
+import { Cable, Wifi, RefreshCw, Unplug } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -12,8 +12,6 @@ import { requireFragmentUser } from "@/lib/fragments";
 import {
   READER_KINDS,
   READER_RESULTS,
-  newReaderSecret,
-  readerConfiguration,
   readerError,
   type ReaderKind,
   type ReaderConnection,
@@ -68,17 +66,13 @@ export function ReaderStatus({ connection: c }: { connection: ReaderConnection }
 export function ReaderConnections() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: library = [] } = useLibrary(user?.id);
-  const [kind, setKind] = useState<ReaderKind>("kindle");
-  const [name, setName] = useState("Il mio Kindle");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [setup, setSetup] = useState<{ id: string; kind: ReaderKind; secret: string } | null>(null);
   const [revoke, setRevoke] = useState<ReaderConnection | null>(null);
   const connections = useQuery({
     queryKey: ["reader-connections", user?.id],
     enabled: !!user,
-    refetchInterval: 15000,
+    refetchInterval: (query) => (query.state.data?.length ? 15000 : false),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reader_connections")
@@ -91,7 +85,7 @@ export function ReaderConnections() {
   });
   const documents = useQuery({
     queryKey: ["reader-documents", user?.id],
-    enabled: !!user,
+    enabled: !!user && !!connections.data?.length,
     refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -104,6 +98,7 @@ export function ReaderConnections() {
       return data;
     },
   });
+  const { data: library = [] } = useLibrary(documents.data?.length ? user?.id : undefined);
   async function refresh() {
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["reader-connections"] }),
@@ -127,94 +122,9 @@ export function ReaderConnections() {
       setBusy(false);
     }
   }
-  function downloadConfig() {
-    if (!setup) return;
-    const config = readerConfiguration(
-      setup.id,
-      setup.kind,
-      setup.secret,
-      import.meta.env["VITE_SUPABASE_URL"],
-      import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"],
-    );
-    const a = document.createElement("a");
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(config, null, 2)], { type: "application/json" }),
-    );
-    a.href = url;
-    a.download = "silvae-device.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
   return (
     <div className="space-y-8">
       <KindleCloudSetup key={user?.id} owner={user?.id ?? ""} />
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        <UiText text="Collega il lettore per ricevere i dati nel tuo account. Non chiediamo password Amazon o Kobo. Ogni collegamento ha una chiave personale che puoi revocare." />
-      </p>
-      <section className="rounded-2xl border bg-card p-5">
-        <h2 className="mb-4 font-display text-xl font-bold">
-          <UiText text="Collega un dispositivo" />
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {(Object.keys(READER_KINDS) as ReaderKind[]).map((k) => (
-            <button
-              key={k}
-              disabled={busy}
-              aria-pressed={kind === k}
-              onClick={() => {
-                setKind(k);
-                setName(
-                  k === "kindle"
-                    ? "Il mio Kindle"
-                    : k === "kobo"
-                      ? "Il mio Kobo"
-                      : "Il mio KOReader",
-                );
-              }}
-              className={`rounded-xl border p-4 text-left ${kind === k ? "border-primary bg-accent" : "border-border"}`}
-            >
-              <span className="font-semibold">{READER_KINDS[k].title}</span>
-              <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">
-                {READER_KINDS[k].description}
-              </span>
-            </button>
-          ))}
-        </div>
-        <form
-          className="mt-5 flex flex-wrap items-end gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void action(async () => {
-              const secret = newReaderSecret();
-              const { data, error } = await supabase.rpc("create_reader_connection", {
-                p_name: name.trim(),
-                p_kind: kind,
-                p_secret: secret,
-              });
-              if (error) throw error;
-              setSetup({ id: data, kind, secret });
-            });
-          }}
-        >
-          <label className="grid gap-1 text-sm">
-            <UiText text="Nome del dispositivo" />
-            <input
-              className={input}
-              maxLength={80}
-              required
-              value={name}
-              disabled={busy}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          <button className={button} disabled={busy || !name.trim() || !!setup}>
-            <UiText text="Crea collegamento" />
-          </button>
-        </form>
-      </section>
-      {setup && (
-        <ReaderSetup setup={setup} downloadConfig={downloadConfig} close={() => setSetup(null)} />
-      )}
       {(error || connections.error || documents.error) && (
         <p
           role="alert"
@@ -223,67 +133,61 @@ export function ReaderConnections() {
           {error || readerError(connections.error || documents.error)}
         </p>
       )}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold">
-            <UiText text="I tuoi dispositivi" />
-          </h2>
-          <UiElement
-            as="button"
-            disabled={busy}
-            aria-label="Aggiorna dispositivi"
-            onClick={() => void refresh()}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </UiElement>
-        </div>
-        {connections.isLoading && (
-          <p>
-            <UiText text="Caricamento…" />
-          </p>
-        )}
-        {connections.data?.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            <UiText text="Non hai ancora collegato un lettore." />
-          </p>
-        )}
-        {connections.data?.map((c) => (
-          <div
-            key={c.id}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-5"
-          >
-            <ReaderStatus connection={c} />
-            {!c.revoked_at && (
-              <button
-                disabled={busy}
-                className="inline-flex items-center gap-2 text-sm"
-                onClick={() => setRevoke(c)}
-              >
-                <Unplug className="h-4 w-4" />
-                <UiText text="Disconnetti" />
-              </button>
-            )}
+      {!!connections.data?.length && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold">
+              <UiText text="I tuoi dispositivi" />
+            </h2>
+            <UiElement
+              as="button"
+              disabled={busy}
+              aria-label="Aggiorna dispositivi"
+              onClick={() => void refresh()}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </UiElement>
           </div>
-        ))}
-      </section>
-      <ReaderDocuments
-        documents={documents.data ?? []}
-        connections={connections.data ?? []}
-        books={library
-          .filter((i) => i.books)
-          .map((i) => ({ id: i.book_id, title: i.books!.title, authors: i.books!.authors }))}
-        busy={busy}
-        bind={(document, book) =>
-          void action(async () => {
-            const { data, error } = await supabase.rpc("bind_reader_document", {
-              p_document: document,
-              p_book: book,
-            });
-            if (error) throw error;
-            toast.success(READER_RESULTS[data] ?? "Associazione salvata");
-          })
-        }
-      />
+          {connections.data?.map((c) => (
+            <div
+              key={c.id}
+              className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-5"
+            >
+              <ReaderStatus connection={c} />
+              {!c.revoked_at && (
+                <button
+                  disabled={busy}
+                  className="inline-flex items-center gap-2 text-sm"
+                  onClick={() => setRevoke(c)}
+                >
+                  <Unplug className="h-4 w-4" />
+                  <UiText text="Disconnetti" />
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+      {!!documents.data?.length && (
+        <ReaderDocuments
+          documents={documents.data ?? []}
+          connections={connections.data ?? []}
+          books={library
+            .filter((i) => i.books)
+            .map((i) => ({ id: i.book_id, title: i.books!.title, authors: i.books!.authors }))}
+          busy={busy}
+          bind={(document, book) =>
+            void action(async () => {
+              const { data, error } = await supabase.rpc("bind_reader_document", {
+                p_document: document,
+                p_book: book,
+              });
+              if (error) throw error;
+              toast.success(READER_RESULTS[data] ?? "Associazione salvata");
+            })
+          }
+        />
+      )}
       {revoke && (
         <AlertDialog
           open
@@ -298,7 +202,7 @@ export function ReaderConnections() {
                 {revoke.name}?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                <UiText text="La chiave smetterà subito di funzionare. Libri e frammenti già ricevuti rimangono nel tuo account. Per riconnetterlo creerai una nuova configurazione." />
+                <UiText text="La chiave smetterà subito di funzionare. Libri e frammenti già ricevuti rimangono nel tuo account." />
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -312,7 +216,6 @@ export function ReaderConnections() {
                       p_connection: revoke.id,
                     });
                     if (error) throw error;
-                    if (setup?.id === revoke.id) setSetup(null);
                     setRevoke(null);
                   })
                 }
@@ -459,109 +362,6 @@ export function ReaderDocuments({
           </button>
         </div>
       )}
-    </section>
-  );
-}
-
-export function ReaderSetup({
-  setup,
-  downloadConfig,
-  close,
-}: {
-  setup: { id: string; kind: ReaderKind; secret: string };
-  downloadConfig: () => void;
-  close: () => void;
-}) {
-  return (
-    <section className="space-y-4 rounded-2xl border border-primary/40 bg-card p-5">
-      <h2 className="font-display text-xl font-bold">
-        <UiText text="Configura " />
-        {READER_KINDS[setup.kind].title}
-      </h2>
-      <p className="text-sm">
-        <UiText text="La chiave è mostrata solo adesso. Conserva la configurazione sul tuo computer: autorizza l’invio dei dati a questo account. Se la perdi, disconnetti il dispositivo e creane uno nuovo." />
-      </p>
-      {setup.kind === "koreader" ? (
-        <>
-          <ol className="list-inside list-decimal space-y-3 text-sm">
-            <li>
-              <UiText text="Apri un libro in KOReader → Impostazioni → Sincronizza progresso → Server personalizzato." />
-            </li>
-            <li>
-              <UiText text="Inserisci questo server:" />{" "}
-              <code className="block break-all rounded bg-accent p-2">
-                {import.meta.env["VITE_SUPABASE_URL"]}
-                <UiText text="/functions/v1/reader-sync" />
-              </code>
-            </li>
-            <li>
-              <UiText text="Scegli " />
-              <strong>
-                <UiText text="Login" />
-              </strong>
-              <UiText text=" (non Registrati). Username:" />{" "}
-              <code className="block break-all bg-accent p-2">{setup.id}</code>
-              <UiText text="Password dedicata:" />{" "}
-              <code className="block break-all bg-accent p-2">{setup.secret}</code>
-            </li>
-            <li>
-              <UiText text="Attiva la sincronizzazione automatica e, se desideri, l’invio dei metadati. Invia il primo progresso e associa il documento qui sotto." />
-            </li>
-          </ol>
-          <p className="text-xs text-muted-foreground">
-            <UiText text="Serve il servizio reader-sync attivo sul server. KOReader invia la posizione e la percentuale, senza la data dell’ultima lettura: usiamo l’ora di ricezione. Il collegamento non invia le modifiche manuali dell’app al lettore e non imposta automaticamente “Letto”." />
-          </p>
-        </>
-      ) : (
-        <>
-          <ol className="list-inside list-decimal space-y-3 text-sm">
-            <li>
-              <UiText text="Scarica nella stessa cartella la configurazione e il programma ponte. Serve Python 3.10 o successivo." />
-            </li>
-            <li>
-              <UiText text="Collega " />
-              <UiText text={setup.kind === "kindle" ? "il Kindle" : "il Kobo"} />
-              <UiText text=" via USB e consenti l’accesso ai file." />
-            </li>
-            <li>
-              <UiText text="Avvia il comando sostituendo il percorso con quello del tuo lettore:" />
-              <code className="mt-2 block overflow-x-auto rounded bg-accent p-3">
-                <UiText text="python3 reader-bridge.py --config silvae-device.json --path" />{" "}
-                {setup.kind === "kindle" ? "/Volumes/Kindle" : "/Volumes/KOBOeReader"}
-              </code>
-            </li>
-            <li>
-              <UiText text="Lascia aperto il programma: controlla ogni minuto e invia le novità quando ricolleghi il lettore. Associa una volta i libri ricevuti qui sotto." />
-            </li>
-          </ol>
-          <div className="flex flex-wrap gap-3">
-            <button className={button} onClick={downloadConfig}>
-              <Download className="h-4 w-4" />
-              <UiText text="Scarica configurazione" />
-            </button>
-            <a
-              className="rounded-lg border px-4 py-2 text-sm"
-              href="/downloads/reader-bridge.py"
-              download
-            >
-              <UiText text="Scarica programma ponte" />
-            </a>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            <UiText
-              text={
-                setup.kind === "kindle"
-                  ? "Kindle 11ª generazione: il ponte legge documents/My Clippings.txt, senza modificare il lettore. Trasferisce evidenziazioni disponibili nel file; note e segnalibri non vengono importati. Non legge la percentuale e non funziona con il solo Wi-Fi."
-                  : "Il ponte legge una copia coerente del database Kobo, compresi libri acquistati e caricati. Il lettore non viene modificato. Le percentuali senza data valida non vengono inviate."
-              }
-            />{" "}
-            <UiText text="Se il dispositivo non appare come disco USB, usa l’importazione dei file in Frammenti." />
-          </p>
-        </>
-      )}
-      <button className="text-sm font-medium underline" onClick={close}>
-        <UiText text="Ho conservato la configurazione · chiudi" />
-      </button>
     </section>
   );
 }

@@ -55,3 +55,21 @@ test("format checking never returns the code or claims that the device is regist
   assert.notEqual(a.verifier, attempt.verifier);
   assert.notEqual(a.url, attempt.url);
 });
+
+test("a 404 landing address is usable only when it contains a code, for both marketplaces", async () => {
+  for (const region of ["it", "com"]) {
+    const attempt = await createKindleWebAttempt(region, "reader", 1000);
+    const landing = new URL(`https://www.amazon.${region}/ap/maplanding`);
+    landing.searchParams.set("openid.mode", "id_res");
+    landing.searchParams.set(
+      "openid.identity",
+      `https://www.amazon.${region}/ap/id/synthetic-account`,
+    );
+    assert.throws(
+      () => inspectKindleReturn(attempt, "reader", landing.href, 2000),
+      /manca il codice/,
+    );
+    landing.searchParams.set("openid.oa2.authorization_code", "synthetic-temporary-code");
+    assert.equal(inspectKindleReturn(attempt, "reader", landing.href, 2000), true);
+  }
+});

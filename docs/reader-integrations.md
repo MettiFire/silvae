@@ -4,8 +4,11 @@ Queste integrazioni sono sperimentali. La sincronizzazione cloud nativa di Kindl
 e Kobo è in pausa; non è disponibile un collegamento OAuth agli account Amazon/Kobo.
 Le istruzioni seguenti documentano il ponte locale e i prototipi presenti nella repo.
 
-**Impostazioni → Dispositivi** permette di creare collegamenti personali revocabili e associare i documenti ricevuti
-alle edizioni della propria libreria. Non viene richiesto il login Amazon/Kobo.
+**Impostazioni → Dispositivi** mostra la prova web Kindle e la gestione degli
+eventuali collegamenti precedenti. Il pannello “Collega un dispositivo”, la
+generazione di nuove configurazioni USB/KOReader e i relativi download sono stati
+rimossi dall'interfaccia. Le istruzioni locali seguenti documentano gli strumenti
+già presenti nella repository e non richiedono il login Amazon/Kobo.
 
 | Modalità | Dati | Requisito |
 | --- | --- | --- |
@@ -135,6 +138,14 @@ rimangono esclusivamente su Amazon. Il verifier PKCE è temporaneo e resta nella
 memoria del componente, come in un public client OAuth; non è una credenziale
 Amazon, un token permanente o una chiave condivisa del servizio. Non viene salvato
 in cache, localStorage, sessionStorage, URL, log o database.
+
+**Ritorno 404:** `/ap/maplanding` può restituire una pagina 404 pur contenendo
+`openid.oa2.authorization_code` nell'indirizzo. In quel caso si copia comunque
+l'indirizzo finale nel campo della prova. Una pagina 404 senza codice non è un
+esito utilizzabile. Questo comportamento è documentato anche nella
+[discussione upstream](https://github.com/chemelli74/aioamazondevices/issues/1188).
+Le istruzioni lo spiegano prima del controllo del ritorno; indirizzi e codici
+reali non sono inclusi in documentazione, log o test.
 
 Il controllo di ritorno verifica solo formato, host, percorso, regione, account
 Silvae corrente e scadenza del tentativo (dieci minuti). **Non prova la validità

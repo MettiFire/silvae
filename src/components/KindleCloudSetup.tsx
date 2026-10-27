@@ -52,7 +52,7 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
         <UiText text="Sperimentale: prepariamo l’accesso Amazon nel browser. La registrazione del dispositivo e la sincronizzazione della lettura non sono ancora attive." />
       </p>
       <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-        <UiText text="Password e verifica in due passaggi vanno inserite solo su Amazon. Il login tecnico può mostrare Audible." />
+        <UiText text="Password e verifica in due passaggi vanno inserite solo su Amazon. Il prototipo usa un flusso tecnico Amazon/Audible: non è un collegamento Kindle ufficiale e Silvae non attiva abbonamenti." />
       </p>
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="grid gap-1 text-sm" htmlFor={`${id}-region`}>
@@ -169,7 +169,10 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
           }}
         >
           <p className="text-sm">
-            <UiText text="Dopo l’accesso, copia l’indirizzo completo della pagina finale Amazon e incollalo qui. La prova controlla soltanto il formato e scarta il codice; non verifica ancora l’autorizzazione sul server." />
+            <UiText text="Dopo il login, la pagina finale Amazon può mostrare 404 anche quando ha restituito il codice. Copia comunque l’indirizzo completo dalla barra del browser e incollalo qui: controlliamo la presenza del codice, non la pagina di errore. Questa prova verifica solo il formato e non attiva il collegamento." />
+          </p>
+          <p className="text-xs text-muted-foreground">
+            <UiText text="L’indirizzo contiene un codice temporaneo: incollalo soltanto in questo campo." />
           </p>
           <label htmlFor={`${id}-return`} className="text-sm">
             <UiText text="Indirizzo finale Amazon" />
