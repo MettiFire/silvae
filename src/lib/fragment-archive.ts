@@ -111,10 +111,9 @@ export function validArchive(value: unknown, language: string): value is Archive
 export async function loadFragmentArchive(
   language: string,
   fetcher: typeof fetch = fetch,
+  sharedManifest?: Promise<unknown>,
 ): Promise<ArchivedFragment[]> {
-  const manifestResponse = await fetcher("/fragments/manifest.json");
-  if (!manifestResponse.ok) throw Error("Fragment archive unavailable");
-  const manifest = (await manifestResponse.json()) as {
+  const manifest = (await (sharedManifest ?? loadArchiveManifest(fetcher))) as {
     version?: number;
     languages?: Record<string, { file?: string }>;
   };
@@ -130,6 +129,21 @@ export async function loadFragmentArchive(
   const archive: unknown = await response.json();
   if (!validArchive(archive, language)) throw Error("Invalid fragment archive");
   return archive;
+}
+
+async function loadArchiveManifest(fetcher: typeof fetch): Promise<unknown> {
+  const response = await fetcher("/fragments/manifest.json");
+  if (!response.ok) throw Error("Fragment archive unavailable");
+  return response.json();
+}
+
+/** One manifest per load; a broken language must not hide the other archives. */
+export async function loadFragmentArchives(languages: readonly string[], fetcher: typeof fetch = fetch) {
+  const manifest = loadArchiveManifest(fetcher);
+  const results = await Promise.allSettled([...new Set(languages)].map(language => loadFragmentArchive(language, fetcher, manifest)));
+  const pool = results.flatMap(result => result.status === "fulfilled" ? result.value : []);
+  if (!pool.length) throw Error("Fragment archive unavailable");
+  return pool;
 }
 
 /** Balance selected languages, then advance each language by its own publication day.
