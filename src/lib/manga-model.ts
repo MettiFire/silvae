@@ -8,7 +8,12 @@ export type MangaDetails = {
   mangaDexId?: string | undefined;
   malId?: number | undefined;
 };
-export type MangaVolumeCover = { volume: number; url: string; language: string };
+export type MangaVolumeCover = {
+  volume: number;
+  url: string;
+  language: string;
+  cover_candidates?: string[];
+};
 export function missingPreviousVolumes(volumes: number[], selected: number) {
   if (volumeNumber(selected) === null) return [];
   const read = new Set(volumes);
@@ -274,21 +279,36 @@ export function mangaVolumeCovers(
   mangaId: string,
   language: string,
 ): MangaVolumeCover[] {
-  const covers = new Map<number, MangaVolumeCover>();
+  const covers = new Map<number, { language: string; base: string }[]>();
   const priority = (locale: string) =>
     locale === language ? 0 : locale === "ja" ? 1 : locale === "en" ? 2 : 3;
   for (const record of records) {
     const n = volumeNumber(record.attributes.volume);
     if (!n || !record.attributes.fileName) continue;
     const item = {
-      volume: n,
       language: record.attributes.locale ?? "ja",
-      url: `https://uploads.mangadex.org/covers/${mangaId}/${encodeURIComponent(record.attributes.fileName)}.256.jpg`,
+      base: `https://uploads.mangadex.org/covers/${mangaId}/${encodeURIComponent(record.attributes.fileName)}`,
     };
-    if (!covers.has(n) || priority(item.language) < priority(covers.get(n)!.language))
-      covers.set(n, item);
+    const group = covers.get(n) ?? [];
+    group.push(item);
+    covers.set(n, group);
   }
-  return [...covers.values()].sort((a, b) => a.volume - b.volume);
+  return [...covers.entries()]
+    .map(([volume, group]) => {
+      group.sort((a, b) => priority(a.language) - priority(b.language));
+      const candidates = [
+        ...new Set(
+          group.flatMap((item) => [`${item.base}.256.jpg`, `${item.base}.512.jpg`, item.base]),
+        ),
+      ].slice(0, 9);
+      return {
+        volume,
+        language: group[0]!.language,
+        url: candidates[0]!,
+        cover_candidates: candidates,
+      };
+    })
+    .sort((a, b) => a.volume - b.volume);
 }
 
 /** MangaDex searches primary English titles more reliably than translated aliases. */

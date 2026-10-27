@@ -2,22 +2,67 @@ import { useMangaVolumeCovers } from "@/lib/use-manga-volume-covers";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useRef, useState } from "react";
 import type { Book } from "@/lib/books";
-export function MangaVolumeCover({ url, volume }: { url?: string | undefined; volume: number }) {
-  const [failedUrl, setFailedUrl] = useState("");
+export function MangaCoverStatus({
+  query,
+  total,
+}: {
+  query: ReturnType<typeof useMangaVolumeCovers>;
+  total: number | null;
+}) {
+  const missing =
+    query.isError ||
+    (!query.isPending && (!query.data?.length || (!!total && query.data.length < total)));
+  if (!missing) return null;
+  return (
+    <div
+      className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+      role="status"
+    >
+      <UiText
+        text={
+          query.isError
+            ? "Copertine dei volumi temporaneamente non disponibili."
+            : "Alcune copertine non sono disponibili nel catalogo."
+        }
+      />
+      <button
+        type="button"
+        disabled={query.isFetching}
+        onClick={() => void query.refetch()}
+        className="min-h-11 underline disabled:opacity-50"
+      >
+        <UiText text={query.isFetching ? "Caricamento…" : "Riprova"} />
+      </button>
+    </div>
+  );
+}
+export function MangaVolumeCover({
+  url,
+  volume,
+  coverCandidates = [],
+}: {
+  url?: string | undefined;
+  volume: number;
+  coverCandidates?: string[] | undefined;
+}) {
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const source = [...new Set([url, ...coverCandidates])].find(
+    (candidate) => candidate && !failed.has(candidate),
+  );
   return (
     <span className="flex aspect-[2/3] w-full items-center justify-center overflow-hidden rounded border border-border bg-muted/40">
-      {url && failedUrl !== url ? (
+      {source ? (
         <UiElement
           as="img"
-          key={url}
-          src={url}
+          key={source}
+          src={source}
           alt={`Copertina del volume ${volume}`}
           width={128}
           height={192}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          onError={() => setFailedUrl(url)}
+          onError={() => setFailed((previous) => new Set(previous).add(source))}
           className="h-full w-full object-contain"
         />
       ) : (
@@ -36,7 +81,7 @@ export function MangaVolumeStrip({
   focusTick = 0,
 }: {
   count: number;
-  covers: { volume: number; url: string }[];
+  covers: { volume: number; url: string; cover_candidates?: string[] }[];
   read?: number[];
   onToggle?: (n: number) => void;
   disabled?: boolean;
@@ -50,7 +95,7 @@ export function MangaVolumeStrip({
   useEffect(() => {
     scroll.current?.scrollTo({ left: 0 });
   }, [safeBlock]);
-  const byVolume = new Map(covers.map((c) => [c.volume, c.url]));
+  const byVolume = new Map(covers.map((c) => [c.volume, c]));
   const readSet = new Set(read);
   const start = safeBlock * 25 + 1,
     end = Math.min(count, start + 24);
@@ -116,7 +161,11 @@ export function MangaVolumeStrip({
               onClick={() => onToggle(n)}
               className={`w-20 shrink-0 snap-start rounded p-1 text-xs ${readSet.has(n) ? "bg-primary/10 ring-2 ring-inset ring-primary" : "hover:bg-accent"}`}
             >
-              <MangaVolumeCover volume={n} url={byVolume.get(n)} />
+              <MangaVolumeCover
+                volume={n}
+                url={byVolume.get(n)?.url}
+                coverCandidates={byVolume.get(n)?.cover_candidates}
+              />
               <span className="mt-1 block">
                 {n}
                 {readSet.has(n) ? " ✓" : ""}
@@ -124,7 +173,11 @@ export function MangaVolumeStrip({
             </UiElement>
           ) : (
             <figure key={n} className="w-20 shrink-0 snap-start">
-              <MangaVolumeCover volume={n} url={byVolume.get(n)} />
+              <MangaVolumeCover
+                volume={n}
+                url={byVolume.get(n)?.url}
+                coverCandidates={byVolume.get(n)?.cover_candidates}
+              />
               <figcaption className="mt-1 text-xs">
                 <UiText text="Volume " />
                 {n}
@@ -137,20 +190,24 @@ export function MangaVolumeStrip({
   );
 }
 export function MangaVolumeGallery({ book }: { book: Book }) {
-  const { data: covers = [], isFetching } = useMangaVolumeCovers(book);
+  const query = useMangaVolumeCovers(book);
+  const { data: covers = [], isFetching } = query;
   const count = Math.max(book.manga?.totalVolumes ?? 0, ...covers.map((c) => c.volume));
   if (!count)
     return isFetching ? (
       <p className="mt-4 text-xs text-muted-foreground" role="status">
         <UiText text="Caricamento copertine dei volumi…" />
       </p>
-    ) : null;
+    ) : (
+      <MangaCoverStatus query={query} total={book.manga?.totalVolumes ?? null} />
+    );
   return (
     <section className="mt-6 min-w-0">
       <h2 className="font-display text-xl">
         <UiText text="Volumi della serie" />
       </h2>
       <MangaVolumeStrip count={Math.min(2000, count)} covers={covers} />
+      <MangaCoverStatus query={query} total={book.manga?.totalVolumes ?? null} />
     </section>
   );
 }

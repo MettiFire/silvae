@@ -1,4 +1,6 @@
 export const UI_EN: Record<string, string> = {
+  "Copertine dei volumi temporaneamente non disponibili.": "Volume covers are temporarily unavailable.",
+  "Alcune copertine non sono disponibili nel catalogo.": "Some covers are unavailable in the catalogue.",
   "Usa le frecce per spostare il ritaglio": "Use the arrow keys to move the crop",
   "Ridimensiona dall’angolo in alto a sinistra": "Resize from the top left corner with the arrow keys",
   "Ridimensiona dal bordo superiore": "Resize from the top edge with the arrow keys",

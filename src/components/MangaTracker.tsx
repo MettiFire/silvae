@@ -1,6 +1,6 @@
 import { useMangaVolumeCovers } from "@/lib/use-manga-volume-covers";
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { MangaVolumeStrip, MangaVolumeGallery } from "./MangaVolumeCover";
+import { MangaVolumeStrip, MangaVolumeGallery, MangaCoverStatus } from "./MangaVolumeCover";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ProgressBar } from "./ProgressBar";
 import { useState } from "react";
@@ -159,6 +159,7 @@ export function MangaVolumeForm({
         focusVolume={focusVolume}
         focusTick={focusTick}
       />
+      {!customNumbering && <MangaCoverStatus query={covers} total={progress.total} />}
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <label className="flex items-center gap-2">
           <UiText text="Vai al volume" />

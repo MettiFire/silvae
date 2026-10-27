@@ -1,4 +1,4 @@
-import { aniListCatalogue } from "./anilist-catalogue";
+import { aniListCatalogue } from "./anilist-catalogue.ts";
 import {
   mapManga,
   mangaSearchTitle,
@@ -9,7 +9,7 @@ import {
   type JikanManga,
   type MangaDexCover,
   type MangaVolumeCover,
-} from "./manga-model";
+} from "./manga-model.ts";
 import type { Book } from "./books";
 export type MangaCatalogueInput = {
   id?: string | undefined;
@@ -157,30 +157,42 @@ export async function fetchMangaCovers(data: MangaCoversInput) {
   const hit = coversCache.get(key);
   if (hit && hit.until > Date.now()) return hit.covers;
   if (coversPending.has(key)) return coversPending.get(key)!;
+  let complete = false;
   const task = (async () => {
     const id =
       data.id ??
-      (await mdSearch(data.title, data.language)).find((b) => b.manga?.malId === data.malId)?.manga
-        ?.mangaDexId;
+      (await mdSearch(mangaSearchTitle(data.title), data.language)).find(
+        (b) => b.manga?.malId === data.malId,
+      )?.manga?.mangaDexId;
     if (!id) return [];
     const records: MangaDexCover[] = [];
-    for (let offset = 0; offset < 400; offset += 100) {
+    for (let offset = 0; offset < 10000; offset += 100) {
       const params = new URLSearchParams({
         "manga[]": id,
         limit: "100",
         offset: String(offset),
         "order[volume]": "asc",
       });
-      const raw = await request<{ data: MangaDexCover[]; total: number }>(
-        `https://api.mangadex.org/cover?${params}`,
-      );
+      let raw: { data: MangaDexCover[]; total: number };
+      try {
+        raw = await request<{ data: MangaDexCover[]; total: number }>(
+          `https://api.mangadex.org/cover?${params}`,
+        );
+      } catch (error) {
+        if (!records.length) throw error;
+        break;
+      }
       records.push(...raw.data);
-      if (records.length >= raw.total || raw.data.length < 100) break;
+      if (records.length >= raw.total || raw.data.length < 100) {
+        complete = true;
+        break;
+      }
     }
     return mangaVolumeCovers(records, id, data.language);
   })()
     .then((covers) => {
-      coversCache.set(key, { covers, until: Date.now() + 86400000 });
+      // Missing identities and partial pages must remain immediately retryable.
+      if (complete && covers.length) coversCache.set(key, { covers, until: Date.now() + 86400000 });
       while (coversCache.size > 100) coversCache.delete(coversCache.keys().next().value!);
       return covers;
     })

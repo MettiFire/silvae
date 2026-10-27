@@ -13,16 +13,27 @@ export function useMangaVolumeCovers(book: Book) {
   const malId =
     book.manga?.malId ?? (book.id.startsWith("manga:mal:") ? Number(book.id.slice(10)) : null);
   return useQuery({
-    queryKey: ["manga-volume-covers", id, malId, language],
+    queryKey: [
+      "manga-volume-covers-v2",
+      id,
+      malId,
+      book.manga?.canonicalTitle ?? book.title,
+      language,
+    ],
     enabled: !!id || !!malId,
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       mangaCovers({
+        signal,
         data: {
-          ...(id ? { id } : { malId: malId!, title: book.title }),
+          ...(id ? { id } : { malId: malId!, title: book.manga?.canonicalTitle ?? book.title }),
           ...(language ? { language } : {}),
         },
       }),
-    staleTime: 86400000,
-    retry: false,
+    staleTime: (query) =>
+      query.state.data?.length &&
+      (!book.manga?.totalVolumes || query.state.data.length >= book.manga.totalVolumes)
+        ? 86400000
+        : 60000,
+    retry: 1,
   });
 }
