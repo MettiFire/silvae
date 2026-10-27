@@ -2,6 +2,8 @@
 
 Readers can attach a JPG, PNG or WebP photo (up to 8 MB) to a book fragment, with an optional caption. Photos are re-encoded as WebP, stripped of embedded metadata, resized to a maximum dimension of 2400 pixels, and limited to 2 MB after conversion. Existing avatar/banner conversion uses the same preparation helper at its original dimensions.
 
+The photo field accepts drag-and-drop or the standard file picker. Before saving, readers can select a free-form crop, rotate by quarter turns, reset, apply, or cancel. Existing private photos can also be downloaded through the current session for editing. Mouse, touch and keyboard crop handles use `react-image-crop`; canvas export applies the actual pixel transformation locally. Changes are uploaded only when the fragment is saved. These editing controls do not require another database migration.
+
 ## Activation
 
 Apply `supabase/migrations/20261027093800_fragment_photos.sql` to the **Silvae** backend before publishing the frontend. It adds the optional `fragments.image_path` column, allows photo-only fragments, and creates the private `fragment-photos` bucket with access policies. Text-only fragments remain supported. The project reference is recorded in `supabase/config.toml`; do not apply this migration to an unrelated project.

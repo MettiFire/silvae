@@ -1,5 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/localized-toast";
 import {
@@ -15,8 +15,8 @@ import { searchBooks, cacheBook, type Book } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
 import { fragmentError, saveFragment, type Fragment, type FragmentDraft } from "@/lib/fragments";
 import { FragmentTextEditor } from "./FragmentTextEditor";
-import { FragmentImage } from "./FragmentImage";
-import { prepareImageFile, validateProfileImage } from "@/lib/profile-images";
+import { FragmentPhotoField } from "./FragmentPhotoField";
+import { prepareImageFile } from "@/lib/profile-images";
 import { saveFragmentPhoto } from "@/lib/fragment-photos";
 export function FragmentEditor({
   book,
@@ -34,16 +34,7 @@ export function FragmentEditor({
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  useEffect(() => {
-    if (!photo) {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(photo);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [photo]);
+  const [editingPhoto, setEditingPhoto] = useState(false);
   const [draft, setDraft] = useState<FragmentDraft>({
     image_path: original?.image_path ?? null,
     kind: original?.kind === "note" ? "note" : "quote",
@@ -62,7 +53,7 @@ export function FragmentEditor({
     staleTime: 300000,
   });
   const save = async () => {
-    if (!user || !selected || busy) return;
+    if (!user || !selected || busy || editingPhoto) return;
     setBusy(true);
     try {
       await cacheBook(selected);
@@ -204,54 +195,17 @@ export function FragmentEditor({
               </option>
             </select>
           </label>
-          <div className="block text-sm">
-            <label className="block space-y-2">
-              <UiText text="Foto del frammento" />
-              <input
-                key={photo?.name ?? draft.image_path ?? "empty"}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                disabled={busy}
-                className="block w-full rounded-lg border bg-background p-2 text-sm"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  try {
-                    validateProfileImage(file);
-                    setPhoto(file);
-                  } catch (error) {
-                    toast.error(fragmentError(error));
-                    event.target.value = "";
-                  }
-                }}
-              />
-            </label>
-            <p className="mt-1 text-xs text-muted-foreground">
-              <UiText text="JPG, PNG o WebP, fino a 8 MB. La foto segue la visibilità della tua raccolta." />
-            </p>
-            {preview ? (
-              <img
-                src={preview}
-                alt="Anteprima della foto"
-                className="my-3 max-h-80 w-full rounded-lg object-contain"
-              />
-            ) : (
-              draft.image_path && <FragmentImage path={draft.image_path} alt="Foto del frammento" />
-            )}
-            {(photo || draft.image_path) && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setPhoto(null);
-                  setDraft({ ...draft, image_path: null });
-                }}
-                className="my-2 text-xs underline"
-              >
-                <UiText text="Rimuovi foto" />
-              </button>
-            )}
-          </div>
+          <FragmentPhotoField
+            photo={photo}
+            path={draft.image_path ?? null}
+            busy={busy}
+            onChange={setPhoto}
+            onEditingChange={setEditingPhoto}
+            onRemove={() => {
+              setPhoto(null);
+              setDraft({ ...draft, image_path: null });
+            }}
+          />
           <div className="block text-sm">
             <UiText
               text={
@@ -319,7 +273,12 @@ export function FragmentEditor({
             <UiText text="Tra i preferiti" />
           </label>
           <button
-            disabled={busy || !selected || (!draft.quote.trim() && !photo && !draft.image_path)}
+            disabled={
+              busy ||
+              editingPhoto ||
+              !selected ||
+              (!draft.quote.trim() && !photo && !draft.image_path)
+            }
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             <UiText text={busy ? "Salvataggio…" : "Salva frammento"} />
