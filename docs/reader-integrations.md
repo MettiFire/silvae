@@ -172,5 +172,14 @@ documenta richieste firmate al sidecar CDE. Una posizione non assicura una
 percentuale: serve un totale documentato nella stessa unità. Non usare dimensione
 file, ultima annotazione o furthest-read come totale. Nessun ebook scaricato.
 
+Il pannello collegato include una verifica tecnica per singolo identificativo
+Amazon (PDOC per Send to Kindle, EBOK per acquisti). Usa la stessa autorizzazione
+e lo stesso lease per evitare concorrenza con revoca/registrazione; risultati
+recenti sono riutilizzati per 30 secondi. Solo un record esatto `kindle.lpr`
+con posizione intera valida viene mostrato; note e citazioni non vengono
+memorizzate o inviate al client. Eventuali record in conflitto sono un errore.
+L'esito per libro è conservato insieme alle credenziali cifrate, separato dalle
+statistiche della libreria. Nessun aggiornamento automatico o percentuale stimata.
+
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.

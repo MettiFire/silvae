@@ -1,17 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { KindleCloudStatus, KindleRegion } from "./kindle-cloud";
+import {
+  validKindleBook,
+  type KindleBook,
+  type KindleCloudStatus,
+  type KindleRegion,
+} from "./kindle-cloud";
 
 export const kindleCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
     (input: {
       owner: string;
-      action: "poll" | "start" | "disconnect" | "check";
+      action: "poll" | "start" | "disconnect" | "check" | "book";
       region?: KindleRegion;
+      book?: KindleBook;
     }) => {
-      if (!input || !["poll", "start", "disconnect", "check"].includes(input.action))
+      if (!input || !["poll", "start", "disconnect", "check", "book"].includes(input.action))
+        throw Error("Richiesta Kindle non valida.");
+      if (input.action === "book" && !validKindleBook(input.book))
         throw Error("Richiesta Kindle non valida.");
       if (input.action === "start" && input.region !== "it" && input.region !== "com")
         throw Error("Account Amazon non valido.");
@@ -34,6 +42,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
       publicState,
       deregister,
       probeKindleMetadata,
+      probeKindleBook,
     } = await import("./kindle-cloud.server");
     const db = context.supabase as unknown as SupabaseClient;
     const rpc = async (name: string, args?: Record<string, unknown>) => {
@@ -68,6 +77,17 @@ export const kindleCloud = createServerFn({ method: "POST" })
         (previous.phase === "pending" && previous.nextPollAt > Date.now()))
     )
       return publicState(previous);
+    if (data.action === "book") {
+      if (previous?.phase !== "connected") throw Error("Collegamento Amazon richiesto.");
+      if (previous.bookReading && previous.bookReading.checkedAt > Date.now() - 30_000) {
+        if (
+          previous.bookReading.key === data.book!.key &&
+          previous.bookReading.type === data.book!.type
+        )
+          return publicState(previous);
+        throw Error("Attendi qualche secondo prima di riprovare.");
+      }
+    }
     const claim = (await rpc("kindle_cloud_claim", { p_start: data.action === "start" })) as {
       lease: string;
       ciphertext: string | null;
@@ -98,6 +118,10 @@ export const kindleCloud = createServerFn({ method: "POST" })
       }
       if (["poll", "check"].includes(data.action) && state?.phase === "connected")
         state = { ...state, reading: await probeKindleMetadata(state) };
+      if (data.action === "book") {
+        if (state?.phase !== "connected") throw Error("Collegamento Amazon richiesto.");
+        state = { ...state, bookReading: await probeKindleBook(state, data.book!) };
+      }
       const applied = await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,
         p_ciphertext: state ? sealState(state, context.userId, key) : null,

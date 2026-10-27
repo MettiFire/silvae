@@ -1,4 +1,18 @@
 export type KindleRegion = "it" | "com";
+export type KindleBook = { key: string; type: "PDOC" | "EBOK" };
+export type KindleBookReading = KindleReadingCheck &
+  KindleBook & {
+    position?: number;
+    updatedAt?: number;
+  };
+export function validKindleBook(book: KindleBook | undefined): book is KindleBook {
+  return (
+    !!book &&
+    ["PDOC", "EBOK"].includes(book.type) &&
+    typeof book.key === "string" &&
+    /^[A-Z0-9]{10,64}$/.test(book.key)
+  );
+}
 export type KindleReadingCheck = {
   checkedAt: number;
   status: "available" | "blocked" | "empty" | "error";
@@ -15,4 +29,10 @@ export type KindleCloudStatus =
       expiresAt: number;
       nextPollAt: number;
     }
-  | { phase: "connected"; region: KindleRegion; connectedAt: number; reading?: KindleReadingCheck };
+  | {
+      phase: "connected";
+      region: KindleRegion;
+      connectedAt: number;
+      reading?: KindleReadingCheck;
+      bookReading?: KindleBookReading;
+    };

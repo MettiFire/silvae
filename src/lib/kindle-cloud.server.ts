@@ -2,6 +2,7 @@
 import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign } from "node:crypto";
 import { Buffer } from "node:buffer";
 import type { KindleCloudStatus, KindleRegion, KindleReadingCheck } from "./kindle-cloud.ts";
+import { validKindleBook, type KindleBook, type KindleBookReading } from "./kindle-cloud.ts";
 
 type Pending = {
   phase: "pending";
@@ -24,6 +25,7 @@ type Connected = {
   refreshToken: string;
   tokenExpiresAt: number;
   reading?: KindleReadingCheck;
+  bookReading?: KindleBookReading;
 };
 export type KindleState = Pending | Connected;
 const DEVICE_TYPE = "A2CZJZGLK2JJVM";
@@ -41,8 +43,13 @@ export async function amazonFetch(
   const metadata =
     url.href === "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000" &&
     init?.method === "GET";
+  const sidecar =
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}$/.test(
+      url.href,
+    ) && init?.method === "GET";
   if (
     !metadata &&
+    !sidecar &&
     (url.protocol !== "https:" ||
       !["api.amazon.it", "api.amazon.com"].includes(url.host) ||
       url.username ||
@@ -56,7 +63,10 @@ export async function amazonFetch(
     throw Error("Richiesta Amazon non valida.");
   const body = JSON.stringify({
     region: url.hostname.endsWith(".it") ? "it" : "com",
-    path: metadata ? "/kindle/metadata" : url.pathname,
+    path: metadata ? "/kindle/metadata" : sidecar ? "/kindle/sidecar" : url.pathname,
+    ...(sidecar
+      ? { book: { key: url.searchParams.get("key"), type: url.searchParams.get("type") } }
+      : {}),
     headers: Object.fromEntries(new Headers(init?.headers)),
     body: String(init?.body ?? ""),
   });
@@ -278,6 +288,7 @@ export function publicState(state: KindleState | null, now = Date.now()): Kindle
     region: state.region,
     connectedAt: state.connectedAt,
     ...(state.reading ? { reading: state.reading } : {}),
+    ...(state.bookReading ? { bookReading: state.bookReading } : {}),
   };
 }
 export function signedHeaders(
@@ -359,6 +370,94 @@ export async function probeKindleMetadata(
       status: "error",
       message:
         "Non è stato possibile recuperare i dati Kindle. Il collegamento Amazon rimane attivo.",
+    };
+  }
+}
+/** Read only the exact last-read record. Highlight/note content never leaves the server. */
+export async function probeKindleBook(
+  state: Connected,
+  book: KindleBook,
+  fetcher: Fetcher = amazonFetch,
+): Promise<KindleBookReading> {
+  if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
+  const base = { ...book, checkedAt: Date.now() };
+  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}`;
+  try {
+    const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, path),
+      signal: AbortSignal.timeout(20_000),
+    });
+    console.info("[Kindle book] HTTP", response.status);
+    if (!response.ok)
+      return {
+        ...base,
+        status: [401, 403].includes(response.status) ? "blocked" : "error",
+        message: "Amazon non ha consentito la lettura della posizione di questo libro.",
+      };
+    const text = await response.text();
+    if (!text.trim())
+      return {
+        ...base,
+        status: "empty",
+        message: "Amazon non ha restituito una posizione per questo libro.",
+      };
+    if (Buffer.byteLength(text) > 1_000_000) throw Error();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data?.payload?.records)) throw Error();
+    const records = data.payload.records.filter(
+      (r: Record<string, unknown>) => r?.["type"] === "kindle.lpr",
+    );
+    if (!records.length)
+      return {
+        ...base,
+        status: "empty",
+        message: "Non è presente una posizione di lettura sincronizzata per questo libro.",
+      };
+    // Multiple conflicting LPRs are not silently interpreted as a current position.
+    const positions = records.map((r: Record<string, unknown>) =>
+      typeof r["location"] === "string" && /^\d{1,15}$/.test(r["location"])
+        ? Number(r["location"])
+        : r["location"],
+    );
+    const position = positions[0];
+    if (
+      !Number.isSafeInteger(position) ||
+      (position as number) < 0 ||
+      positions.some((p: unknown) => p !== position)
+    )
+      throw Error();
+    const rawTime = records[0].creationTime;
+    let updatedAt: number | undefined;
+    if (typeof rawTime === "string") {
+      const normalized = /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(?:\.\d{1,6})?$/.test(rawTime)
+        ? rawTime.replace(" ", "T") + "Z"
+        : /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(rawTime)
+          ? rawTime
+          : "";
+      const timestamp = Date.parse(normalized);
+      if (
+        Number.isFinite(timestamp) &&
+        timestamp >= Date.UTC(2007, 0, 1) &&
+        timestamp <= Date.now() + 300_000
+      )
+        updatedAt = timestamp;
+    }
+    return {
+      ...base,
+      status: "available",
+      position: position as number,
+      ...(updatedAt === undefined ? {} : { updatedAt }),
+      message:
+        "Posizione più avanzata recuperata da Amazon. Il totale del libro non è disponibile: nessuna percentuale è stata stimata e la libreria non è stata modificata.",
+    };
+  } catch {
+    return {
+      ...base,
+      status: "error",
+      message:
+        "La posizione di questo libro non è al momento leggibile. Il collegamento Amazon rimane attivo.",
     };
   }
 }

@@ -175,3 +175,40 @@ test("Kindle metadata is a fixed read-only target with device signing headers", 
     400,
   );
 });
+
+test("per-book relay validates the content identifier and never permits extra URLs or request bodies", async () => {
+  const data = {
+    region: "it",
+    path: "/kindle/sidecar",
+    book: { type: "PDOC", key: "A".repeat(32) },
+    body: "",
+    headers: {
+      "x-adp-token": "token",
+      "x-adp-alg": "SHA256withRSA:1.0",
+      "x-adp-signature": "signed",
+    },
+  };
+  let calls = 0;
+  const upstream = async (url, init) => {
+    calls++;
+    assert.equal(
+      url,
+      `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=PDOC&key=${data.book.key}`,
+    );
+    assert.equal(init.method, "GET");
+    assert.equal(init.body, undefined);
+    assert.equal(init.redirect, "manual");
+    return Response.json({ payload: { records: [] } });
+  };
+  assert.equal((await handleAmazonRelay(request(data), verifyKey, upstream)).status, 200);
+  for (const bad of [
+    { ...data, book: { ...data.book, key: "A&url=https://evil.test" } },
+    { ...data, book: { ...data.book, type: "OTHER" } },
+    { ...data, body: "private" },
+    { ...data, headers: {} },
+    { ...data, headers: { ...data.headers, Cookie: "secret" } },
+  ]) {
+    assert.equal((await handleAmazonRelay(request(bad), verifyKey, upstream)).status, 400);
+  }
+  assert.equal(calls, 1);
+});

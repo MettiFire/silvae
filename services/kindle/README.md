@@ -9,7 +9,9 @@ still requires the account holder's authorization on Amazon.
 
 The Lovable worker could not reach Amazon's code-pair endpoint in the live test.
 This independent Node 24 function forwards four fixed Amazon authentication
-endpoints for Italy/US and one fixed, read-only Kindle metadata endpoint.
+endpoints for Italy/US, a fixed read-only Kindle metadata endpoint, and the
+fixed CDE sidecar endpoint for a validated PDOC/EBOK identifier. Sidecar requests
+require ADP signing headers, an empty body and the signed server envelope.
 Every request requires a fresh Ed25519 signature; no CORS,
 cookies, arbitrary target URL, credential persistence, or request body logging.
 Responses are never cached. It has no access to the database or encryption key.

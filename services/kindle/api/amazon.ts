@@ -7,6 +7,7 @@ const paths = new Set([
   "/auth/token",
   "/auth/deregister",
   "/kindle/metadata",
+  "/kindle/sidecar",
 ]);
 const allowedHeaders = new Set([
   "content-type",
@@ -89,8 +90,18 @@ export async function handleAmazonRelay(
     headers.set(name, value);
   }
   const metadata = data.path === "/kindle/metadata";
+  const sidecar = data.path === "/kindle/sidecar";
   if (
-    metadata &&
+    sidecar &&
+    (!data.book ||
+      !["PDOC", "EBOK"].includes(data.book.type) ||
+      typeof data.book.key !== "string" ||
+      !/^[A-Z0-9]{10,64}$/.test(data.book.key))
+  )
+    return failure(400);
+  const reading = metadata || sidecar;
+  if (
+    reading &&
     (data.body !== "" ||
       !headers.get("x-adp-token") ||
       headers.get("x-adp-alg") !== "SHA256withRSA:1.0" ||
@@ -98,27 +109,29 @@ export async function handleAmazonRelay(
   )
     return failure(400);
   if (
-    !metadata &&
+    !reading &&
     !["application/json", "application/x-www-form-urlencoded"].includes(
       headers.get("Content-Type") ?? "",
     )
   )
     return failure(400);
-  if (!metadata) headers.set("x-amzn-identity-auth-domain", `api.amazon.${data.region}`);
+  if (!reading) headers.set("x-amzn-identity-auth-domain", `api.amazon.${data.region}`);
   try {
     const target = metadata
       ? "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000"
-      : `https://api.amazon.${data.region}${data.path}`;
+      : sidecar
+        ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}`
+        : `https://api.amazon.${data.region}${data.path}`;
     const response = await fetcher(target, {
-      method: metadata ? "GET" : "POST",
+      method: reading ? "GET" : "POST",
       headers,
-      ...(metadata ? {} : { body: data.body }),
-      redirect: metadata ? "manual" : "error",
+      ...(reading ? {} : { body: data.body }),
+      redirect: reading ? "manual" : "error",
       credentials: "omit",
       signal: AbortSignal.timeout(15_000),
     });
     const body = await response.text();
-    if (Buffer.byteLength(body) > (metadata ? 1_000_000 : 150_000)) return failure(502);
+    if (Buffer.byteLength(body) > (reading ? 1_000_000 : 150_000)) return failure(502);
     return new Response(response.status === 204 ? null : body, {
       status: response.status,
       headers: {
