@@ -105,6 +105,13 @@ function Privacy() {
       </p>
       <h2>6. Memorizzazione sul dispositivo</h2>
       <p>
+        Per velocizzare le pagine, conserviamo in IndexedDB una copia locale della tua libreria, dei
+        dettagli già consultati e delle copertine manga disponibili come indirizzi immagine. I dati
+        vengono aggiornati in background, scadono dopo sette giorni e vengono rimossi al logout o al
+        cambio di account. Puoi eliminarli anche cancellando i dati del sito nel browser. Questa
+        cache non contiene password, token di accesso o frammenti privati.
+      </p>
+      <p>
         Usiamo archiviazione locale e meccanismi tecnici per mantenere la sessione e ricordare
         preferenze come tema, lingua e dimensione della griglia. Il codice applicativo non aggiunge
         strumenti pubblicitari o di analisi facoltativa. Eventuali strumenti aggiunti

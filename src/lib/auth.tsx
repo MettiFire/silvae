@@ -11,6 +11,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeAuthSession } from "./auth-session";
+import { createLibraryCache } from "./library-cache";
+import { libraryCacheStorage } from "./library-cache-storage";
 
 export type Profile = {
   id: string;
@@ -43,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const request = useRef(0);
   const previousUser = useRef<string | null>(null);
+  const libraryCache = useRef<ReturnType<typeof createLibraryCache> | null>(null);
+  const cacheRestore = useRef(0);
   const profileTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
@@ -74,9 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         if (previousUser.current) qc.clear();
         previousUser.current = id;
+        setLoading(true);
       }
       setSession(normalizeAuthSession(next));
-      setLoading(false);
+      const cache = libraryCache.current;
+      const restoreTicket = ++cacheRestore.current;
+      void (cache?.activate(id) ?? Promise.resolve()).finally(() => {
+        if (
+          libraryCache.current === cache &&
+          previousUser.current === id &&
+          restoreTicket === cacheRestore.current
+        )
+          setLoading(false);
+      });
       if (next?.user) {
         setProfileLoading(true);
         profileTimer.current = setTimeout(() => {
@@ -90,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    const cache = createLibraryCache(qc, libraryCacheStorage);
+    libraryCache.current = cache;
     let disposed = false;
     let authObserved = false;
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
@@ -106,11 +122,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     return () => {
       disposed = true;
+      cache.dispose();
+      libraryCache.current = null;
       if (profileTimer.current) clearTimeout(profileTimer.current);
       request.current++;
       sub.subscription.unsubscribe();
     };
-  }, [switchUser]);
+  }, [switchUser, qc]);
 
   return (
     <AuthContext.Provider

@@ -72,6 +72,7 @@ export function useLibrary(userId?: string) {
     enabled: !!userId,
     // Library mutations invalidate this shared query immediately. Reuse it on navigation.
     staleTime: 2 * 60_000,
+    gcTime: 24 * 60 * 60_000,
     retry: 1,
     queryFn: async ({ signal }) => {
       const items: LibraryItem[] = [];
@@ -95,11 +96,17 @@ export function useLibrary(userId?: string) {
 
 export function useLibraryItem(bookId: string) {
   const { user } = useAuth();
+  const client = useQueryClient();
   return useQuery({
     queryKey: ["library-item", user?.id, bookId],
     enabled: !!user && !!bookId,
     staleTime: 30_000,
     retry: 1,
+    initialData: () =>
+      client
+        .getQueryData<LibraryItem[]>(["library", user?.id])
+        ?.find((item) => item.book_id === bookId),
+    initialDataUpdatedAt: () => client.getQueryState(["library", user?.id])?.dataUpdatedAt,
     queryFn: async ({ signal }) => {
       const { data, error } = await supabase
         .from("library_items")

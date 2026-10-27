@@ -96,3 +96,22 @@ di acquisti/Send to Kindle **restano da provare con l'account e il Kindle reali*
 Non presentare questo prototipo come sincronizzazione funzionante o supporto
 universale dei documenti personali.
 
+### Documenti Send to Kindle: percorso ancora da verificare
+
+La sincronizzazione della stessa posizione tra lettore e app Kindle conferma il
+percorso cloud Amazon, ma non dimostra che il lettore web esponga quel documento
+alle API usate dal prototipo. Non si devono confondere questi due test.
+
+Il progetto [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
+documenta un percorso distinto per i documenti personali: registrazione di un
+dispositivo software Amazon e richieste firmate al servizio delle annotazioni.
+I suoi test descrivono limiti del percorso web per i PDOC e l'assenza di un totale
+posizioni affidabile per calcolare una percentuale esatta. Queste osservazioni
+sono del progetto upstream e non sono state validate con Silvae.
+
+Questo percorso non è implementato né attivato: richiederebbe un'autorizzazione
+esplicita per registrare il dispositivo software e conservare localmente le sue
+credenziali. Non richiede modifiche al firmware Kindle. Una futura prova deve
+riguardare un documento scelto, confrontare posizione e timestamp su due letture,
+e non inventare una percentuale dalla sola posizione grezza.
+

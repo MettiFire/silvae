@@ -21,6 +21,7 @@ export function useMangaVolumeCovers(book: Book) {
       language,
     ],
     enabled: !!id || !!malId,
+    gcTime: 24 * 60 * 60_000,
     queryFn: ({ signal }) =>
       mangaCovers({
         signal,

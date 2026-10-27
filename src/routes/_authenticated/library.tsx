@@ -253,7 +253,13 @@ function LibraryPage() {
       )}
       {isError && (
         <p role="alert" className="editorial-empty">
-          <UiText text="La libreria non si è caricata." />{" "}
+          <UiText
+            text={
+              items.length
+                ? "Mostro la libreria salvata. Aggiornamento non riuscito."
+                : "La libreria non si è caricata."
+            }
+          />{" "}
           <button onClick={() => void refetch()} className="underline">
             <UiText text="Riprova" />
           </button>

@@ -37,6 +37,7 @@ import {
   useLibraryItem,
   useSaveToLibrary,
   useUpdateItem,
+  type LibraryItem,
   type ReadingStatus,
 } from "@/lib/library";
 
@@ -70,6 +71,13 @@ function BookPage() {
   } = useQuery({
     queryKey: ["book", bookId, language ?? "any"],
     staleTime: 5 * 60000,
+    gcTime: 24 * 60 * 60000,
+    placeholderData: () =>
+      !isMangaId(bookId)
+        ? (qc
+            .getQueryData<LibraryItem[]>(["library", user?.id])
+            ?.find((row) => row.book_id === bookId)?.books ?? undefined)
+        : undefined,
     queryFn: () => getBook(bookId, language),
     enabled: languageReady,
   });
@@ -141,7 +149,7 @@ function BookPage() {
     if (savedPage != null) setPageInput(String(savedPage));
   }, [item?.id, savedPage]);
 
-  if (isError)
+  if (isError && !book)
     return (
       <AppShell>
         <p role="alert">

@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Mostro la libreria salvata. Aggiornamento non riuscito.": "Showing your saved library. Refresh failed.",
   "La tua riflessione · facoltativa": "Your thoughts · optional",
   "Copertine dei volumi temporaneamente non disponibili.": "Volume covers are temporarily unavailable.",
   "Alcune copertine non sono disponibili nel catalogo.": "Some covers are unavailable in the catalogue.",
