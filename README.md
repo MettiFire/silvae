@@ -126,7 +126,9 @@ automatically change reading status or dates.
 Connections are managed in **Settings → Devices**. The repository includes a local
 USB bridge, an experimental KOReader integration, and export tools.
 **Native automatic Wi-Fi synchronization with Kindle or Kobo accounts is not available.**
-The isolated Kindle cloud prototype does not update the app’s library.
+An experimental Amazon device-code connection is available in Settings → Devices.
+It stores device credentials encrypted on the server; reading progress retrieval
+is still being validated and does not update the app’s library.
 
 Requirements, limitations, and instructions are documented in
 [`docs/reader-integrations.md`](docs/reader-integrations.md) (Italian).

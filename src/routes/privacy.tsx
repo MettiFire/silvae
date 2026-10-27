@@ -33,6 +33,12 @@ function Privacy() {
         sincronizzazione; non richiediamo la password Amazon o Kobo in questo sito.
       </p>
       <p>
+        Se colleghi Amazon, autorizzi un dispositivo software sul sito Amazon. Silvae conserva sul
+        server le credenziali del dispositivo cifrate, senza inserirle nella cache del browser. Puoi
+        revocare il collegamento da Impostazioni → Dispositivi. La password e i codici di verifica
+        Amazon vengono inseriti esclusivamente su Amazon.
+      </p>
+      <p>
         Il funzionamento del servizio comporta il trattamento di dati tecnici, come indirizzo IP,
         richieste al server e informazioni necessarie alla sicurezza e alla gestione degli errori da
         parte dei fornitori dell’infrastruttura.

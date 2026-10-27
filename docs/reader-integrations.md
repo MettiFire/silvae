@@ -1,10 +1,10 @@
 # Integrazioni con i lettori ebook
 
-Queste integrazioni sono sperimentali. La sincronizzazione cloud nativa di Kindle
-e Kobo è in pausa; non è disponibile un collegamento OAuth agli account Amazon/Kobo.
-Le istruzioni seguenti documentano il ponte locale e i prototipi presenti nella repo.
+Queste integrazioni sono sperimentali. Il collegamento Amazon tramite codice è
+implementato; il recupero del progresso Kindle resta da validare. Non è un OAuth
+Kindle ufficiale. La sincronizzazione cloud Kobo non è disponibile.
 
-**Impostazioni → Dispositivi** mostra la prova web Kindle e la gestione degli
+**Impostazioni → Dispositivi** mostra il collegamento web Amazon e la gestione degli
 eventuali collegamenti precedenti. Il pannello “Collega un dispositivo”, la
 generazione di nuove configurazioni USB/KOReader e i relativi download sono stati
 rimossi dall'interfaccia. Le istruzioni locali seguenti documentano gli strumenti
@@ -99,63 +99,42 @@ di acquisti/Send to Kindle **restano da provare con l'account e il Kindle reali*
 Non presentare questo prototipo come sincronizzazione funzionante o supporto
 universale dei documenti personali.
 
-### Documenti Send to Kindle: percorso ancora da verificare
+### Collegamento Amazon nel browser
 
-La sincronizzazione della stessa posizione tra lettore e app Kindle conferma il
-percorso cloud Amazon, ma non dimostra che il lettore web esponga quel documento
-alle API usate dal prototipo. Non si devono confondere questi due test.
+Impostazioni → Dispositivi → Kindle · Amazon usa un codice da autorizzare su
+`amazon.it/code` o `amazon.com/code`. Non richiede di copiare URL dopo il login.
+Il server registra un dispositivo software solo dopo l'approvazione su Amazon;
+password e MFA rimangono sul sito Amazon. Non è un'integrazione ufficiale Kindle:
+Amazon può identificare il profilo tecnico come Audible, senza abbonamenti.
 
-Il progetto [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
-documenta un percorso distinto per i documenti personali: registrazione di un
-dispositivo software Amazon e richieste firmate al servizio delle annotazioni.
-I suoi test descrivono limiti del percorso web per i PDOC e l'assenza di un totale
-posizioni affidabile per calcolare una percentuale esatta. Queste osservazioni
-sono del progetto upstream e non sono state validate con Silvae.
+Il server usa solo gli host Amazon consentiti, con timeout e senza redirect.
+Il browser riceve codice pubblico e stato. Codice privato e credenziali sono
+cifrati AES-256-GCM con AAD legata all'utente, in `kindle_cloud_connections`.
+`KINDLE_CLOUD_KEY` (32 byte casuali, 64 caratteri esadecimali) è un segreto del
+server Lovable, mai VITE. La tabella non concede accesso diretto ad anon o
+authenticated. Le RPC sono isolate per auth.uid() e trasportano solo ciphertext;
+nessuna espone la decifratura. Non ruotare la chiave senza migrare le credenziali.
 
-La prima parte è ora in **Impostazioni → Dispositivi → Kindle · prova di accesso
-web**. Il client macOS separato è stato rimosso. Nessun nuovo dispositivo viene
-registrato da questa interfaccia.
+Una lease atomica serializza registrazione, annullamento e scollegamento.
+Il polling rispetta l'intervallo Amazon, si ferma sugli errori e fuori dalla
+pagina. I codici scadono entro dieci minuti. Gli errori hanno un backoff di un
+minuto. Scollega revoca solo il dispositivo Silvae su Amazon, poi elimina le
+credenziali salvate. Se Amazon rifiuta la revoca, le conserva per riprovare.
+Il logout non revoca il collegamento, che resta associato all'account.
 
-I link Amazon.it e Amazon.com sono stati verificati in schede autonome del browser
-Codex: raggiungono le pagine di accesso. Amazon restituisce `X-Frame-Options:
-SAMEORIGIN` e `Content-Security-Policy: frame-ancestors 'none'`; il login non può
-essere incorporato nell'anteprima Lovable. **Copia link Amazon** consente di aprire
-l'indirizzo direttamente nella barra di una nuova scheda del browser, mantenendo
-aperta la pagina Silvae con il tentativo in memoria. Se anche gli appunti sono
-bloccati dal riquadro, compare un campo selezionabile per la copia manuale. Il
-fallback è stato provato con la scrittura negli appunti negata da un iframe.
+Setup: applicare `supabase/migrations/20261027190000_kindle_cloud.sql`, impostare
+il segreto e pubblicare. La migrazione è additiva e ripetibile; il rollback
+applicativo può nascondere il componente senza eliminare dati.
 
-La selezione esplicita di nessun lettore nasconde e smonta tutte le sezioni dei
-collegamenti immediatamente, prima del salvataggio della preferenza. Non rimuove
-i collegamenti già conservati nel database. Scegliendo nuovamente un lettore, i
-controlli tornano visibili. Le preferenze non ancora specificate mantengono il
-comportamento precedente.
+**27 ottobre 2026:** Amazon.it e Amazon.com hanno restituito codici (HTTP 200,
+scadenza 600 s). Questo prova la generazione, non l'accesso al progresso.
+Una vera registrazione richiede l'approvazione dell'utente su Amazon.
+La sincronizzazione resta disabilitata finché non è verificata.
 
-La prova web genera un tentativo PKCE distinto, apre il login Amazon in una nuova
-scheda e permette di incollare l'indirizzo finale Amazon. Può comparire il marchio
-Audible, perché il protocollo privato usa quel flusso tecnico. Password e MFA
-rimangono esclusivamente su Amazon. Il verifier PKCE è temporaneo e resta nella
-memoria del componente, come in un public client OAuth; non è una credenziale
-Amazon, un token permanente o una chiave condivisa del servizio. Non viene salvato
-in cache, localStorage, sessionStorage, URL, log o database.
+Per Send to Kindle, [Flyleaf](https://github.com/tldev/flyleaf/blob/main/docs/kindle-endpoints.md)
+documenta richieste firmate al sidecar CDE. Una posizione non assicura una
+percentuale: serve un totale documentato nella stessa unità. Non usare dimensione
+file, ultima annotazione o furthest-read come totale. Nessun ebook scaricato.
 
-**Ritorno 404:** `/ap/maplanding` può restituire una pagina 404 pur contenendo
-`openid.oa2.authorization_code` nell'indirizzo. In quel caso si copia comunque
-l'indirizzo finale nel campo della prova. Una pagina 404 senza codice non è un
-esito utilizzabile. Questo comportamento è documentato anche nella
-[discussione upstream](https://github.com/chemelli74/aioamazondevices/issues/1188).
-Le istruzioni lo spiegano prima del controllo del ritorno; indirizzi e codici
-reali non sono inclusi in documentazione, log o test.
-
-Il controllo di ritorno verifica solo formato, host, percorso, regione, account
-Silvae corrente e scadenza del tentativo (dieci minuti). **Non prova la validità
-del codice presso Amazon e non equivale a un account collegato.** L'indirizzo
-incollato viene svuotato dopo il controllo e il codice non viene conservato.
-Annullamento, cambio account e uscita dalla pagina eliminano il tentativo locale.
-
-Registrazione, scambio del codice, custodia cifrata delle credenziali sul server e
-polling del progresso non sono ancora implementati. Richiederanno una transazione
-server autenticata e verificata; il controllo client non deve diventare una prova
-di autorizzazione. Le API private potrebbero rifiutare il flusso web, e il limite
-sulla percentuale dei documenti personali rimane da verificare.
-
+Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
+Client macOS separato e prova PKCE con URL incollato sono rimossi.

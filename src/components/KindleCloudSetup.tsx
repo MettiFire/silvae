@@ -1,213 +1,186 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { useId, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink, LoaderCircle } from "lucide-react";
 import { UiText } from "@/lib/ui-language-context";
-import {
-  createKindleWebAttempt,
-  inspectKindleReturn,
-  type KindleAmazonRegion,
-  type KindleWebAttempt,
-} from "@/lib/kindle-web-auth";
+import { kindleCloud } from "@/lib/kindle-cloud.functions";
+import type { KindleRegion } from "@/lib/kindle-cloud";
 
-/** Phase one only: no device credentials, registrations or library mutations. */
 export function KindleCloudSetup({ owner }: { owner: string }) {
   const id = useId();
-  const [region, setRegion] = useState<KindleAmazonRegion>("it");
-  const [attempt, setAttempt] = useState<KindleWebAttempt | null>(null);
-  const [returnUrl, setReturnUrl] = useState("");
+  const client = useQueryClient();
+  const queryKey = ["kindle-cloud", owner];
+  const [region, setRegion] = useState<KindleRegion>("it");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [manualCopy, setManualCopy] = useState(false);
-  const copyField = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!attempt) return;
-    const timer = setTimeout(
-      () => {
-        setAttempt(null);
-        setReturnUrl("");
-        setMessage("");
-        setError("La prova è scaduta. Prepara un nuovo accesso.");
-      },
-      Math.max(0, attempt.expiresAt - Date.now()),
-    );
-    return () => clearTimeout(timer);
-  }, [attempt]);
-  if (!owner) return null;
-  const reset = () => {
-    setAttempt(null);
-    setReturnUrl("");
-    setMessage("");
+  const query = useQuery({
+    queryKey,
+    queryFn: () => kindleCloud({ data: { owner, action: "poll" } }),
+    enabled: !!owner,
+    retry: false,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) =>
+      query.state.error
+        ? false
+        : query.state.data?.phase === "pending"
+          ? Math.max(3000, Math.min(60_000, query.state.data.nextPollAt - Date.now()))
+          : false,
+    refetchIntervalInBackground: false,
+  });
+  const status = query.data;
+  const change = async (action: "start" | "disconnect") => {
+    setBusy(true);
     setError("");
-    setManualCopy(false);
+    try {
+      await client.cancelQueries({ queryKey });
+      const value = await kindleCloud({
+        data: action === "start" ? { owner, action, region } : { owner, action },
+      });
+      client.setQueryData(queryKey, value);
+      await client.invalidateQueries({ queryKey, refetchType: "none" });
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Collegamento non riuscito. Riprova.");
+    } finally {
+      setBusy(false);
+    }
   };
+  if (!owner) return null;
   return (
     <section
       className="rounded-2xl border border-border bg-card p-5"
       aria-labelledby={`${id}-title`}
     >
       <h2 id={`${id}-title`} className="font-display text-xl">
-        <UiText text="Kindle · prova di accesso web" />
+        Kindle · Amazon
       </h2>
       <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-        <UiText text="Sperimentale: prepariamo l’accesso Amazon nel browser. La registrazione del dispositivo e la sincronizzazione della lettura non sono ancora attive." />
+        <UiText text="Collega il tuo account autorizzando un codice direttamente su Amazon." />
       </p>
-      <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-        <UiText text="Password e verifica in due passaggi vanno inserite solo su Amazon. Il prototipo usa un flusso tecnico Amazon/Audible: non è un collegamento Kindle ufficiale e Silvae non attiva abbonamenti." />
-      </p>
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <label className="grid gap-1 text-sm" htmlFor={`${id}-region`}>
-          <UiText text="Account Amazon" />
-          <select
-            id={`${id}-region`}
-            value={region}
-            disabled={busy || !!attempt}
-            onChange={(event) => setRegion(event.target.value as KindleAmazonRegion)}
-            className="min-h-11 rounded-lg border border-border bg-background py-2 pl-3 pr-9"
-          >
-            <option value="it">Amazon.it</option>
-            <option value="com">Amazon.com</option>
-          </select>
-        </label>
-        {!attempt && (
+      {query.isPending && (
+        <p className="mt-4 text-sm" role="status">
+          <UiText text="Caricamento…" />
+        </p>
+      )}
+      {status?.phase === "unavailable" && (
+        <p className="mt-4 text-sm" role="status">
+          <UiText text={status.message} />
+        </p>
+      )}
+      {status?.phase === "disconnected" && (
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="grid gap-1 text-sm" htmlFor={`${id}-region`}>
+            <UiText text="Account Amazon" />
+            <select
+              id={`${id}-region`}
+              value={region}
+              disabled={busy}
+              onChange={(event) => setRegion(event.target.value as KindleRegion)}
+              className="min-h-11 rounded-lg border border-border bg-background py-2 pl-3 pr-9"
+            >
+              <option value="it">Amazon.it</option>
+              <option value="com">Amazon.com</option>
+            </select>
+          </label>
           <button
             type="button"
-            className="button-outline min-h-11"
+            className="button-ink min-h-11"
             disabled={busy}
-            onClick={async () => {
-              reset();
-              setBusy(true);
-              try {
-                setAttempt(await createKindleWebAttempt(region, owner));
-              } catch {
-                setError("Non è stato possibile preparare l’accesso. Riprova.");
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={() => void change("start")}
           >
-            <UiText text={busy ? "Preparazione…" : "Prepara accesso Amazon"} />
+            <UiText text={busy ? "Preparazione…" : "Collega Amazon"} />
           </button>
-        )}
-        {attempt && (
-          <>
+        </div>
+      )}
+      {status?.phase === "pending" && (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm">
+            <UiText text="Apri Amazon e inserisci questo codice:" />
+          </p>
+          <output
+            aria-label="Codice Amazon"
+            className="block select-all font-mono text-3xl tracking-[0.15em]"
+          >
+            {status.publicCode}
+          </output>
+          <div className="flex flex-wrap items-center gap-3">
             <a
-              href={attempt.url}
+              href={status.url}
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
               className="button-ink inline-flex min-h-11 items-center gap-2"
             >
-              <UiText text="Apri Amazon" />
+              <UiText text="Autorizza su Amazon" />
               <ExternalLink size={15} aria-hidden="true" />
             </a>
-            <button type="button" className="button-outline min-h-11" onClick={reset}>
-              <UiText text="Annulla" />
-            </button>
             <button
               type="button"
               className="button-outline min-h-11"
-              onClick={async () => {
-                try {
-                  if (!navigator.clipboard?.writeText) throw Error("Clipboard unavailable");
-                  await navigator.clipboard.writeText(attempt.url);
-                  setMessage(
-                    "Link copiato. Incollalo nella barra degli indirizzi di una nuova scheda del browser.",
-                  );
-                } catch {
-                  setManualCopy(true);
-                  setMessage(
-                    "Seleziona e copia il link dal campo qui sotto, poi incollalo in una nuova scheda del browser.",
-                  );
-                }
+              disabled={busy}
+              onClick={() => void change("disconnect")}
+            >
+              <UiText text="Annulla" />
+            </button>
+          </div>
+          {!query.error && (
+            <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />
+              <UiText text="In attesa dell’autorizzazione Amazon…" />
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            <UiText text="Il codice scade dopo 10 minuti. Lascia aperta Silvae: il collegamento verrà confermato automaticamente." />
+          </p>
+        </div>
+      )}
+      {status?.phase === "connected" && (
+        <div className="mt-4 space-y-3">
+          <p role="status" className="text-sm">
+            <UiText text="Account Amazon collegato" /> · Amazon.{status.region}
+          </p>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            <UiText text="Autorizzazione riuscita. Il recupero del progresso Kindle è ancora in verifica: la tua libreria non viene modificata." />
+          </p>
+          <button
+            type="button"
+            className="button-outline min-h-11"
+            disabled={busy}
+            onClick={() => void change("disconnect")}
+          >
+            <UiText text="Scollega Amazon" />
+          </button>
+        </div>
+      )}
+      {(error || query.error) && (
+        <div role="alert" className="mt-4 space-y-2 text-sm text-destructive">
+          <p>
+            <UiText
+              text={
+                error ||
+                (query.error instanceof Error
+                  ? query.error.message
+                  : "Collegamento non riuscito. Riprova.")
+              }
+            />
+          </p>
+          {query.error && (
+            <button
+              type="button"
+              className="button-outline min-h-11"
+              disabled={query.isFetching || busy}
+              onClick={() => {
+                setError("");
+                void query.refetch();
               }}
             >
-              <UiText text="Copia link Amazon" />
+              <UiText text="Riprova" />
             </button>
-          </>
-        )}
-      </div>
-      {attempt && (
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          <UiText text="Amazon blocca l’accesso nei riquadri incorporati. Nell’anteprima Lovable usa Copia link Amazon e incollalo nella barra degli indirizzi di una nuova scheda, lasciando aperta Silvae." />
-        </p>
+          )}
+        </div>
       )}
-      {attempt && manualCopy && (
-        <label className="mt-3 grid min-w-0 gap-1 text-sm" htmlFor={`${id}-copy`}>
-          <UiText text="Link Amazon da copiare" />
-          <input
-            ref={copyField}
-            id={`${id}-copy`}
-            type="text"
-            readOnly
-            value={attempt.url}
-            onFocus={() => copyField.current?.select()}
-            className="min-h-11 min-w-0 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-          />
-        </label>
-      )}
-      {attempt && (
-        <form
-          className="mt-5 grid max-w-3xl gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setError("");
-            try {
-              inspectKindleReturn(attempt, owner, returnUrl);
-              setReturnUrl("");
-              setAttempt(null);
-              setMessage(
-                "Formato dell’indirizzo riconosciuto. Il codice è stato scartato: il collegamento e la sincronizzazione non sono ancora attivi.",
-              );
-            } catch (failure) {
-              setReturnUrl("");
-              setError(
-                failure instanceof Error
-                  ? failure.message
-                  : "Amazon non ha restituito un codice utilizzabile.",
-              );
-            }
-          }}
-        >
-          <p className="text-sm">
-            <UiText text="Dopo il login, la pagina finale Amazon può mostrare 404 anche quando ha restituito il codice. Copia comunque l’indirizzo completo dalla barra del browser e incollalo qui: controlliamo la presenza del codice, non la pagina di errore. Questa prova verifica solo il formato e non attiva il collegamento." />
-          </p>
-          <p className="text-xs text-muted-foreground">
-            <UiText text="L’indirizzo contiene un codice temporaneo: incollalo soltanto in questo campo." />
-          </p>
-          <label htmlFor={`${id}-return`} className="text-sm">
-            <UiText text="Indirizzo finale Amazon" />
-          </label>
-          <input
-            id={`${id}-return`}
-            value={returnUrl}
-            onChange={(event) => setReturnUrl(event.target.value)}
-            type="text"
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            maxLength={16000}
-            required
-            className="min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            className="button-outline min-h-11 justify-self-start"
-            disabled={!returnUrl.trim()}
-          >
-            <UiText text="Controlla indirizzo di ritorno" />
-          </button>
-        </form>
-      )}
-      {message && (
-        <p role="status" className="mt-4 text-sm">
-          <UiText text={message} />
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="mt-4 text-sm text-destructive">
-          <UiText text={error} />
-        </p>
-      )}
+      <p className="mt-4 max-w-3xl text-xs text-muted-foreground">
+        <UiText text="Sperimentale: Amazon può identificare il dispositivo software come Audible. Password e verifica in due passaggi rimangono su Amazon; non vengono attivati abbonamenti." />
+      </p>
     </section>
   );
 }
