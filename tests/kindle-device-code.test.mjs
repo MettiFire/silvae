@@ -124,6 +124,16 @@ test("encrypted state rejects another owner, tampering and a different server ke
   assert.equal(publicState(pair, 601000).phase, "disconnected");
 });
 
+test("encryption works in worker runtimes without a global Buffer", () => {
+  const original = globalThis.Buffer;
+  try {
+    delete globalThis.Buffer;
+    assert.deepEqual(openState(sealState(pair, "worker-owner", key), "worker-owner", key), pair);
+  } finally {
+    globalThis.Buffer = original;
+  }
+});
+
 test("disconnection refreshes expired bearer credentials using form encoding and never revokes other devices", async () => {
   const requests = [];
   await deregister(

@@ -1,5 +1,6 @@
 // Server-only. Import dynamically inside server function handlers.
 import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign } from "node:crypto";
+import { Buffer } from "node:buffer";
 import type { KindleCloudStatus, KindleRegion } from "./kindle-cloud.ts";
 
 type Pending = {
