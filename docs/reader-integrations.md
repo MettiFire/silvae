@@ -181,5 +181,12 @@ memorizzate o inviate al client. Eventuali record in conflitto sono un errore.
 L'esito per libro è conservato insieme alle credenziali cifrate, separato dalle
 statistiche della libreria. Nessun aggiornamento automatico o percentuale stimata.
 
+**Verifica reale del 27 ottobre 2026:** richiesta firmata al sidecar PDOC riuscita
+attraverso il relay e il pannello Silvae autenticato. Amazon ha restituito una
+posizione intera e il timestamp dell'aggiornamento per un documento Send to Kindle
+dell'account autorizzato. Identificativo, titolo e dati personali non sono nei
+test o nel repository. Resta da verificare un totale attendibile e implementare
+selezione/associazione automatica dei contenuti prima di abilitare la sync.
+
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.
