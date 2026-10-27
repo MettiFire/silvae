@@ -12,6 +12,13 @@ This independent Node 24 function forwards four fixed Amazon authentication
 endpoints for Italy/US, a fixed read-only Kindle metadata endpoint, and the
 fixed CDE sidecar endpoint for a validated PDOC/EBOK identifier. Sidecar requests
 require ADP signing headers, an empty body and the signed server envelope.
+
+The signed `/kindle/catalogue` operation exchanges an existing refresh token for
+a temporary Amazon web session and reads only Kindle collection metadata.
+Cookies stay in invocation memory; only sanitized titles/authors/content IDs are
+returned. The application requires additional explicit consent before calling
+this operation. There is no arbitrary URL, cookie forwarding API or account-wide
+proxy. Server logs contain operation names and HTTP status only.
 Every request requires a fresh Ed25519 signature; no CORS,
 cookies, arbitrary target URL, credential persistence, or request body logging.
 Responses are never cached. It has no access to the database or encryption key.

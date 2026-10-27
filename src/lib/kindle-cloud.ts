@@ -1,5 +1,9 @@
 export type KindleRegion = "it" | "com";
 export type KindleBook = { key: string; type: "PDOC" | "EBOK" };
+export type KindleCatalogue = {
+  items: (KindleBook & { title: string; authors: string[] })[];
+  partial: boolean;
+};
 export type KindleBookReading = KindleReadingCheck &
   KindleBook & {
     position?: number;
@@ -35,4 +39,6 @@ export type KindleCloudStatus =
       connectedAt: number;
       reading?: KindleReadingCheck;
       bookReading?: KindleBookReading;
+      catalogue?: KindleCatalogue;
+      libraryMessage?: string;
     };

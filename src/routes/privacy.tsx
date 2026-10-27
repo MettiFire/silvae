@@ -107,6 +107,15 @@ function Privacy() {
         sul server Lovable.
       </p>
       <p>
+        La ricerca nella raccolta Kindle richiede un consenso aggiuntivo nel pannello Dispositivi.
+        Su tua richiesta, il servizio ottiene da Amazon una sessione web temporanea per leggere
+        titoli, autori e identificativi dei tuoi contenuti. La sessione esiste solo durante la
+        richiesta sul servizio Vercel: non viene salvata, registrata nei log o inviata al browser.
+        Tecnicamente può consentire accesso anche ad altre sezioni dell’account Amazon; Silvae
+        limita le richieste alla raccolta Kindle e non legge ordini o pagamenti. Lo stato del libro
+        in Silvae viene aggiornato quando confermi l’associazione e richiedi l’aggiornamento.
+      </p>
+      <p>
         I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. Supabase e
         Lovable descrivono nei propri accordi sul trattamento le garanzie applicabili, incluse le
         clausole contrattuali standard ove necessarie. Puoi chiedere al titolare informazioni sulla

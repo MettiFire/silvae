@@ -1,9 +1,10 @@
+import { KindleLibrarySync } from "./KindleLibrarySync";
 import { useId, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, LoaderCircle } from "lucide-react";
 import { UiText } from "@/lib/ui-language-context";
 import { kindleCloud } from "@/lib/kindle-cloud.functions";
-import type { KindleRegion, KindleBook } from "@/lib/kindle-cloud";
+import type { KindleRegion } from "@/lib/kindle-cloud";
 
 export function KindleCloudSetup({ owner }: { owner: string }) {
   const id = useId();
@@ -12,8 +13,6 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
   const [region, setRegion] = useState<KindleRegion>("it");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [bookKey, setBookKey] = useState("");
-  const [bookType, setBookType] = useState<KindleBook["type"]>("PDOC");
   const query = useQuery({
     queryKey,
     queryFn: () => kindleCloud({ data: { owner, action: "poll" } }),
@@ -30,18 +29,13 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
     refetchIntervalInBackground: false,
   });
   const status = query.data;
-  const change = async (action: "start" | "disconnect" | "check" | "book") => {
+  const change = async (action: "start" | "disconnect" | "check") => {
     setBusy(true);
     setError("");
     try {
       await client.cancelQueries({ queryKey });
       const value = await kindleCloud({
-        data:
-          action === "start"
-            ? { owner, action, region }
-            : action === "book"
-              ? { owner, action, book: { key: bookKey.trim().toUpperCase(), type: bookType } }
-              : { owner, action },
+        data: action === "start" ? { owner, action, region } : { owner, action },
       });
       client.setQueryData(queryKey, value);
       await client.invalidateQueries({ queryKey, refetchType: "none" });
@@ -171,75 +165,10 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
               <UiText text={busy ? "Caricamento…" : "Riprova lettura Kindle"} />
             </button>
           )}
-          <details className="border-t border-border pt-3">
-            <summary className="cursor-pointer text-sm">
-              <UiText text="Verifica un singolo libro · sperimentale" />
-            </summary>
-            <form
-              className="mt-3 grid max-w-xl gap-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void change("book");
-              }}
-            >
-              <label className="grid gap-1 text-sm" htmlFor={`${id}-book-type`}>
-                <UiText text="Tipo di contenuto" />
-                <select
-                  id={`${id}-book-type`}
-                  value={bookType}
-                  onChange={(e) => setBookType(e.target.value as KindleBook["type"])}
-                  disabled={busy}
-                  className="min-h-11 rounded-lg border border-border bg-background py-2 pl-3 pr-9"
-                >
-                  <option value="PDOC">Send to Kindle</option>
-                  <option value="EBOK">Kindle Store</option>
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm" htmlFor={`${id}-book-key`}>
-                <UiText text="Identificativo Amazon del libro" />
-                <input
-                  id={`${id}-book-key`}
-                  value={bookKey}
-                  onChange={(e) => setBookKey(e.target.value)}
-                  required
-                  pattern="[A-Za-z0-9]{10,64}"
-                  maxLength={64}
-                  autoComplete="off"
-                  spellCheck={false}
-                  disabled={busy}
-                  className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 font-mono"
-                />
-              </label>
-              <p className="text-xs text-muted-foreground">
-                <UiText text="Test tecnico con l’identificativo del contenuto Amazon. Recupera solo la posizione più avanzata; non aggiorna la libreria Silvae." />
-              </p>
-              <button
-                type="submit"
-                disabled={busy}
-                className="button-outline min-h-11 justify-self-start"
-              >
-                <UiText text={busy ? "Caricamento…" : "Verifica posizione"} />
-              </button>
-            </form>
-            {status.bookReading && (
-              <div role="status" className="mt-3 space-y-1 text-sm">
-                <p>
-                  <UiText text={status.bookReading.message} />
-                </p>
-                {status.bookReading.position !== undefined && (
-                  <p>
-                    <UiText text="Posizione più avanzata" />: {status.bookReading.position}
-                  </p>
-                )}
-                {status.bookReading.updatedAt !== undefined && (
-                  <p>
-                    <UiText text="Ultimo aggiornamento Amazon" />:{" "}
-                    {new Date(status.bookReading.updatedAt).toLocaleString()}
-                  </p>
-                )}
-              </div>
-            )}
-          </details>
+          <KindleLibrarySync
+            owner={owner}
+            onStatus={(value) => client.setQueryData(queryKey, value)}
+          />
         </div>
       )}
       {(error || query.error) && (

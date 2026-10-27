@@ -1,4 +1,30 @@
 export const UI_EN: Record<string, string> = {
+  "Aggiorna dalla raccolta Kindle": "Update from your Kindle collection",
+  "Per cercare i tuoi titoli, Silvae richiede ad Amazon una sessione web temporanea. Passa solo sui server Silvae/Vercel, non viene salvata né inviata al browser. Tecnicamente può dare accesso anche ad altre sezioni dell’account: Silvae la usa solo per la raccolta Kindle, senza leggere ordini o pagamenti.":
+    "To find your titles, Silvae requests a temporary Amazon web session. It stays on Silvae/Vercel servers, is not saved and never reaches your browser. Technically it may access other account sections: Silvae uses it only for the Kindle collection, without reading orders or payments.",
+  "Autorizzo l’accesso temporaneo alla raccolta Amazon per cercare i miei libri.":
+    "I authorize temporary access to my Amazon collection to find my books.",
+  "Aggiorna titoli Amazon": "Refresh Amazon titles",
+  "Carica i miei titoli Amazon": "Load my Amazon titles",
+  "Sono mostrati i 100 contenuti più recenti per tipo. La raccolta è parziale.":
+    "Showing the 100 most recent items per content type. This collection is partial.",
+  "Nessun titolo Kindle trovato nella raccolta Amazon.":
+    "No Kindle titles found in your Amazon collection.",
+  "Cerca nella raccolta Amazon": "Search your Amazon collection",
+  "Libro su Amazon": "Amazon book",
+  "Libro corrispondente nella tua libreria Silvae": "Matching book in your Silvae library",
+  "Libreria non disponibile. Ricarica la pagina.": "Library unavailable. Reload the page.",
+  "Controlla l’associazione prima di aggiornare. Una posizione datata può segnare il libro In lettura; non modifica percentuali, libri già letti o aggiornamenti manuali più recenti.":
+    "Check the match before updating. A dated position can mark the book as Currently reading; it does not change percentages, finished books or newer manual updates.",
+  "Aggiorna il libro in libreria": "Update book in library",
+  "Stato conservato: il libro è già letto, i dati manuali sono più recenti oppure manca una posizione datata valida.":
+    "Status preserved: the book is already finished, manual data is newer, or there is no valid dated reading position.",
+  "Libreria aggiornata: libro in lettura. La percentuale non è stata modificata.":
+    "Library updated: book marked as Currently reading. The percentage was not changed.",
+  "La libreria è cambiata durante la verifica: aggiornamento ignorato. Riprova.":
+    "Your library changed during the check: update skipped. Please try again.",
+  "Amazon: raccolta non disponibile. Nessun dato della libreria è stato modificato.":
+    "Amazon: collection unavailable. Your library has not been modified.",
   "Verifica un singolo libro · sperimentale": "Check one book · experimental",
   "Tipo di contenuto": "Content type",
   "Identificativo Amazon del libro": "Amazon book identifier",

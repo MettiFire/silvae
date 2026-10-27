@@ -13,13 +13,27 @@ export const kindleCloud = createServerFn({ method: "POST" })
   .validator(
     (input: {
       owner: string;
-      action: "poll" | "start" | "disconnect" | "check" | "book";
+      action: "poll" | "start" | "disconnect" | "check" | "book" | "catalogue" | "sync";
       region?: KindleRegion;
       book?: KindleBook;
+      consent?: boolean;
+      libraryId?: string;
     }) => {
-      if (!input || !["poll", "start", "disconnect", "check", "book"].includes(input.action))
+      if (
+        !input ||
+        !["poll", "start", "disconnect", "check", "book", "catalogue", "sync"].includes(
+          input.action,
+        )
+      )
         throw Error("Richiesta Kindle non valida.");
-      if (input.action === "book" && !validKindleBook(input.book))
+      if (["book", "sync"].includes(input.action) && !validKindleBook(input.book))
+        throw Error("Richiesta Kindle non valida.");
+      if (input.action === "catalogue" && input.consent !== true)
+        throw Error("Collegamento Kindle: autorizza prima l’accesso alla raccolta Amazon.");
+      if (
+        input.action === "sync" &&
+        (typeof input.libraryId !== "string" || !/^[a-f0-9-]{36}$/i.test(input.libraryId))
+      )
         throw Error("Richiesta Kindle non valida.");
       if (input.action === "start" && input.region !== "it" && input.region !== "com")
         throw Error("Account Amazon non valido.");
@@ -43,6 +57,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
       deregister,
       probeKindleMetadata,
       probeKindleBook,
+      kindleCatalogue,
     } = await import("./kindle-cloud.server");
     const db = context.supabase as unknown as SupabaseClient;
     const rpc = async (name: string, args?: Record<string, unknown>) => {
@@ -99,6 +114,8 @@ export const kindleCloud = createServerFn({ method: "POST" })
     }
     let state = claim.ciphertext ? openState(claim.ciphertext, context.userId, key) : null;
     let newlyRegistered: Extract<NonNullable<typeof state>, { phase: "connected" }> | null = null;
+    let catalogue: import("./kindle-cloud").KindleCatalogue | undefined;
+    let libraryMessage: string | undefined;
     try {
       if (data.action === "disconnect") {
         if (state?.phase === "connected") await deregister(state);
@@ -122,6 +139,30 @@ export const kindleCloud = createServerFn({ method: "POST" })
         if (state?.phase !== "connected") throw Error("Collegamento Amazon richiesto.");
         state = { ...state, bookReading: await probeKindleBook(state, data.book!) };
       }
+      if (data.action === "catalogue") {
+        if (state?.phase !== "connected") throw Error("Collegamento Amazon richiesto.");
+        catalogue = await kindleCatalogue(state);
+      }
+      if (data.action === "sync") {
+        if (state?.phase !== "connected") throw Error("Collegamento Amazon richiesto.");
+        const item = await db
+          .from("library_items")
+          .select("id,book_id,status,started_at,updated_at,progress_updated_at,reading_session_id")
+          .eq("user_id", context.userId)
+          .eq("id", data.libraryId!)
+          .maybeSingle();
+        if (item.error || !item.data)
+          throw Error("Collegamento Kindle: scegli un libro della tua libreria.");
+        const reading =
+          state.bookReading?.key === data.book!.key &&
+          state.bookReading.type === data.book!.type &&
+          state.bookReading.checkedAt > Date.now() - 30_000
+            ? state.bookReading
+            : await probeKindleBook(state, data.book!);
+        state = { ...state, bookReading: reading };
+        const { applyKindleStatus } = await import("./kindle-library-sync.server");
+        libraryMessage = await applyKindleStatus(db, context.userId, item.data, reading);
+      }
       const applied = await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,
         p_ciphertext: state ? sealState(state, context.userId, key) : null,
@@ -130,7 +171,14 @@ export const kindleCloud = createServerFn({ method: "POST" })
         if (newlyRegistered) await deregister(newlyRegistered);
         throw Error("Il collegamento è cambiato durante l’accesso. Riprova.");
       }
-      return publicState(state);
+      const result = publicState(state);
+      return result.phase === "connected"
+        ? {
+            ...result,
+            ...(catalogue ? { catalogue } : {}),
+            ...(libraryMessage ? { libraryMessage } : {}),
+          }
+        : result;
     } catch (failure) {
       const retryState =
         state?.phase === "pending" ? { ...state, nextPollAt: Date.now() + 60_000 } : state;

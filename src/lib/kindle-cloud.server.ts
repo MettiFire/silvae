@@ -55,9 +55,13 @@ export async function amazonFetch(
       url.username ||
       url.password ||
       url.search ||
-      !["/auth/create/codepair", "/auth/register", "/auth/token", "/auth/deregister"].includes(
-        url.pathname,
-      ) ||
+      ![
+        "/auth/create/codepair",
+        "/auth/register",
+        "/auth/token",
+        "/auth/deregister",
+        "/kindle/catalogue",
+      ].includes(url.pathname) ||
       init?.method !== "POST")
   )
     throw Error("Richiesta Amazon non valida.");
@@ -98,7 +102,7 @@ export async function amazonFetch(
       "x-silvae-signature": Buffer.from(signature).toString("base64"),
     },
     body,
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(url.pathname === "/kindle/catalogue" ? 55_000 : 20_000),
   }).catch(() => {
     throw Error("Amazon: servizio di collegamento non raggiungibile.");
   });
@@ -106,6 +110,38 @@ export async function amazonFetch(
 function regionHost(region: KindleRegion) {
   if (region !== "it" && region !== "com") throw Error("Account Amazon non valido.");
   return `https://api.amazon.${region}`;
+}
+export async function kindleCatalogue(state: Connected) {
+  const response = await amazonFetch(`${regionHost(state.region)}/kindle/catalogue`, {
+    method: "POST",
+    headers: {},
+    body: JSON.stringify({ refreshToken: state.refreshToken }),
+  });
+  if (!response.ok)
+    throw Error("Amazon: raccolta non disponibile. Nessun dato della libreria è stato modificato.");
+  const text = await response.text();
+  if (Buffer.byteLength(text) > 1_000_000) throw Error("Risposta Amazon non valida.");
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw Error("Risposta Amazon non valida.");
+  }
+  if (
+    !Array.isArray(data["items"]) ||
+    data["items"].length > 200 ||
+    typeof data["partial"] !== "boolean"
+  )
+    throw Error("Risposta Amazon non valida.");
+  const items = data["items"].filter(
+    (item: import("./kindle-cloud.ts").KindleCatalogue["items"][number]) =>
+      validKindleBook(item) &&
+      typeof item.title === "string" &&
+      item.title.length <= 500 &&
+      Array.isArray(item.authors) &&
+      item.authors.every((a) => typeof a === "string"),
+  );
+  return { items, partial: data["partial"] as boolean };
 }
 function headers(region: KindleRegion) {
   return {

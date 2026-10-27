@@ -1,5 +1,6 @@
 import { createPublicKey, verify } from "node:crypto";
 import { Buffer } from "node:buffer";
+import { readCatalogue } from "../lib/catalogue.ts";
 
 const paths = new Set([
   "/auth/create/codepair",
@@ -8,6 +9,7 @@ const paths = new Set([
   "/auth/deregister",
   "/kindle/metadata",
   "/kindle/sidecar",
+  "/kindle/catalogue",
 ]);
 const allowedHeaders = new Set([
   "content-type",
@@ -78,6 +80,22 @@ export async function handleAmazonRelay(
     Array.isArray(data.headers)
   )
     return failure(400);
+  if (data.path === "/kindle/catalogue") {
+    try {
+      const input = JSON.parse(data.body);
+      if (
+        typeof input.refreshToken !== "string" ||
+        !input.refreshToken ||
+        input.refreshToken.length > 32_000 ||
+        Object.keys(data.headers).length
+      )
+        return failure(400);
+      const result = await readCatalogue(data.region, input.refreshToken, fetcher);
+      return new Response(JSON.stringify(result), { headers: responseHeaders });
+    } catch {
+      return failure(502);
+    }
+  }
   const headers = new Headers();
   for (const [name, value] of Object.entries(data.headers)) {
     if (
