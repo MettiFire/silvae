@@ -631,6 +631,7 @@ export async function inspectNativeKindleBook(
     const text = await response.text();
     if (Buffer.byteLength(text) > 1_000_000) return { status: 502 };
     const data = JSON.parse(text)?.payload;
+    console.info("[Kindle KFX] schema",JSON.stringify({types:Array.isArray(data?.records)?[...new Set(data.records.map((r:Record<string,unknown>)=>r.type).filter((t:unknown)=>typeof t==="string"&&/^[A-Za-z0-9_.-]{1,80}$/.test(t)))]:[],fields:Array.isArray(data?.records)?[...new Set(data.records.flatMap((r:Record<string,unknown>)=>Object.keys(r)))].slice(0,40):[]}));
     const record = Array.isArray(data?.records)
       ? data.records.find((r: Record<string, unknown>) => r?.type === "kindle.lpr")
       : undefined;
