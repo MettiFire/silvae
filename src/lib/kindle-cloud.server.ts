@@ -1,5 +1,6 @@
 // Server-only. Import dynamically inside server function handlers.
-import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign } from "node:crypto";
+import { createPrivateKey, randomBytes, sign } from "node:crypto";
+import { sealReaderState, openReaderState } from "./reader-cloud-crypto.server.ts";
 import { Buffer } from "node:buffer";
 import type {
   KindleCloudStatus,
@@ -401,24 +402,10 @@ export async function registerCodePair(
   };
 }
 export function sealState(state: KindleState, owner: string, key: string) {
-  if (!/^[a-f0-9]{64}$/i.test(key)) throw Error("Cifratura Kindle non configurata.");
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
-  cipher.setAAD(Buffer.from(`silvae-kindle-v1:${owner}`));
-  const encrypted = Buffer.concat([
-    cipher.update(Buffer.from(JSON.stringify(state), "utf8")),
-    cipher.final(),
-  ]);
-  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString("base64");
+  return sealReaderState(state, owner, key, "kindle");
 }
 export function openState(ciphertext: string, owner: string, key: string): KindleState {
-  if (!/^[a-f0-9]{64}$/i.test(key) || ciphertext.length > 150_000)
-    throw Error("Collegamento Kindle non leggibile.");
-  const bytes = Buffer.from(ciphertext, "base64");
-  const cipher = createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), bytes.subarray(0, 12));
-  cipher.setAAD(Buffer.from(`silvae-kindle-v1:${owner}`));
-  cipher.setAuthTag(bytes.subarray(12, 28));
-  return JSON.parse(Buffer.concat([cipher.update(bytes.subarray(28)), cipher.final()]).toString());
+  return openReaderState(ciphertext, owner, key, "kindle") as KindleState;
 }
 export function publicState(state: KindleState | null, now = Date.now()): KindleCloudStatus {
   if (!state || (state.phase === "pending" && state.expiresAt <= now))

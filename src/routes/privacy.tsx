@@ -46,6 +46,15 @@ function Privacy() {
         aggiornamenti rispettano le modifiche manuali più recenti.
       </p>
       <p>
+        Se colleghi Kobo, il login e la password rimangono su Kobo. Silvae conserva cifrati i token
+        necessari sul backend e legge titoli, autori, percentuali e date di lettura della raccolta
+        Kobo. Il collegamento sperimentale è indipendente da Kobo e StoryGraph. I documenti caricati
+        a mano non sono inclusi. I controlli automatici, tre volte al giorno anche a sito chiuso,
+        richiedono un’attivazione separata. Puoi interrompere gli accessi e cancellare i token da
+        Impostazioni → Dispositivi → Scollega Kobo. Scollegare Silvae non equivale a una revoca
+        globale delle sessioni sul servizio Kobo.
+      </p>
+      <p>
         Il funzionamento del servizio comporta il trattamento di dati tecnici, come indirizzo IP,
         richieste al server e informazioni necessarie alla sicurezza e alla gestione degli errori da
         parte dei fornitori dell’infrastruttura.

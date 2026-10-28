@@ -1,5 +1,6 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { KindleCloudSetup } from "./KindleCloudSetup";
+import { KoboCloudSetup } from "./KoboCloudSetup";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -125,6 +126,7 @@ export function ReaderConnections() {
   return (
     <div className="space-y-8">
       <KindleCloudSetup key={user?.id} owner={user?.id ?? ""} />
+      <KoboCloudSetup key={`kobo-${user?.id}`} owner={user?.id ?? ""} />
       {(error || connections.error || documents.error) && (
         <p
           role="alert"

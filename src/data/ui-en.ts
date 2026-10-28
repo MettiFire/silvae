@@ -1451,6 +1451,38 @@ export const UI_EN: Record<string, string> = {
     "Your saved personal numbering is preserved; covers from other editions are not assigned.",
   "Frammento temporaneamente non disponibile.": "Daily fragment temporarily unavailable.",
   "Ultimo controllo Kindle": "Last Kindle check",
+  "Sincronizza i progressi dei libri acquistati su Kobo. Gli EPUB caricati a mano, anche tramite Dropbox o Google Drive, non condividono il progresso con il cloud Kobo.":
+    "Sync progress for books purchased from Kobo. Sideloaded EPUBs, including files transferred through Dropbox or Google Drive, do not share progress with Kobo’s cloud.",
+  "Autorizzo Silvae a conservare cifrato il collegamento Kobo e a leggere titoli e progressi della mia raccolta. Password e login rimangono su Kobo.":
+    "I authorize Silvae to store my Kobo connection encrypted and read titles and progress from my collection. Passwords and sign-in stay on Kobo.",
+  "Collega Kobo": "Connect Kobo",
+  "Autorizzi un dispositivo software: le credenziali Kobo non sono limitate tecnicamente alla sola lettura. Silvae le usa esclusivamente per leggere raccolta e progressi.":
+    "You authorize a software device: Kobo credentials are not technically restricted to read-only access. Silvae uses them exclusively to read your collection and progress.",
+  "Apri Kobo e inserisci questo codice:": "Open Kobo and enter this code:",
+  "Autorizza su Kobo": "Authorize on Kobo",
+  "In attesa dell’autorizzazione Kobo. Il codice scade dopo 10 minuti; lascia aperta questa pagina.":
+    "Waiting for Kobo authorization. The code expires in 10 minutes; keep this page open.",
+  "Account Kobo collegato": "Kobo account connected",
+  "Sincronizza Kobo": "Sync Kobo",
+  "Scollega Kobo": "Disconnect Kobo",
+  "Ultimo controllo Kobo": "Last Kobo check",
+  "Raccolta parziale: sincronizza di nuovo per caricare gli altri libri.":
+    "Partial collection: sync again to load the remaining books.",
+  "libri aggiornati": "books updated",
+  "L’ultimo controllo non è riuscito. Riprova.": "The last check failed. Please try again.",
+  "Controlli automatici tre volte al giorno, anche a Silvae chiuso. Le modifiche manuali più recenti e i libri già letti o abbandonati vengono conservati.":
+    "Automatic checks three times a day, even when Silvae is closed. Newer manual edits and books already finished or abandoned are preserved.",
+  "Disattiva sincronizzazione automatica Kobo": "Turn off automatic Kobo sync",
+  "Attiva sincronizzazione automatica Kobo": "Turn on automatic Kobo sync",
+  "Associa un libro Kobo": "Match a Kobo book",
+  "I titoli e autori univoci vengono associati automaticamente. Puoi confermare qui le altre corrispondenze con la tua libreria.":
+    "Unique title and author matches are linked automatically. Confirm other matches with your library here.",
+  "Libro Kobo": "Kobo book",
+  "Libro nella tua libreria": "Book in your library",
+  "Conferma associazione e aggiorna": "Confirm match and update",
+  "Collegamento Kobo non riuscito.": "Could not connect to Kobo.",
+  "Collegamento sperimentale indipendente, non affiliato a Kobo o StoryGraph. Silvae legge solo la raccolta e i progressi; non acquista, scarica o modifica libri su Kobo. Scollegando interrompi gli accessi di Silvae.":
+    "Experimental independent connection, unaffiliated with Kobo or StoryGraph. Silvae only reads your collection and progress; it does not purchase, download or change books on Kobo. Disconnecting stops Silvae’s access.",
   "Creazione del record Amazon": "Amazon record created",
   "Posizione temporaneamente non disponibile": "Reading position temporarily unavailable",
   "Il controllo non indica l’ora della lettura. Silvae aggiorna il progresso quando rileva un avanzamento verificabile.":
