@@ -1,7 +1,12 @@
 // Server-only. Import dynamically inside server function handlers.
 import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign } from "node:crypto";
 import { Buffer } from "node:buffer";
-import type { KindleCloudStatus, KindleRegion, KindleReadingCheck } from "./kindle-cloud.ts";
+import type {
+  KindleCloudStatus,
+  KindleRegion,
+  KindleReadingCheck,
+  KindleObservation,
+} from "./kindle-cloud.ts";
 import { validKindleBook, type KindleBook, type KindleBookReading } from "./kindle-cloud.ts";
 import { kindlePercentage } from "./kindle-progress.ts";
 
@@ -28,10 +33,10 @@ type Connected = {
   reading?: KindleReadingCheck;
   bookReading?: KindleBookReading;
   scanCursor?: number;
-  mappings?: Record<string, { libraryId: string; sessionId: string }>;
+  mappings?: Record<string, { libraryId: string; sessionId: string; nativeVersion?: string }>;
   totals?: Record<string, { checkedAt: number; start?: number; end?: number }>;
   pendingTitles?: { key: string; type: "PDOC" | "EBOK"; title: string; authors: string[] }[];
-  positions?: Record<string, { position: number; updatedAt: number; percentage?: number }>;
+  positions?: Record<string, KindleObservation>;
 };
 export type KindleState = Pending | Connected;
 const DEVICE_TYPE = "A2CZJZGLK2JJVM";
@@ -183,10 +188,15 @@ export async function inspectKindleWhispersync(state: Connected, book: KindleBoo
 }
 export async function enrichKindleProgress(state: Connected, readings: KindleBookReading[]) {
   const totals = state.totals ?? {};
+  // Web metadata describes a different rendition; its total cannot scale KFX positions.
+  const native = (r: KindleBookReading) =>
+    !!state.mappings?.[`${r.type}:${r.key}`]?.nativeVersion &&
+    state.mappings[`${r.type}:${r.key}`]?.nativeVersion === r.contentVersion?.guid;
   const needed = readings
     .filter(
       (r) =>
         r.status === "available" &&
+        !native(r) &&
         ((r.type === "EBOK" && !totals[`${r.type}:${r.key}`]?.end) ||
           !totals[`${r.type}:${r.key}`] ||
           totals[`${r.type}:${r.key}`]!.checkedAt < Date.now() - 24 * 60 * 60_000),
@@ -234,12 +244,14 @@ export async function enrichKindleProgress(state: Connected, readings: KindleBoo
   }
   return {
     readings: readings.map((r) =>
-      kindlePercentage(
-        r,
-        metadata.find((m) => m?.key === r.key && m.type === r.type) ??
-          totals[`${r.type}:${r.key}`] ??
-          {},
-      ),
+      native(r)
+        ? r
+        : kindlePercentage(
+            r,
+            metadata.find((m) => m?.key === r.key && m.type === r.type) ??
+              totals[`${r.type}:${r.key}`] ??
+              {},
+          ),
     ),
     totals,
   };
@@ -425,7 +437,29 @@ export function publicState(state: KindleState | null, now = Date.now()): Kindle
     region: state.region,
     connectedAt: state.connectedAt,
     ...(state.reading ? { reading: state.reading } : {}),
-    ...(state.bookReading ? { bookReading: state.bookReading } : {}),
+    ...(state.bookReading
+      ? {
+          bookReading: {
+            key: state.bookReading.key,
+            type: state.bookReading.type,
+            checkedAt: state.bookReading.checkedAt,
+            status: state.bookReading.status,
+            message: state.bookReading.message,
+            ...(state.bookReading.position === undefined
+              ? {}
+              : { position: state.bookReading.position }),
+            ...(state.bookReading.updatedAt === undefined
+              ? {}
+              : { updatedAt: state.bookReading.updatedAt }),
+            ...(state.bookReading.percentage === undefined
+              ? {}
+              : { percentage: state.bookReading.percentage }),
+            ...(state.bookReading.percentageSource === undefined
+              ? {}
+              : { percentageSource: state.bookReading.percentageSource }),
+          },
+        }
+      : {}),
   };
 }
 export function signedHeaders(
@@ -515,10 +549,12 @@ export async function probeKindleBook(
   state: Connected,
   book: KindleBook,
   fetcher: Fetcher = amazonFetch,
+  version?: string,
 ): Promise<KindleBookReading> {
   if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
+  if (version && !/^CR![A-Z0-9]{10,100}$/.test(version)) throw Error("Versione Kindle non valida.");
   const base = { ...book, checkedAt: Date.now() };
-  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}`;
+  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}${version ? `&format=YJBINARY&guid=${encodeURIComponent(version)}` : ""}`;
   try {
     const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
       method: "GET",
@@ -543,6 +579,7 @@ export async function probeKindleBook(
     if (Buffer.byteLength(text) > 1_000_000) throw Error();
     const data = JSON.parse(text);
     if (!Array.isArray(data?.payload?.records)) throw Error();
+    if (version && data.payload.guid !== version) throw Error();
     const records = data.payload.records.filter(
       (r: Record<string, unknown>) => r?.["type"] === "kindle.lpr",
     );

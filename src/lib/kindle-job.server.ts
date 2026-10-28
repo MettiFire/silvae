@@ -12,6 +12,7 @@ import {
 import { kindleTitleKey, sameKindleAuthor } from "./kindle-progress.ts";
 import type { KindleBook, KindleBookReading, KindleCatalogue } from "./kindle-cloud.ts";
 import { validKindleBook } from "./kindle-cloud.ts";
+import { kindleObservation, kindleReadingEventTime } from "./kindle-library-sync.server.ts";
 
 export function jobSignature(body: string, key: string) {
   return createHmac("sha256", Buffer.from(key, "hex")).update(body).digest("hex");
@@ -140,6 +141,16 @@ export async function handleKindleJob(
       current = await inspectKindleRecentRead(state, input.probe, input.probe.version);
     const catalogue = await kindleCatalogue(state);
     const mappings = state.mappings ?? {};
+    if (input.probe && probe?.status === 200 && probe.guid === input.probe.version) {
+      const map = mappings[`${input.probe.type}:${input.probe.key}`];
+      if (
+        map &&
+        claim.library.some(
+          (row) => row.id === map.libraryId && row.reading_session_id === map.sessionId,
+        )
+      )
+        map.nativeVersion = input.probe.version;
+    }
     const candidates = catalogue.items.filter((book) => {
       const map = mappings[`${book.type}:${book.key}`];
       const item = map
@@ -174,7 +185,12 @@ export async function handleKindleJob(
           selected
             .slice(i, i + 3)
             .map((book) =>
-              probeKindleBook(state as Extract<typeof state, { phase: "connected" }>, book),
+              probeKindleBook(
+                state as Extract<typeof state, { phase: "connected" }>,
+                book,
+                undefined,
+                mappings[`${book.type}:${book.key}`]?.nativeVersion,
+              ),
             ),
         )),
       );
@@ -182,16 +198,14 @@ export async function handleKindleJob(
     const pending: KindleCatalogue["items"] = [];
     const positions = state.positions ?? {};
     for (const reading of enriched.readings) {
-      if (reading.status !== "available" || !reading.position || !reading.updatedAt) {
+      const mapKey = `${reading.type}:${reading.key}`;
+      const previous = positions[mapKey];
+      positions[mapKey] = kindleObservation(reading);
+      if (reading.status !== "available" || !reading.position) {
         unknown++;
         continue;
       }
       if (reading.percentage === undefined) unknown++;
-      positions[`${reading.type}:${reading.key}`] = {
-        position: reading.position,
-        updatedAt: reading.updatedAt,
-        ...(reading.percentage === undefined ? {} : { percentage: reading.percentage }),
-      };
       const book = selected.find((b) => b.key === reading.key && b.type === reading.type)!;
       const map = mappings[`${book.type}:${book.key}`];
       const item = map
@@ -199,9 +213,17 @@ export async function handleKindleJob(
             (row) => row.id === map.libraryId && row.reading_session_id === map.sessionId,
           )
         : matchKindleLibrary(book, claim.library);
+      const observed = kindleReadingEventTime(
+        reading,
+        item ? Date.parse(item.progress_updated_at ?? item.updated_at) : Date.parse(claim.since),
+        map && item ? previous : undefined,
+      );
+      if (item)
+        mappings[mapKey] = { ...map, libraryId: item.id, sessionId: item.reading_session_id };
+      if (!observed) continue;
       const event = {
         position: reading.position,
-        observed: new Date(reading.updatedAt).toISOString(),
+        observed: new Date(observed).toISOString(),
         ...(reading.percentage === undefined ? {} : { percentage: reading.percentage }),
       };
       if (item) {
@@ -211,11 +233,7 @@ export async function handleKindleJob(
           session: item.reading_session_id,
           version: item.updated_at,
         });
-        mappings[`${book.type}:${book.key}`] = {
-          libraryId: item.id,
-          sessionId: item.reading_session_id,
-        };
-      } else if (!map && reading.updatedAt >= Date.parse(claim.since)) {
+      } else if (!map && observed >= Date.parse(claim.since)) {
         // Only public, already-catalogued metadata can be added automatically.
         const url = new URL("https://eouwfswqnpjgorlkrnyt.supabase.co/rest/v1/books");
         url.searchParams.set("select", "id,title,authors");
@@ -247,7 +265,10 @@ export async function handleKindleJob(
       pendingTitles: pending.slice(0, 10),
       positions: Object.fromEntries(
         Object.entries(positions)
-          .sort((a, b) => b[1].updatedAt - a[1].updatedAt)
+          .sort(
+            (a, b) =>
+              (b[1].checkedAt ?? b[1].updatedAt ?? 0) - (a[1].checkedAt ?? a[1].updatedAt ?? 0),
+          )
           .slice(0, 100),
       ),
     };

@@ -1,10 +1,52 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
-import { probeKindleBook, parseKindleLastRead } from "../src/lib/kindle-cloud.server.ts";
+import {
+  probeKindleBook,
+  parseKindleLastRead,
+  enrichKindleProgress,
+  publicState,
+} from "../src/lib/kindle-cloud.server.ts";
 const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const state = { phase: "connected", adpToken: "private-token", privateKey };
 const book = { key: "A".repeat(32), type: "PDOC" };
+test("native positions require the exact verified rendition and never reuse web totals", async () => {
+  const version = "CR!" + "B".repeat(32);
+  const nativeState = {
+    ...state,
+    mappings: { [`PDOC:${book.key}`]: { nativeVersion: version } },
+    totals: { [`PDOC:${book.key}`]: { start: 0, end: 1000, checkedAt: Date.now() } },
+  };
+  const lookup = (guid) =>
+    probeKindleBook(
+      nativeState,
+      book,
+      async (url) => {
+        assert.ok(String(url).endsWith(`&format=YJBINARY&guid=${encodeURIComponent(version)}`));
+        return Response.json({
+          payload: {
+            guid,
+            records: [{ type: "kindle.lpr", location: 500, creationTime: "2026-01-01 00:00:00" }],
+          },
+        });
+      },
+      version,
+    );
+  const reading = await lookup(version);
+  assert.equal(reading.position, 500);
+  assert.equal(
+    (await enrichKindleProgress(nativeState, [reading])).readings[0].percentage,
+    undefined,
+  );
+  assert.equal((await lookup("other-rendition")).status, "error");
+  const exposed = publicState({
+    ...nativeState,
+    bookReading: { ...reading, nativeReading: { status: 200, guid: version } },
+  });
+  assert.equal(exposed.bookReading.contentVersion, undefined);
+  assert.equal(exposed.bookReading.nativeReading, undefined);
+  assert.ok(!JSON.stringify(exposed).includes(version));
+});
 test("last-read XML reads only the exact last_read position and never annotation or end positions", () => {
   assert.equal(
     parseKindleLastRead(

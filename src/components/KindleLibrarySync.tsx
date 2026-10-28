@@ -223,7 +223,7 @@ export function KindleLibrarySync({
                 <UiText text="Posizione di lettura Amazon" />: {reading.position}
               </p>
               <p>
-                <UiText text="Data della posizione Amazon" />:{" "}
+                <UiText text="Creazione del record Amazon" />:{" "}
                 {reading.updatedAt ? (
                   <UiDate value={new Date(reading.updatedAt).toISOString()} withTime />
                 ) : (
@@ -236,42 +236,10 @@ export function KindleLibrarySync({
               <UiText text={reading.message} />
             </p>
           )}
-          {reading.lastReadPosition !== undefined && (
-            <p>
-              <UiText text="Ultima posizione letta su Amazon" />: {reading.lastReadPosition}
-            </p>
-          )}
-          {reading.contentVersion && (
-            <details>
-              <summary className="cursor-pointer">
-                <UiText text="Dati del collegamento" />
-              </summary>
-              <dl className="mt-2 break-all text-xs">
-                {Object.entries(reading.contentVersion).map(([field, value]) => (
-                  <div key={field}>
-                    <dt>{field}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          )}
+          <p className="text-xs text-muted-foreground">
+            <UiText text="Il controllo non indica l’ora della lettura. Silvae aggiorna il progresso quando rileva un avanzamento verificabile." />
+          </p>
         </div>
-      )}
-      {reading?.nativeReading && (
-        <details>
-          <summary className="cursor-pointer">
-            <UiText text="Dati KFX" />
-          </summary>
-          <dl className="mt-2 break-all text-xs">
-            {Object.entries(reading.nativeReading).map(([field, value]) => (
-              <div key={field}>
-                <dt>{field}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
       )}
       {message && (
         <p role="status" className="text-sm">

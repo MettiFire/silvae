@@ -64,3 +64,33 @@ test("status update is owner scoped and compares session and row version atomica
     ["updated_at", item.updated_at],
   ]);
 });
+test("a forward observation updates despite a frozen Amazon creation date, preserving manual edits", () => {
+  const previous = {
+    position: 100,
+    updatedAt: reading.updatedAt,
+    checkedAt: Date.parse("2026-02-02T00:00:00Z"),
+    version: "native",
+    status: "available",
+  };
+  const current = {
+    ...reading,
+    position: 200,
+    checkedAt: Date.parse("2026-02-03T00:00:00Z"),
+    contentVersion: { guid: "native" },
+  };
+  const local = { ...item, progress_updated_at: "2026-02-01T00:00:00Z" };
+  assert.equal(
+    kindleStatusPatch(local, current, previous)?.progress_updated_at,
+    new Date(current.checkedAt).toISOString(),
+  );
+  assert.equal(kindleStatusPatch(local, { ...current, position: 100 }, previous), null);
+  assert.equal(kindleStatusPatch(local, { ...current, position: 50 }, previous), null);
+  assert.equal(kindleStatusPatch(local, current, { ...previous, version: "other" }), null);
+  assert.equal(kindleStatusPatch(local, current, { ...previous, checkedAt: undefined }), null);
+  assert.equal(
+    kindleStatusPatch({ ...local, progress_updated_at: "2026-02-02T12:00:00Z" }, current, previous),
+    null,
+  );
+  for (const status of ["read", "abandoned"])
+    assert.equal(kindleStatusPatch({ ...local, status }, current, previous), null);
+});

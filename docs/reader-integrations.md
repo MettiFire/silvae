@@ -252,3 +252,32 @@ con un redirect che perde il percorso API. Questo indirizzo è coperto da test.
 
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.
+
+### Verifica delle posizioni del 28 ottobre 2026
+
+Il campo CDE `kindle.lpr.creationTime` è la creazione del record, non l'ora
+dell'ultima sincronizzazione. Può rimanere invariato mentre la posizione cambia.
+Silvae conserva separatamente il controllo effettivo e la posizione osservata:
+un avanzamento nella stessa versione può aggiornare la libreria al momento in
+cui viene rilevato, purché il controllo precedente sia successivo all'ultima
+modifica locale. Posizione invariata, cambio di versione, errori e modifiche
+manuali successive al controllo precedente non generano avanzamenti.
+Restano attivi i controlli atomici su proprietario, sessione e versione della riga.
+
+La verifica USB di un documento personale ha mostrato una versione KFX diversa
+da quella restituita dalla richiesta CDE predefinita. La richiesta con formato
+`YJBINARY` e versione esatta restituisce la stessa posizione più avanzata del
+lettore. La versione verificata resta soltanto nello stato cifrato dell'account;
+non viene inserita nel codice, nelle fixture o nell'interfaccia pubblica.
+Il rilevamento automatico di questa versione per qualsiasi documento non è
+ancora risolto. `_LATEST_` non ha funzionato nella prova Kindle.
+
+Le richieste `last_read` e `most_recent_read` hanno entrambe restituito un record
+`FRL` (posizione più avanzata), senza un orario recente di lettura. Il dataset
+Whispersync `BookReadStates/CurrentStates` era vuoto. Questi risultati non
+dimostrano l'accesso alla pagina corrente né alla percentuale: pagine indicate
+dal lettore e contatori di versioni diverse non vengono usati per stimarle.
+I totali del lettore web non vengono applicati alle coordinate KFX.
+L'apertura della pagina di un libro legge solo il controllo già conservato,
+senza avviare altre richieste Amazon. La frequenza automatica resta tre volte
+al giorno; la verifica USB non diventa un requisito di uso quotidiano.

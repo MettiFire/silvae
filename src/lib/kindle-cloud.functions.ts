@@ -8,6 +8,44 @@ import {
   type KindleRegion,
 } from "./kindle-cloud";
 
+// Local encrypted observations only: opening a book never triggers an Amazon request.
+export const kindleBookObservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { libraryId: string }) => {
+    if (!input || !/^[a-f0-9-]{36}$/i.test(input.libraryId))
+      throw Error("Richiesta Kindle non valida.");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const db = context.supabase as unknown as SupabaseClient;
+    const item = await db
+      .from("library_items")
+      .select("reading_session_id")
+      .eq("id", data.libraryId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (item.error || !item.data) return null;
+    const sessionId = item.data.reading_session_id;
+    const key = process.env["KINDLE_CLOUD_KEY"];
+    if (!key) return null;
+    const saved = await db.rpc("kindle_cloud_read");
+    if (saved.error || !saved.data) return null;
+    const { openState } = await import("./kindle-cloud.server");
+    const state = openState(saved.data, context.userId, key);
+    if (state.phase !== "connected") return null;
+    const mapping = Object.entries(state.mappings ?? {}).find(
+      ([, map]) => map.libraryId === data.libraryId && map.sessionId === sessionId,
+    );
+    const observed = mapping ? state.positions?.[mapping[0]] : undefined;
+    if (!observed?.checkedAt) return null;
+    return {
+      checkedAt: observed.checkedAt,
+      status: observed.status,
+      position: observed.position,
+      recordCreatedAt: observed.updatedAt,
+    };
+  });
+
 export const kindleCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
@@ -157,33 +195,38 @@ export const kindleCloud = createServerFn({ method: "POST" })
           .maybeSingle();
         if (item.error || !item.data)
           throw Error("Collegamento Kindle: scegli un libro della tua libreria.");
-        let reading =
-          state.bookReading?.key === data.book!.key &&
-          state.bookReading.type === data.book!.type &&
-          state.bookReading.checkedAt > Date.now() - 30_000
-            ? state.bookReading
-            : await probeKindleBook(state, data.book!);
-        const { inspectKindleLastRead } = await import("./kindle-cloud.server");
-        const { inspectNativeKindleBook } = await import("./kindle-cloud.server");
-        reading = { ...reading, nativeReading: await inspectNativeKindleBook(state, data.book!) };
-        const lastReadPosition = await inspectKindleLastRead(state, data.book!);
-        if (lastReadPosition !== undefined) reading = { ...reading, lastReadPosition };
+        const mapKey = `${data.book!.type}:${data.book!.key}`;
+        const mapping = state.mappings?.[mapKey];
+        const sameSession =
+          !!mapping &&
+          mapping.libraryId === item.data.id &&
+          mapping.sessionId === item.data.reading_session_id;
+        let reading = await probeKindleBook(
+          state,
+          data.book!,
+          undefined,
+          sameSession ? mapping?.nativeVersion : undefined,
+        );
         const enriched = await enrichKindleProgress(state, [reading]);
         reading = enriched.readings[0]!;
+        const { applyKindleStatus, kindleObservation } =
+          await import("./kindle-library-sync.server");
+        const previous = sameSession ? state.positions?.[mapKey] : undefined;
         state = {
           ...state,
           bookReading: reading,
           totals: enriched.totals,
+          positions: { ...state.positions, [mapKey]: kindleObservation(reading) },
           mappings: {
             ...state.mappings,
             [`${data.book!.type}:${data.book!.key}`]: {
+              ...(sameSession ? mapping : {}),
               libraryId: item.data.id,
               sessionId: item.data.reading_session_id,
             },
           },
         };
-        const { applyKindleStatus } = await import("./kindle-library-sync.server");
-        libraryMessage = await applyKindleStatus(db, context.userId, item.data, reading);
+        libraryMessage = await applyKindleStatus(db, context.userId, item.data, reading, previous);
       }
       const applied = await rpc("kindle_cloud_finish", {
         p_lease: claim.lease,

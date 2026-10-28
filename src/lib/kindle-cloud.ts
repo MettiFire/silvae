@@ -1,5 +1,13 @@
 export type KindleRegion = "it" | "com";
 export type KindleBook = { key: string; type: "PDOC" | "EBOK" };
+export type KindleObservation = {
+  position?: number | undefined;
+  updatedAt?: number | undefined;
+  checkedAt?: number;
+  status?: KindleReadingCheck["status"];
+  version?: string | undefined;
+  percentage?: number | undefined;
+};
 export type KindleCatalogue = {
   items: (KindleBook & { title: string; authors: string[] })[];
   partial: boolean;

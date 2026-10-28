@@ -1450,4 +1450,9 @@ export const UI_EN: Record<string, string> = {
   "Numerazione personale già salvata: i progressi sono conservati senza abbinare copertine di altre edizioni.":
     "Your saved personal numbering is preserved; covers from other editions are not assigned.",
   "Frammento temporaneamente non disponibile.": "Daily fragment temporarily unavailable.",
+  "Ultimo controllo Kindle": "Last Kindle check",
+  "Creazione del record Amazon": "Amazon record created",
+  "Posizione temporaneamente non disponibile": "Reading position temporarily unavailable",
+  "Il controllo non indica l’ora della lettura. Silvae aggiorna il progresso quando rileva un avanzamento verificabile.":
+    "The check time is not the reading time. Silvae updates progress when it detects a verified advance.",
 };

@@ -3,7 +3,8 @@ import { UiText, UiElement } from "@/lib/ui-language-context";
 import { showEbookProgress, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { kindleBookObservation } from "@/lib/kindle-cloud.functions";
 import { toast } from "@/lib/localized-toast";
 import { useAuth } from "@/lib/auth";
 import type { LibraryItem } from "@/lib/library";
@@ -23,6 +24,13 @@ import {
 export function ReadingProgress({ item }: { item: LibraryItem }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const kindle = useQuery({
+    queryKey: ["kindle-book-observation", user?.id, item.id, item.reading_session_id],
+    enabled:
+      !!user && showEbookProgress(user.user_metadata[PREFERENCES_FIELD]) && canUpdateReading(item),
+    queryFn: () => kindleBookObservation({ data: { libraryId: item.id } }),
+    staleTime: 60_000,
+  });
   const [value, setValue] = useState(
     item.progress_percent != null ? String(item.progress_percent) : "",
   );
@@ -98,6 +106,20 @@ export function ReadingProgress({ item }: { item: LibraryItem }) {
           <UiText text="Ultimo aggiornamento: " />
           <UiDate value={new Date(item.progress_updated_at)} withTime /> ·{" "}
           {item.progress_source === "manual" ? "manuale" : item.progress_source}
+        </p>
+      )}
+      {kindle.data && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          <UiText text="Ultimo controllo Kindle" />:{" "}
+          <UiDate value={new Date(kindle.data.checkedAt)} withTime />
+          {kindle.data.status !== "available" && (
+            <>
+              {" "}
+              · <UiText text="Posizione temporaneamente non disponibile" />
+            </>
+          )}
+          <br />
+          <UiText text="Il controllo non indica l’ora della lettura. Silvae aggiorna il progresso quando rileva un avanzamento verificabile." />
         </p>
       )}
       <form
