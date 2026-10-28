@@ -231,7 +231,7 @@ test("modern sidecar uses a fixed KFX format parameter without allowing arbitrar
       await handleAmazonRelay(request(data), verifyKey, async (url) => {
         assert.equal(
           url,
-          `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=PDOC&key=${data.book.key}&format=YJBINARY`,
+          `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=PDOC&key=${data.book.key}&format=YJBINARY&guid=_LATEST_`,
         );
         return Response.json({ payload: { records: [] } });
       })

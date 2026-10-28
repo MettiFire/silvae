@@ -156,7 +156,7 @@ export async function handleAmazonRelay(
     const target = metadata
       ? "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000"
       : sidecar
-        ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}${data.format === "YJBINARY" ? "&format=YJBINARY" : ""}`
+        ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}${data.format === "YJBINARY" ? "&format=YJBINARY&guid=_LATEST_" : ""}`
         : lastRead
           ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${data.book.type}&key=${data.book.key}&guid=${encodeURIComponent(data.guid)}`
           : `https://api.amazon.${data.region}${data.path}`;

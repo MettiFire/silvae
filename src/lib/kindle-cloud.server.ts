@@ -50,7 +50,7 @@ export async function amazonFetch(
     url.href === "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000" &&
     init?.method === "GET";
   const sidecar =
-    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}(?:&format=YJBINARY)?$/.test(
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}(?:&format=YJBINARY&guid=_LATEST_)?$/.test(
       url.href,
     ) && init?.method === "GET";
   const lastRead =
@@ -619,7 +619,7 @@ export async function inspectNativeKindleBook(
   fetcher: Fetcher = amazonFetch,
 ): Promise<NonNullable<KindleBookReading["nativeReading"]>> {
   if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
-  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}&format=YJBINARY`;
+  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}&format=YJBINARY&guid=_LATEST_`;
   try {
     const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
       method: "GET",
@@ -631,21 +631,44 @@ export async function inspectNativeKindleBook(
     const text = await response.text();
     if (Buffer.byteLength(text) > 1_000_000) return { status: 502 };
     const data = JSON.parse(text)?.payload;
-    console.info("[Kindle KFX] schema",JSON.stringify({types:Array.isArray(data?.records)?[...new Set(data.records.map((r:Record<string,unknown>)=>r.type).filter((t:unknown)=>typeof t==="string"&&/^[A-Za-z0-9_.-]{1,80}$/.test(t)))]:[],fields:Array.isArray(data?.records)?[...new Set(data.records.flatMap((r:Record<string,unknown>)=>Object.keys(r)))].slice(0,40):[]}));
+    console.info(
+      "[Kindle KFX] schema",
+      JSON.stringify({
+        types: Array.isArray(data?.records)
+          ? [
+              ...new Set(
+                data.records
+                  .map((r: Record<string, unknown>) => r["type"])
+                  .filter(
+                    (t: unknown) => typeof t === "string" && /^[A-Za-z0-9_.-]{1,80}$/.test(t),
+                  ),
+              ),
+            ]
+          : [],
+        fields: Array.isArray(data?.records)
+          ? [
+              ...new Set(data.records.flatMap((r: Record<string, unknown>) => Object.keys(r))),
+            ].slice(0, 40)
+          : [],
+      }),
+    );
     const record = Array.isArray(data?.records)
-      ? data.records.find((r: Record<string, unknown>) => r?.type === "kindle.lpr")
+      ? data.records.find((r: Record<string, unknown>) => r?.["type"] === "kindle.lpr")
       : undefined;
     const clean = (x: unknown) =>
       typeof x === "string" && /^[-A-Za-z0-9!:_./+ ]{1,512}$/.test(x) ? x : undefined;
-    return {
-      status: response.status,
-      position: clean(
-        typeof record?.location === "number" ? String(record.location) : record?.location,
-      ),
-      date: clean(record?.creationTime),
-      guid: clean(data?.guid),
-      acr: clean(data?.acr),
+    const result: NonNullable<KindleBookReading["nativeReading"]> = { status: response.status };
+    const values = {
+      position: typeof record?.location === "number" ? String(record.location) : record?.location,
+      date: record?.creationTime,
+      guid: data?.guid,
+      acr: data?.acr,
     };
+    for (const field of ["position", "date", "guid", "acr"] as const) {
+      const value = clean(values[field]);
+      if (value !== undefined) result[field] = value;
+    }
+    return result;
   } catch {
     return { status: 502 };
   }
