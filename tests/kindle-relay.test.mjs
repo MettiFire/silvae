@@ -217,6 +217,7 @@ test("last-read relay fixes the annotation filter and rejects other annotation r
   const data = {
     region: "it",
     path: "/kindle/last-read",
+    guid: "CR!test-version",
     book: { type: "PDOC", key: "A".repeat(32) },
     body: "",
     headers: {
@@ -230,7 +231,7 @@ test("last-read relay fixes the annotation filter and rejects other annotation r
     calls++;
     assert.equal(
       url,
-      `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=PDOC&key=${data.book.key}`,
+      `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=PDOC&key=${data.book.key}&guid=CR!test-version`,
     );
     assert.equal(init.method, "GET");
     return new Response("<annotations/>");
@@ -238,6 +239,7 @@ test("last-read relay fixes the annotation filter and rejects other annotation r
   assert.equal((await handleAmazonRelay(request(data), verifyKey, upstream)).status, 200);
   for (const bad of [
     { ...data, path: "/kindle/last-read?filter=all" },
+    { ...data, guid: "test&filter=all" },
     { ...data, body: "{}" },
     { ...data, book: { ...data.book, key: "bad&filter=all" } },
   ])

@@ -124,6 +124,8 @@ export async function handleAmazonRelay(
   const metadata = data.path === "/kindle/metadata";
   const sidecar = data.path === "/kindle/sidecar";
   const lastRead = data.path === "/kindle/last-read";
+  if (lastRead && (typeof data.guid !== "string" || !/^[-A-Za-z0-9!:_./+]{1,512}$/.test(data.guid)))
+    return failure(400);
   if (
     (sidecar || lastRead) &&
     (!data.book ||
@@ -155,7 +157,7 @@ export async function handleAmazonRelay(
       : sidecar
         ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}`
         : lastRead
-          ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${data.book.type}&key=${data.book.key}`
+          ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${data.book.type}&key=${data.book.key}&guid=${encodeURIComponent(data.guid)}`
           : `https://api.amazon.${data.region}${data.path}`;
     const response = await fetcher(target, {
       method: reading ? "GET" : "POST",

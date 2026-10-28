@@ -54,7 +54,7 @@ export async function amazonFetch(
       url.href,
     ) && init?.method === "GET";
   const lastRead =
-    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/getAnnotations\?filter=last_read&type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}$/.test(
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/getAnnotations\?filter=last_read&type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}&guid=[A-Za-z0-9%._~!()*'-]{1,1536}$/.test(
       url.href,
     ) && init?.method === "GET";
   if (
@@ -89,6 +89,7 @@ export async function amazonFetch(
     ...(sidecar || lastRead
       ? { book: { key: url.searchParams.get("key"), type: url.searchParams.get("type") } }
       : {}),
+    ...(lastRead ? { guid: url.searchParams.get("guid") } : {}),
     headers: Object.fromEntries(new Headers(init?.headers)),
     body: String(init?.body ?? ""),
   });
@@ -532,8 +533,8 @@ export async function probeKindleBook(
     console.info(
       "[Kindle book] schema",
       JSON.stringify({
-        topFields: Object.keys(data).slice(0,30),
-        payloadFields: Object.keys(data.payload).slice(0,30),
+        topFields: Object.keys(data).slice(0, 30),
+        payloadFields: Object.keys(data.payload).slice(0, 30),
         records: data.payload.records.length,
         lastRead: records.length,
         fields: [...new Set(records.flatMap((r: Record<string, unknown>) => Object.keys(r)))].slice(
@@ -601,8 +602,23 @@ export async function inspectKindleLastRead(
   fetcher: Fetcher = amazonFetch,
 ) {
   if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
-  const path = `/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${book.type}&key=${book.key}`;
   try {
+    const sidecarPath = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}`;
+    const sidecar = await fetcher(`https://cde-ta-g7g.amazon.com${sidecarPath}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, sidecarPath),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!sidecar.ok) return;
+    const sidecarText = await sidecar.text();
+    if (Buffer.byteLength(sidecarText) > 1_000_000) return;
+    const guid = JSON.parse(sidecarText)?.payload?.guid;
+    if (typeof guid !== "string" || !/^[-A-Za-z0-9!:_./+]{1,512}$/.test(guid)) {
+      console.info("[Kindle last-read] version unavailable");
+      return;
+    }
+    const path = `/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${book.type}&key=${book.key}&guid=${encodeURIComponent(guid)}`;
     const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
       method: "GET",
       redirect: "manual",
@@ -635,6 +651,11 @@ export async function inspectKindleLastRead(
       fields = [
         ...new Set([...text.matchAll(/<\/?([A-Za-z][\w:.-]*)\b/g)].map((m) => m[1]!)),
       ].slice(0, 40);
+      fields.push(
+        ...[
+          ...new Set([...text.matchAll(/\b([A-Za-z_:][\w:.-]*)\s*=/g)].map((m) => `@${m[1]}`)),
+        ].slice(0, 30),
+      );
     }
     console.info("[Kindle last-read] schema", JSON.stringify(fields));
   } catch {
