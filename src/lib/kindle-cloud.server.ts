@@ -532,6 +532,8 @@ export async function probeKindleBook(
     console.info(
       "[Kindle book] schema",
       JSON.stringify({
+        topFields: Object.keys(data).slice(0,30),
+        payloadFields: Object.keys(data.payload).slice(0,30),
         records: data.payload.records.length,
         lastRead: records.length,
         fields: [...new Set(records.flatMap((r: Record<string, unknown>) => Object.keys(r)))].slice(
@@ -610,12 +612,22 @@ export async function inspectKindleLastRead(
     console.info("[Kindle last-read] HTTP", response.status);
     const text = await response.text();
     if (Buffer.byteLength(text) > 1_000_000) return;
+    if (!response.ok)
+      console.info(
+        "[Kindle last-read] error fields",
+        JSON.stringify(
+          ["guid", "key", "filter", "type", "missing", "required", "invalid"].filter((word) =>
+            new RegExp(`\\b${word}\\b`, "i").test(text),
+          ),
+        ),
+      );
     let fields: string[] = [];
     try {
       const data = JSON.parse(text);
       fields = Object.keys(data);
       for (const [name, value] of Object.entries(data)) {
-        if (Array.isArray(value) && value[0] && typeof value[0] === "object") fields.push(...Object.keys(value[0]).map(k=>`${name}[].${k}`));
+        if (Array.isArray(value) && value[0] && typeof value[0] === "object")
+          fields.push(...Object.keys(value[0]).map((k) => `${name}[].${k}`));
       }
       if (data.payload && typeof data.payload === "object")
         fields.push(...Object.keys(data.payload).map((k) => `payload.${k}`));

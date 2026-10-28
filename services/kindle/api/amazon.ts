@@ -268,6 +268,17 @@ export async function readWebProgress(
           { method: "GET", headers },
         ),
       );
+      console.info(
+        "[Kindle reader] schema",
+        JSON.stringify({
+          fields: Object.keys(data).slice(0, 50),
+          readingFields:
+            data.lastPageReadData && typeof data.lastPageReadData === "object"
+              ? Object.keys(data.lastPageReadData)
+              : [],
+          unsupported: data.downloadRestrictionReason === "ContentUnsupported",
+        }),
+      );
       if (data.downloadRestrictionReason === "ContentUnsupported") item.status = "unsupported";
       if (typeof data.metadataUrl === "string") {
         const url = new URL(data.metadataUrl);
