@@ -198,7 +198,7 @@ export async function readWebProgress(
   fetcher: typeof fetch = fetch,
 ) {
   const { cookies, request } = await amazonSession(region, refreshToken, fetcher);
-  const base = `https://read.amazon.${region}`;
+  const base = region === "it" ? "https://leggi.amazon.it" : "https://read.amazon.com";
   const cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
   const headers: Record<string, string> = {
     Cookie: cookie,

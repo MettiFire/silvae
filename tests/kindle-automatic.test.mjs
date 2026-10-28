@@ -90,8 +90,10 @@ test("reader metadata never leaks session cookies to a CDN and unsupported docum
       );
     }
     assert.equal(init.headers.Cookie, "session-id=private-session");
-    if (href.includes("getDeviceToken"))
+    if (href.includes("getDeviceToken")) {
+      assert.equal(new URL(href).hostname, "leggi.amazon.it");
       return Response.json({ deviceSessionToken: "reader-private" });
+    }
     if (href.includes("kindle-library/search"))
       return Response.json({ itemsList: [{ asin: ebook.key, percentageRead: 50 }] });
     if (href.includes(pdoc.key))
