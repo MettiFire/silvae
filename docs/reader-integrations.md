@@ -241,5 +241,14 @@ il job reale. Le associazioni dubbie richiedono conferma; nuovi libri possono
 essere aggiunti automaticamente soltanto se esiste una corrispondenza pubblica
 univoca di titolo/autore, con lettura successiva al consenso.
 
+Verifica in produzione del 28 ottobre 2026: job firmato avviato dal dispatcher,
+risposta HTTP 200 con `ok: true`, riepilogo senza errori e impostazione automatica
+attiva con cron `0 */8 * * *` (tre controlli al giorno). Il primo ciclo non ha
+sovrascritto dati esistenti; otto letture non avevano una percentuale verificabile.
+Il test SQL con rollback verifica anche il passaggio Da leggere → In lettura con
+avanzamento e la conservazione di una modifica manuale concorrente più recente.
+Il lettore web italiano usa `https://leggi.amazon.it`: `read.amazon.it` risponde
+con un redirect che perde il percorso API. Questo indirizzo è coperto da test.
+
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.
