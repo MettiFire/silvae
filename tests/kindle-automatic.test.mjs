@@ -62,6 +62,12 @@ test("percentage uses a verified same-edition total, never an annotation end or 
   });
   assert.equal(metadataPositions('arbitraryCode({"startPosition":10,"endPosition":110});'), null);
 });
+test("signed format diagnostics bind a bounded book and revision to the existing job capability",()=>{
+ const data={action:"run",owner:"11111111-1111-1111-1111-111111111111",time:now,probe:{key:"A".repeat(32),type:"PDOC",version:"CR!"+"A".repeat(28)}};
+ const payload=JSON.stringify(data);assert.ok(authorizedKindleJob(payload,jobSignature(payload,key),key,now));
+ for(const probe of [{...data.probe,version:"CR!ABC&url=evil"},{...data.probe,key:"../private"},{...data.probe,type:"OTHER"}]){const invalid=JSON.stringify({...data,probe});assert.equal(authorizedKindleJob(invalid,jobSignature(invalid,key),key,now),null);}
+ assert.equal(authorizedKindleJob(payload.replace("PDOC","EBOK"),jobSignature(payload,key),key,now),null);
+});
 test("automatic association requires one exact title and an author match", () => {
   const book = { title: "Example Book", authors: ["Example Author"] };
   const item = { books: { title: "Example Book", authors: ["Example Author"] } };

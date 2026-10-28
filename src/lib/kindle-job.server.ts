@@ -6,9 +6,11 @@ import {
   kindleCatalogue,
   probeKindleBook,
   enrichKindleProgress,
+  inspectNativeKindleBook,
 } from "./kindle-cloud.server.ts";
 import { kindleTitleKey, sameKindleAuthor } from "./kindle-progress.ts";
 import type { KindleBook, KindleBookReading, KindleCatalogue } from "./kindle-cloud.ts";
+import { validKindleBook } from "./kindle-cloud.ts";
 
 export function jobSignature(body: string, key: string) {
   return createHmac("sha256", Buffer.from(key, "hex")).update(body).digest("hex");
@@ -29,12 +31,19 @@ export function authorizedKindleJob(
     return null;
   try {
     const value = JSON.parse(body);
+    if (
+      value.probe !== undefined &&
+      (!validKindleBook(value.probe) ||
+        typeof value.probe.version !== "string" ||
+        !/^(?:_LATEST_|CR![A-Z0-9]{10,100})$/.test(value.probe.version))
+    )
+      return null;
     return value.action === "run" &&
       typeof value.time === "number" &&
       Number.isFinite(value.time) &&
       Math.abs(now - value.time) <= 60_000 &&
       /^[a-f0-9-]{36}$/i.test(value.owner)
-      ? (value as { owner: string; time: number })
+      ? (value as { owner: string; time: number; probe?: KindleBook & { version: string } })
       : null;
   } catch {
     return null;
@@ -115,6 +124,7 @@ export async function handleKindleJob(
   }
   if (!claim) return json({ skipped: true });
   const updates: Record<string, unknown>[] = [];
+  let probe: KindleBookReading["nativeReading"];
   let ciphertext = claim.ciphertext,
     unknown = 0,
     unmatched = 0,
@@ -122,6 +132,8 @@ export async function handleKindleJob(
   try {
     let state = openState(claim.ciphertext, input.owner, cloudKey);
     if (state.phase !== "connected") throw Error();
+    if (input.probe)
+      probe = await inspectNativeKindleBook(state, input.probe, undefined, input.probe.version);
     const catalogue = await kindleCatalogue(state);
     const mappings = state.mappings ?? {};
     const candidates = catalogue.items.filter((book) => {
@@ -250,7 +262,7 @@ export async function handleKindleJob(
       unmatched,
       error,
     });
-    return json({ ok: !!result, ...result });
+    return json({ ok: !!result, ...result, ...(probe ? { probe } : {}) });
   } catch {
     return json({ error: "Unavailable" }, 503);
   }

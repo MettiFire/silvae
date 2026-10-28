@@ -50,7 +50,7 @@ export async function amazonFetch(
     url.href === "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000" &&
     init?.method === "GET";
   const sidecar =
-    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}(?:&format=YJBINARY&guid=_LATEST_)?$/.test(
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}(?:&format=YJBINARY&guid=(?:_LATEST_|CR![A-Z0-9]{10,100}))?$/.test(
       url.href,
     ) && init?.method === "GET";
   const lastRead =
@@ -91,6 +91,9 @@ export async function amazonFetch(
       : {}),
     ...(lastRead ? { guid: url.searchParams.get("guid") } : {}),
     ...(sidecar && url.searchParams.get("format") === "YJBINARY" ? { format: "YJBINARY" } : {}),
+    ...(sidecar && url.searchParams.get("format") === "YJBINARY"
+      ? { guid: url.searchParams.get("guid") }
+      : {}),
     headers: Object.fromEntries(new Headers(init?.headers)),
     body: String(init?.body ?? ""),
   });
@@ -617,9 +620,12 @@ export async function inspectNativeKindleBook(
   state: Connected,
   book: KindleBook,
   fetcher: Fetcher = amazonFetch,
+  version = "_LATEST_",
 ): Promise<NonNullable<KindleBookReading["nativeReading"]>> {
   if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
-  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}&format=YJBINARY&guid=_LATEST_`;
+  if (!/^(?:_LATEST_|CR![A-Z0-9]{10,100})$/.test(version))
+    throw Error("Versione Kindle non valida.");
+  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}&format=YJBINARY&guid=${version}`;
   try {
     const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
       method: "GET",

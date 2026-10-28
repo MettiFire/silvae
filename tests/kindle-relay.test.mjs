@@ -219,6 +219,7 @@ test("modern sidecar uses a fixed KFX format parameter without allowing arbitrar
     path: "/kindle/sidecar",
     book: { type: "PDOC", key: "A".repeat(32) },
     format: "YJBINARY",
+    guid: "_LATEST_",
     body: "",
     headers: {
       "x-adp-token": "token",
