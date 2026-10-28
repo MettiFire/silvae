@@ -1,7 +1,7 @@
 export const UI_EN: Record<string, string> = {
   "Sincronizzazione automatica": "Automatic synchronization",
-  "Silvae può controllare Amazon sul server anche a sito chiuso, circa ogni 5 minuti. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine.":
-    "Silvae can check Amazon on the server even while the site is closed, approximately every 5 minutes. Kindle must synchronize with Amazon first. Unambiguous book matches are updated; uncertain matches need confirmation. Percentages are saved only when verifiable, never estimated from page counts.",
+  "Silvae controlla Amazon sul server anche a sito chiuso, tre volte al giorno, circa ogni 8 ore. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine.":
+    "Silvae checks Amazon on the server even while the site is closed, three times a day, approximately every 8 hours. Kindle must synchronize with Amazon first. Unambiguous book matches are updated; uncertain matches need confirmation. Percentages are saved only when verifiable, never estimated from page counts.",
   "Sincronizzazione automatica attiva": "Automatic synchronization is on",
   "Disattiva sincronizzazione automatica": "Turn off automatic synchronization",
   "Attiva sincronizzazione automatica": "Turn on automatic synchronization",

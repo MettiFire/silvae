@@ -215,7 +215,7 @@ richiesta; non è una sincronizzazione periodica in background.
 ### Aggiornamenti automatici opzionali
 
 La versione successiva aggiunge un consenso separato e revocabile in Dispositivi.
-`pg_cron` esegue il dispatcher ogni cinque minuti; ogni account autorizzato è
+`pg_cron` esegue il dispatcher tre volte al giorno, ogni otto ore; ogni account autorizzato è
 controllato con batch limitati e cursore, quindi librerie grandi possono richiedere
 più cicli. Gli account non autorizzati, disconnessi o con scelta esplicita Nessun
 ebook non sono aggiornati. Il consenso può essere revocato durante una richiesta:

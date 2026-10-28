@@ -127,7 +127,7 @@ Connections are managed in **Settings → Devices**. The repository includes a l
 USB bridge, an experimental KOReader integration, and export tools.
 **Kindle cloud synchronization is experimental and opt-in; native Kobo cloud sync is unavailable.**
 Authorize Amazon in Settings → Devices, then separately enable background checks.
-The backend scheduler checks eligible accounts approximately every five minutes,
+The backend scheduler checks eligible accounts three times daily, approximately every eight hours,
 with bounded scans, confirmed or unambiguous book matches, and protection for newer
 manual changes and reading sessions. Verified percentages can update progress and
 completion; personal documents without a reliable total retain raw positions without

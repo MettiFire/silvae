@@ -41,7 +41,7 @@ export function KindleAutomaticSync({ owner }: { owner: string }) {
         <UiText text="Sincronizzazione automatica" />
       </h3>
       <p className="text-sm text-muted-foreground">
-        <UiText text="Silvae può controllare Amazon sul server anche a sito chiuso, circa ogni 5 minuti. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine." />
+        <UiText text="Silvae controlla Amazon sul server anche a sito chiuso, tre volte al giorno, circa ogni 8 ore. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine." />
       </p>
       {query.data?.enabled ? (
         <>
