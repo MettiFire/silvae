@@ -8,6 +8,8 @@ export type KindleBookReading = KindleReadingCheck &
   KindleBook & {
     position?: number;
     updatedAt?: number;
+    percentage?: number;
+    percentageSource?: "amazon" | "positions";
   };
 export function validKindleBook(book: KindleBook | undefined): book is KindleBook {
   return (

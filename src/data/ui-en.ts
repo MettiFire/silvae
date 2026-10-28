@@ -1,4 +1,22 @@
 export const UI_EN: Record<string, string> = {
+  "Sincronizzazione automatica": "Automatic synchronization",
+  "Silvae può controllare Amazon sul server anche a sito chiuso, circa ogni 5 minuti. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine.":
+    "Silvae can check Amazon on the server even while the site is closed, approximately every 5 minutes. Kindle must synchronize with Amazon first. Unambiguous book matches are updated; uncertain matches need confirmation. Percentages are saved only when verifiable, never estimated from page counts.",
+  "Sincronizzazione automatica attiva": "Automatic synchronization is on",
+  "Disattiva sincronizzazione automatica": "Turn off automatic synchronization",
+  "Attiva sincronizzazione automatica": "Turn on automatic synchronization",
+  "Autorizzo i controlli periodici della raccolta e gli aggiornamenti automatici della mia libreria anche quando Silvae è chiuso. Posso disattivarli qui in qualsiasi momento.":
+    "I authorize periodic collection checks and automatic library updates even while Silvae is closed. I can turn them off here at any time.",
+  "Ultimo controllo": "Last check",
+  "Libri aggiornati": "Books updated",
+  "Percentuali non disponibili": "Percentages unavailable",
+  "Associazioni da confermare": "Matches needing confirmation",
+  "Amazon non era disponibile. Il controllo verrà riprovato senza modificare i dati esistenti.":
+    "Amazon was unavailable. The check will be retried without changing existing data.",
+  "Libreria aggiornata con l’avanzamento Kindle verificato.":
+    "Library updated with verified Kindle progress.",
+  "Controlla l’associazione prima di aggiornare. Silvae salva la percentuale solo quando verificabile; conserva libri già letti e modifiche manuali più recenti.":
+    "Check the match before updating. Silvae saves a percentage only when verifiable, preserving finished books and newer manual changes.",
   "Scegli un titolo dalla raccolta Amazon e conferma il libro corrispondente nella tua libreria.":
     "Choose a title from your Amazon collection and confirm the matching book in your library.",
   "Aggiorna dalla raccolta Kindle": "Update from your Kindle collection",

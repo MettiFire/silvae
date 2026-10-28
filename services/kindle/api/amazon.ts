@@ -9,6 +9,7 @@ const paths = new Set([
   "/kindle/metadata",
   "/kindle/sidecar",
   "/kindle/catalogue",
+  "/kindle/progress",
 ]);
 const allowedHeaders = new Set([
   "content-type",
@@ -79,7 +80,7 @@ export async function handleAmazonRelay(
     Array.isArray(data.headers)
   )
     return failure(400);
-  if (data.path === "/kindle/catalogue") {
+  if (data.path === "/kindle/catalogue" || data.path === "/kindle/progress") {
     try {
       const input = JSON.parse(data.body);
       if (
@@ -89,7 +90,20 @@ export async function handleAmazonRelay(
         Object.keys(data.headers).length
       )
         return failure(400);
-      const result = await readCatalogue(data.region, input.refreshToken, fetcher);
+      if (
+        data.path === "/kindle/progress" &&
+        (!Array.isArray(input.books) ||
+          input.books.length > 5 ||
+          input.books.some(
+            (b: { key: string; type: string }) =>
+              !b || !/^([A-Z0-9]{10,64})$/.test(b.key) || !["PDOC", "EBOK"].includes(b.type),
+          ))
+      )
+        return failure(400);
+      const result =
+        data.path === "/kindle/catalogue"
+          ? await readCatalogue(data.region, input.refreshToken, fetcher)
+          : await readWebProgress(data.region, input.refreshToken, input.books, fetcher);
       return new Response(JSON.stringify(result), { headers: responseHeaders });
     } catch {
       return failure(502);
@@ -160,6 +174,131 @@ export async function handleAmazonRelay(
     return failure(502);
   }
 }
+
+/** Public delivery metadata only: never follow a provider URL to book content or a cookie-bearing host. */
+export function metadataPositions(text: string, expectedKey?: string) {
+  const match = /^\s*(?:loadMetadata\s*\(\s*)?(\{[\s\S]*\})\s*\)?\s*;?\s*$/.exec(text);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]!);
+    if (expectedKey && data.asin !== expectedKey) return null;
+    const start = data.startPosition,
+      end = data.endPosition;
+    return Number.isSafeInteger(start) && Number.isSafeInteger(end) && start >= 0 && end > start
+      ? { start, end }
+      : null;
+  } catch {
+    return null;
+  }
+}
+export async function readWebProgress(
+  region: "it" | "com",
+  refreshToken: string,
+  books: { key: string; type: string }[],
+  fetcher: typeof fetch = fetch,
+) {
+  const { cookies, request } = await amazonSession(region, refreshToken, fetcher);
+  const base = `https://read.amazon.${region}`;
+  const cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
+  const headers: Record<string, string> = {
+    Cookie: cookie,
+    Accept: "application/json",
+    "x-amzn-sessionid": cookies.get("session-id") ?? "",
+  };
+  const registration = JSON.parse(
+    await request(
+      `${base}/service/web/register/getDeviceToken?serialNumber=A2CTZ977SKFQZY&deviceType=A2CTZ977SKFQZY`,
+      { method: "GET", headers },
+    ),
+  );
+  if (
+    typeof registration.deviceSessionToken !== "string" ||
+    registration.deviceSessionToken.length > 32000
+  )
+    throw Error("Reader session unavailable");
+  headers["x-adp-session-token"] = registration.deviceSessionToken;
+  let library: { asin: string; percentageRead: number }[] = [];
+  try {
+    const data = JSON.parse(
+      await request(
+        `${base}/kindle-library/search?query=&libraryType=BOOKS&sortType=recency&querySize=50`,
+        { method: "GET", headers },
+      ),
+    );
+    if (Array.isArray(data.itemsList)) library = data.itemsList;
+  } catch {
+    /* Metadata may still supply a same-edition total. */
+  }
+  const result: {
+    key: string;
+    type: string;
+    status?: string;
+    percentage?: number;
+    start?: number;
+    end?: number;
+  }[] = [];
+  for (const book of books) {
+    const item: {
+      key: string;
+      type: string;
+      status?: string;
+      percentage?: number;
+      start?: number;
+      end?: number;
+    } = { key: book.key, type: book.type };
+    const reported =
+      book.type === "EBOK"
+        ? library.find((row) => row.asin === book.key)?.percentageRead
+        : undefined;
+    if (
+      typeof reported === "number" &&
+      Number.isFinite(reported) &&
+      reported > 0 &&
+      reported <= 100
+    )
+      item.percentage = reported;
+    try {
+      const data = JSON.parse(
+        await request(
+          `${base}/service/mobile/reader/startReading?asin=${book.key}&clientVersion=20000100`,
+          { method: "GET", headers },
+        ),
+      );
+      if (data.downloadRestrictionReason === "ContentUnsupported") item.status = "unsupported";
+      if (typeof data.metadataUrl === "string") {
+        const url = new URL(data.metadataUrl);
+        if (
+          url.protocol === "https:" &&
+          !url.username &&
+          !url.password &&
+          url.hostname === "k4wyjmetadata.s3.amazonaws.com" &&
+          url.pathname.includes(`/${book.key}/`) &&
+          /\/book\/(?:YJmetadata|metadata)\.(?:jsonp|json|js)$/i.test(url.pathname)
+        ) {
+          // No Amazon cookies, device credentials, redirects, or arbitrary HTML/script execution.
+          const response = await fetcher(url, {
+            method: "GET",
+            redirect: "manual",
+            credentials: "omit",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (response.ok) {
+            const text = await response.text();
+            if (Buffer.byteLength(text) <= 1_000_000) {
+              const positions = metadataPositions(text, book.key);
+              if (positions) Object.assign(item, positions);
+            }
+          }
+        }
+      }
+      // Unsupported documents do not yield guessed values or zero progress.
+    } catch {
+      item.status = "error"; /* Other books can still sync. */
+    }
+    result.push(item);
+  }
+  return result;
+}
 export default { fetch: (request: Request) => handleAmazonRelay(request) };
 
 export function collectionCsrf(html: string) {
@@ -185,7 +324,7 @@ export function collectionCsrf(html: string) {
 }
 
 /** Session cookies exist only inside this invocation and are never returned or logged. */
-export async function readCatalogue(
+async function amazonSession(
   region: "it" | "com",
   refreshToken: string,
   fetcher: typeof fetch = fetch,
@@ -266,6 +405,14 @@ export async function readCatalogue(
   if (!cookies.size) throw Error("Amazon collection unavailable");
   const cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
   if (cookie.length > 64_000) throw Error("Amazon collection unavailable");
+  return { base, cookies, request, cookie };
+}
+export async function readCatalogue(
+  region: "it" | "com",
+  refreshToken: string,
+  fetcher: typeof fetch = fetch,
+) {
+  const { base, cookies, request, cookie } = await amazonSession(region, refreshToken, fetcher);
   const page = `${base}/hz/mycd/digital-console/contentlist/pdocs/dateDsc/`;
   const html = await request(page, { method: "GET", headers: { Cookie: cookie } });
   const csrf = collectionCsrf(html);

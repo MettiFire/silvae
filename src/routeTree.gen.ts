@@ -26,6 +26,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as ApiKindleJobRouteImport } from './routes/api.kindle-job'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
 import { Route as BookBookIdRouteImport } from './routes/book.$bookId'
 import { Route as ListListIdRouteImport } from './routes/list.$listId'
@@ -115,6 +116,11 @@ const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiKindleJobRoute = ApiKindleJobRouteImport.update({
+  id: '/api/kindle-job',
+  path: '/api/kindle-job',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthorAuthorRoute = AuthorAuthorRouteImport.update({
   id: '/author/$author',
   path: '/author/$author',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/kindle-job': typeof ApiKindleJobRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/list/$listId': typeof ListListIdRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/kindle-job': typeof ApiKindleJobRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/list/$listId': typeof ListListIdRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/api/kindle-job': typeof ApiKindleJobRoute
   '/author/$author': typeof AuthorAuthorRoute
   '/book/$bookId': typeof BookBookIdRoute
   '/list/$listId': typeof ListListIdRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/stats'
+    | '/api/kindle-job'
     | '/author/$author'
     | '/book/$bookId'
     | '/list/$listId'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/stats'
+    | '/api/kindle-job'
     | '/author/$author'
     | '/book/$bookId'
     | '/list/$listId'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/social'
     | '/_authenticated/stats'
+    | '/api/kindle-job'
     | '/author/$author'
     | '/book/$bookId'
     | '/list/$listId'
@@ -281,6 +293,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  ApiKindleJobRoute: typeof ApiKindleJobRoute
   AuthorAuthorRoute: typeof AuthorAuthorRoute
   BookBookIdRoute: typeof BookBookIdRoute
   ListListIdRoute: typeof ListListIdRoute
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/kindle-job': {
+      id: '/api/kindle-job'
+      path: '/api/kindle-job'
+      fullPath: '/api/kindle-job'
+      preLoaderRoute: typeof ApiKindleJobRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/author/$author': {
       id: '/author/$author'
       path: '/author/$author'
@@ -477,6 +497,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  ApiKindleJobRoute: ApiKindleJobRoute,
   AuthorAuthorRoute: AuthorAuthorRoute,
   BookBookIdRoute: BookBookIdRoute,
   ListListIdRoute: ListListIdRoute,

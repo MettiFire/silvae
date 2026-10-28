@@ -3,6 +3,7 @@ import { createCipheriv, createDecipheriv, createPrivateKey, randomBytes, sign }
 import { Buffer } from "node:buffer";
 import type { KindleCloudStatus, KindleRegion, KindleReadingCheck } from "./kindle-cloud.ts";
 import { validKindleBook, type KindleBook, type KindleBookReading } from "./kindle-cloud.ts";
+import { kindlePercentage } from "./kindle-progress.ts";
 
 type Pending = {
   phase: "pending";
@@ -26,6 +27,11 @@ type Connected = {
   tokenExpiresAt: number;
   reading?: KindleReadingCheck;
   bookReading?: KindleBookReading;
+  scanCursor?: number;
+  mappings?: Record<string, { libraryId: string; sessionId: string }>;
+  totals?: Record<string, { checkedAt: number; start?: number; end?: number }>;
+  pendingTitles?: { key: string; type: "PDOC" | "EBOK"; title: string; authors: string[] }[];
+  positions?: Record<string, { position: number; updatedAt: number; percentage?: number }>;
 };
 export type KindleState = Pending | Connected;
 const DEVICE_TYPE = "A2CZJZGLK2JJVM";
@@ -61,6 +67,7 @@ export async function amazonFetch(
         "/auth/token",
         "/auth/deregister",
         "/kindle/catalogue",
+        "/kindle/progress",
       ].includes(url.pathname) ||
       init?.method !== "POST")
   )
@@ -102,7 +109,9 @@ export async function amazonFetch(
       "x-silvae-signature": Buffer.from(signature).toString("base64"),
     },
     body,
-    signal: AbortSignal.timeout(url.pathname === "/kindle/catalogue" ? 55_000 : 20_000),
+    signal: AbortSignal.timeout(
+      ["/kindle/catalogue", "/kindle/progress"].includes(url.pathname) ? 55_000 : 20_000,
+    ),
   }).catch(() => {
     throw Error("Amazon: servizio di collegamento non raggiungibile.");
   });
@@ -142,6 +151,69 @@ export async function kindleCatalogue(state: Connected) {
       item.authors.every((a) => typeof a === "string"),
   );
   return { items, partial: data["partial"] as boolean };
+}
+export async function enrichKindleProgress(state: Connected, readings: KindleBookReading[]) {
+  const totals = state.totals ?? {};
+  const needed = readings
+    .filter(
+      (r) =>
+        r.status === "available" &&
+        ((r.type === "EBOK" && !totals[`${r.type}:${r.key}`]?.end) ||
+          !totals[`${r.type}:${r.key}`] ||
+          totals[`${r.type}:${r.key}`]!.checkedAt < Date.now() - 24 * 60 * 60_000),
+    )
+    .slice(0, 5);
+  let metadata: {
+    key: string;
+    type: string;
+    status?: string;
+    start?: number;
+    end?: number;
+    percentage?: number;
+  }[] = [];
+  if (needed.length) {
+    try {
+      const response = await amazonFetch(`${regionHost(state.region)}/kindle/progress`, {
+        method: "POST",
+        headers: {},
+        body: JSON.stringify({
+          refreshToken: state.refreshToken,
+          books: needed.slice(0, 5).map(({ key, type }) => ({ key, type })),
+        }),
+      });
+      if (response.ok) {
+        const data = await json(response);
+        if (Array.isArray(data) && data.length <= 5) metadata = data;
+      }
+    } catch {
+      /* Preserve raw, dated positions when Amazon cannot provide a total. */
+    }
+    for (const reading of needed) {
+      const item = metadata.find((m) => m?.key === reading.key && m.type === reading.type);
+      const valid =
+        item &&
+        Number.isSafeInteger(item.start) &&
+        Number.isSafeInteger(item.end) &&
+        item.start! >= 0 &&
+        item.end! > item.start!;
+      if (valid || item?.status === "unsupported")
+        totals[`${reading.type}:${reading.key}`] = {
+          checkedAt: Date.now(),
+          ...(valid ? { start: item.start!, end: item.end! } : {}),
+        };
+    }
+  }
+  return {
+    readings: readings.map((r) =>
+      kindlePercentage(
+        r,
+        metadata.find((m) => m?.key === r.key && m.type === r.type) ??
+          totals[`${r.type}:${r.key}`] ??
+          {},
+      ),
+    ),
+    totals,
+  };
 }
 function headers(region: KindleRegion) {
   return {

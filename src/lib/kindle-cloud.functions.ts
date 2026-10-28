@@ -28,7 +28,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
         throw Error("Richiesta Kindle non valida.");
       if (["book", "sync"].includes(input.action) && !validKindleBook(input.book))
         throw Error("Richiesta Kindle non valida.");
-      if (input.action === "catalogue" && input.consent !== true)
+      if (["catalogue", "sync"].includes(input.action) && input.consent !== true)
         throw Error("Collegamento Kindle: autorizza prima l’accesso alla raccolta Amazon.");
       if (
         input.action === "sync" &&
@@ -58,6 +58,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
       probeKindleMetadata,
       probeKindleBook,
       kindleCatalogue,
+      enrichKindleProgress,
     } = await import("./kindle-cloud.server");
     const db = context.supabase as unknown as SupabaseClient;
     const rpc = async (name: string, args?: Record<string, unknown>) => {
@@ -82,6 +83,7 @@ export const kindleCloud = createServerFn({ method: "POST" })
         "Non riesco a leggere il collegamento Kindle. Contatta l’assistenza prima di riconfigurarlo.",
       );
     }
+    if (data.action === "disconnect") await rpc("kindle_cloud_automatic", { p_enabled: false });
     // Account status does not need another request to the known-empty device feed.
     if (data.action === "poll" && previous?.phase === "connected") return publicState(previous);
     if (
@@ -155,13 +157,26 @@ export const kindleCloud = createServerFn({ method: "POST" })
           .maybeSingle();
         if (item.error || !item.data)
           throw Error("Collegamento Kindle: scegli un libro della tua libreria.");
-        const reading =
+        let reading =
           state.bookReading?.key === data.book!.key &&
           state.bookReading.type === data.book!.type &&
           state.bookReading.checkedAt > Date.now() - 30_000
             ? state.bookReading
             : await probeKindleBook(state, data.book!);
-        state = { ...state, bookReading: reading };
+        const enriched = await enrichKindleProgress(state, [reading]);
+        reading = enriched.readings[0]!;
+        state = {
+          ...state,
+          bookReading: reading,
+          totals: enriched.totals,
+          mappings: {
+            ...state.mappings,
+            [`${data.book!.type}:${data.book!.key}`]: {
+              libraryId: item.data.id,
+              sessionId: item.data.reading_session_id,
+            },
+          },
+        };
         const { applyKindleStatus } = await import("./kindle-library-sync.server");
         libraryMessage = await applyKindleStatus(db, context.userId, item.data, reading);
       }

@@ -212,5 +212,34 @@ della navigazione Amazon: il parser dà precedenza all'assegnazione della pagina
 alla variabile `csrfToken`, con test dedicato. Questa versione aggiorna su
 richiesta; non è una sincronizzazione periodica in background.
 
+### Aggiornamenti automatici opzionali
+
+La versione successiva aggiunge un consenso separato e revocabile in Dispositivi.
+`pg_cron` esegue il dispatcher ogni cinque minuti; ogni account autorizzato è
+controllato con batch limitati e cursore, quindi librerie grandi possono richiedere
+più cicli. Gli account non autorizzati, disconnessi o con scelta esplicita Nessun
+ebook non sono aggiornati. Il consenso può essere revocato durante una richiesta:
+il risultato successivo non verrà applicato.
+
+La chiave dedicata `KINDLE_JOB_KEY` è in Lovable Secrets e Supabase Vault. Firma
+l'intero payload HMAC, con scadenza e lease; il database espone solo un'operazione
+di job circoscritta e verificata, non accesso generico ad altri account. Vercel
+non riceve questa chiave, la chiave di cifratura o una service-role key. Il job
+conserva le associazioni e le posizioni recenti cifrate; gli aggiornamenti alla
+libreria confrontano proprietario, sessione, versione e data osservata atomicamente.
+
+La percentuale proviene da `percentageRead` dei libri EBOK, se disponibile e non
+contraddittoriamente zero, o da limiti `startPosition`/`endPosition` della stessa
+edizione e identificativo. Il JSONP di metadati viene analizzato come JSON senza
+eseguirlo. Nessun totale viene dedotto da pagine, byte del file, annotazioni o
+massimi osservati. Un documento personale non supportato resta senza percentuale.
+Gli errori transitori non vengono memorizzati come indisponibilità permanente.
+
+Test SQL con rollback: `tests/kindle-automatic-db.sql`. Revoca, firme errate,
+lease assente e privilegi sono verificati sul database gestito prima di attivare
+il job reale. Le associazioni dubbie richiedono conferma; nuovi libri possono
+essere aggiunti automaticamente soltanto se esiste una corrispondenza pubblica
+univoca di titolo/autore, con lettura successiva al consenso.
+
 Riferimento: [Audible issue 906](https://github.com/mkb79/Audible/issues/906).
 Client macOS separato e prova PKCE con URL incollato sono rimossi.

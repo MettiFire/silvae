@@ -125,12 +125,15 @@ automatically change reading status or dates.
 
 Connections are managed in **Settings → Devices**. The repository includes a local
 USB bridge, an experimental KOReader integration, and export tools.
-**Native automatic Wi-Fi synchronization with Kindle or Kobo accounts is not available.**
-An experimental Amazon device-code connection is implemented in Settings → Devices.
-An authenticated, fixed-destination transport runs on the owner's Vercel account.
-Account authorization and encrypted server-side credential persistence have been
-verified. Kindle metadata access and reading progress retrieval are experimental
-and do not update the library.
+**Kindle cloud synchronization is experimental and opt-in; native Kobo cloud sync is unavailable.**
+Authorize Amazon in Settings → Devices, then separately enable background checks.
+The backend scheduler checks eligible accounts approximately every five minutes,
+with bounded scans, confirmed or unambiguous book matches, and protection for newer
+manual changes and reading sessions. Verified percentages can update progress and
+completion; personal documents without a reliable total retain raw positions without
+fabricated percentages. Kindle must synchronize with Amazon first.
+Amazon credentials stay encrypted on the server. Temporary web sessions exist only
+in an authenticated, fixed-destination Vercel transport; no native client is required.
 
 Requirements, limitations, and instructions are documented in
 [`docs/reader-integrations.md`](docs/reader-integrations.md) (Italian).

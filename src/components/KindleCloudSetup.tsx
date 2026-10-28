@@ -1,4 +1,5 @@
 import { KindleLibrarySync } from "./KindleLibrarySync";
+import { KindleAutomaticSync } from "./KindleAutomaticSync";
 import { useId, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, LoaderCircle } from "lucide-react";
@@ -154,6 +155,7 @@ export function KindleCloudSetup({ owner }: { owner: string }) {
             owner={owner}
             onStatus={(value) => client.setQueryData(queryKey, value)}
           />
+          <KindleAutomaticSync owner={owner} />
         </div>
       )}
       {(error || query.error) && (

@@ -62,7 +62,7 @@ async function main() {
       .filter(
         ([key, value]) =>
           !key.startsWith("VITE_") &&
-          /(?:SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY|KINDLE_CLOUD_KEY|SERVICE_ROLE_KEY|DATABASE_URL|DB_MIGRATION_URL|DB_URL)$/.test(
+          /(?:SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY|KINDLE_CLOUD_KEY|KINDLE_JOB_KEY|SERVICE_ROLE_KEY|DATABASE_URL|DB_MIGRATION_URL|DB_URL)$/.test(
             key,
           ) &&
           typeof value === "string",

@@ -36,7 +36,14 @@ function Privacy() {
         Se colleghi Amazon, autorizzi un dispositivo software sul sito Amazon. Silvae conserva sul
         server le credenziali del dispositivo cifrate, senza inserirle nella cache del browser. Puoi
         revocare il collegamento da Impostazioni → Dispositivi. La password e i codici di verifica
-        Amazon vengono inseriti esclusivamente su Amazon.
+        Amazon vengono inseriti esclusivamente su Amazon. Con un consenso separato, Silvae può
+        ottenere una sessione web temporanea per leggere titoli e identificativi della raccolta
+        Kindle. La sessione attraversa soltanto il backend e il relay Vercel, non viene conservata
+        né inviata al browser; tecnicamente potrebbe consentire accesso ad altre sezioni Amazon, ma
+        Silvae non legge ordini o pagamenti. Se attivi la sincronizzazione automatica, autorizzi
+        controlli periodici anche a sito chiuso, fino alla disattivazione nelle impostazioni o allo
+        scollegamento di Amazon. Le associazioni confermate sono conservate cifrate; gli
+        aggiornamenti rispettano le modifiche manuali più recenti.
       </p>
       <p>
         Il funzionamento del servizio comporta il trattamento di dati tecnici, come indirizzo IP,
@@ -113,7 +120,11 @@ function Privacy() {
         richiesta sul servizio Vercel: non viene salvata, registrata nei log o inviata al browser.
         Tecnicamente può consentire accesso anche ad altre sezioni dell’account Amazon; Silvae
         limita le richieste alla raccolta Kindle e non legge ordini o pagamenti. Lo stato del libro
-        in Silvae viene aggiornato quando confermi l’associazione e richiedi l’aggiornamento.
+        in Silvae viene aggiornato quando confermi l’associazione e richiedi l’aggiornamento. Se
+        attivi separatamente la sincronizzazione automatica, autorizzi controlli periodici sul
+        server anche a sito chiuso, fino alla disattivazione nelle impostazioni o allo scollegamento
+        di Amazon. Le associazioni confermate sono conservate cifrate; i progressi vengono salvati
+        nella tua libreria rispettando le modifiche manuali più recenti.
       </p>
       <p>
         I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. Supabase e

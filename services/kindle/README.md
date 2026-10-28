@@ -19,8 +19,8 @@ Cookies stay in invocation memory; only sanitized titles/authors/content IDs are
 returned. The application requires additional explicit consent before calling
 this operation. There is no arbitrary URL, cookie forwarding API or account-wide
 proxy. Server logs contain operation names and HTTP status only.
-Every request requires a fresh Ed25519 signature; no CORS,
-cookies, arbitrary target URL, credential persistence, or request body logging.
+Every request requires a fresh Ed25519 signature; no browser CORS or browser-cookie
+forwarding, arbitrary target URL, credential persistence, or request body logging.
 Responses are never cached. It has no access to the database or encryption key.
 
 Deployment root: `services/kindle`. Configure `KINDLE_RELAY_VERIFY_KEY` as base64
@@ -31,7 +31,14 @@ key is public. The request signing key differs from `KINDLE_CLOUD_KEY`.
 
 The app only uses this transport when the signing secret is configured.
 Deploy production as `silvae-kindle.vercel.app`; keep preview deployments protected.
-No new storage, scheduled jobs or paid integrations are required.
+The relay has no scheduler or storage. Background jobs run on the managed database;
+no paid scheduler integration is required.
+
+`/kindle/progress` shares the same temporary session and accepts at most five content
+identifiers. It reads Kindle Web Reader progress and delivery metadata only. Signed
+metadata URLs are restricted to the known metadata S3 bucket, matching content ID
+and metadata path; cookies and device credentials are never sent to that CDN.
+No rendering, book-content or DRM endpoint is used.
 
 Deployments use the Vercel connector with these tracked files as the source;
 Git metadata alone is not a configured automatic deployment trigger.

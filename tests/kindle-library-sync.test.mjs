@@ -20,6 +20,14 @@ test("Kindle status uses dated reading evidence without inventing completion or 
   assert.equal(patch.progress_percent, undefined);
   assert.equal(patch.current_page, undefined);
   assert.equal(patch.finished_at, undefined);
+  const complete = kindleStatusPatch(item, {
+    ...reading,
+    percentage: 100,
+    percentageSource: "positions",
+  });
+  assert.equal(complete.status, "read");
+  assert.equal(complete.progress_percent, 100);
+  assert.equal(complete.finished_at, new Date(reading.updatedAt).toISOString());
   for (const status of ["read", "abandoned"])
     assert.equal(kindleStatusPatch({ ...item, status }, reading), null);
   assert.equal(

@@ -43,7 +43,7 @@ export function KindleLibrarySync({
         data:
           action === "catalogue"
             ? { owner, action, consent }
-            : { owner, action, book: book!, libraryId },
+            : { owner, action, book: book!, libraryId, consent },
       });
       onStatus(result);
       if (result.phase === "connected") {
@@ -194,7 +194,7 @@ export function KindleLibrarySync({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                <UiText text="Controlla l’associazione prima di aggiornare. Una posizione datata può segnare il libro In lettura; non modifica percentuali, libri già letti o aggiornamenti manuali più recenti." />
+                <UiText text="Controlla l’associazione prima di aggiornare. Silvae salva la percentuale solo quando verificabile; conserva libri già letti e modifiche manuali più recenti." />
               </p>
               <button
                 type="submit"
