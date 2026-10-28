@@ -2,5 +2,5 @@
 export const LEGAL = {
   operatorName: "Anna Mettifogo",
   contactEmail: "mettignis@gmail.com",
-  updated: "27 ottobre 2026",
+  updated: "28 ottobre 2026",
 };

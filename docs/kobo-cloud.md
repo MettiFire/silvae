@@ -25,8 +25,12 @@ Compatible devices can download files from Dropbox/Google Drive. Independent
 services such as send2ereader transfer a file through the device's browser. These
 transfers do not turn a personal EPUB into a Kobo-store entitlement or upload its
 reading state to Kobo's account cloud. They do not solve progress synchronization.
+Kobo also documents email delivery through Dropbox's email-upload feature, with
+a compatible reader and a paid Dropbox account. This is still a file transfer,
+not a Kobo personal-document cloud equivalent to Amazon Send to Kindle.
 
 - https://www.kobo.com/blog/accessing-cloud-files-on-your-kobo-ereader
+- https://www.kobo.com/blog/how-to-email-books-to-your-kobo
 - https://help.kobo.com/hc/en-us/articles/43753873356055-Missing-books-reading-stats-or-notes-after-Kobo-software-update
 - https://github.com/daniel-j/send2ereader
 
@@ -88,9 +92,16 @@ HMAC expiry/tampering, ambiguous matches, finished books, dates, edition dedupli
 and database ownership/lease/session/manual-conflict/disconnect rules.
 
 The unauthenticated Kobo activation page was verified from the development host.
+After publication, the public Silvae backend also generated a valid activation
+code and a fixed `https://www.kobo.com/activate` link. The pending test connection
+was cancelled without logging into any Kobo account; no automatic access was enabled.
 The schema was applied to the managed database. The rollback-only live SQL test
 passed owner privileges, real HMAC verification, leases, cancellation, a reading
 update and a concurrent manual edit, without retaining any fixture data.
+It also verified status-only completion without overwriting the saved percentage.
+The complete automated suite passed 323 tests; TypeScript, production build and
+the client-bundle secret audit passed. An independent review's scheduling and
+status-timestamp findings were corrected and rechecked before release.
 A purchased-book end-to-end test requires an authorized Kobo account containing
 reading activity. Mocked protocol tests are not evidence that a particular real
 account's cloud progress is available. No Kobo password, token or personal book
