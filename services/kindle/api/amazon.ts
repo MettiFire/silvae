@@ -408,6 +408,19 @@ export async function inspectWhispersync(refreshToken: string, fetcher: typeof f
     status: result.status,
     shape: shape(result.data),
     names: [...new Set(names)].slice(0, 30),
+    datasets: Array.isArray(result.data?.datasets)
+      ? result.data.datasets
+          .slice(0, 30)
+          .map((row: Record<string, unknown>) =>
+            Object.fromEntries(
+              ["identifier", "name", "namespace", "lastUpdatedTime"].flatMap((field) =>
+                typeof row[field] === "string" && row[field].length <= 512
+                  ? [[field, row[field]]]
+                  : [],
+              ),
+            ),
+          )
+      : [],
   };
 }
 
