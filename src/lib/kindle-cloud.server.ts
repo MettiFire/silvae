@@ -171,11 +171,11 @@ export async function kindleCatalogue(state: Connected) {
   );
   return { items, partial: data["partial"] as boolean };
 }
-export async function inspectKindleWhispersync(state: Connected) {
+export async function inspectKindleWhispersync(state: Connected, book: KindleBook) {
   const response = await amazonFetch(`${regionHost(state.region)}/kindle/whispersync`, {
     method: "POST",
     headers: {},
-    body: JSON.stringify({ refreshToken: state.refreshToken }),
+    body: JSON.stringify({ refreshToken: state.refreshToken, book }),
   });
   if (!response.ok) return { stage: "transport", status: response.status };
   return response.json();

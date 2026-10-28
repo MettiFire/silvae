@@ -136,7 +136,7 @@ export async function handleKindleJob(
     if (state.phase !== "connected") throw Error();
     if (input.probe)
       probe = await inspectNativeKindleBook(state, input.probe, undefined, input.probe.version);
-    if (input.probe) modern = await inspectKindleWhispersync(state);
+    if (input.probe) modern = await inspectKindleWhispersync(state,input.probe);
     const catalogue = await kindleCatalogue(state);
     const mappings = state.mappings ?? {};
     const candidates = catalogue.items.filter((book) => {
