@@ -241,6 +241,21 @@ export function KindleLibrarySync({
               <UiText text="Ultima posizione letta su Amazon" />: {reading.lastReadPosition}
             </p>
           )}
+          {reading.contentVersion && (
+            <details>
+              <summary className="cursor-pointer">
+                <UiText text="Dati del collegamento" />
+              </summary>
+              <dl className="mt-2 break-all text-xs">
+                {Object.entries(reading.contentVersion).map(([field, value]) => (
+                  <div key={field}>
+                    <dt>{field}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          )}
         </div>
       )}
       {message && (

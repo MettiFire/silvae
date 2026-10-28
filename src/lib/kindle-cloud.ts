@@ -8,6 +8,7 @@ export type KindleBookReading = KindleReadingCheck &
   KindleBook & {
     position?: number;
     lastReadPosition?: number;
+    contentVersion?: { guid?: string; acr?: string };
     updatedAt?: number;
     percentage?: number;
     percentageSource?: "amazon" | "positions";

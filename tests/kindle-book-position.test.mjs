@@ -16,6 +16,7 @@ test("last-read XML reads only the exact last_read position and never annotation
     '<book><highlight pos="99999"/></book>',
     '<book><last_read pos="-1"/></book>',
     '<book><last_read pos="12.5"/></book>',
+    '<book><last_read other-pos="123"/></book>',
     '<book><last_read pos="10"/><last_read pos="20"/></book>',
     '<!DOCTYPE book><book><last_read pos="10"/></book>',
   ])

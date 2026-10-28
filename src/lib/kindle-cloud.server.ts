@@ -582,6 +582,14 @@ export async function probeKindleBook(
       ...base,
       status: "available",
       position: position as number,
+      contentVersion: Object.fromEntries(
+        ["guid", "acr"].flatMap((field) =>
+          typeof data.payload[field] === "string" &&
+          /^[-A-Za-z0-9!:_./+]{1,512}$/.test(data.payload[field])
+            ? [[field, data.payload[field]]]
+            : [],
+        ),
+      ),
       ...(updatedAt === undefined ? {} : { updatedAt }),
       message:
         "Posizione più avanzata recuperata da Amazon. Il totale del libro non è disponibile: nessuna percentuale è stata stimata e la libreria non è stata modificata.",
@@ -599,7 +607,7 @@ export function parseKindleLastRead(text: string): number | undefined {
   if (Buffer.byteLength(text) > 1_000_000 || /<!DOCTYPE|<!ENTITY/i.test(text)) return;
   const tags = [...text.matchAll(/<last_read\b([^<>]*)\/?>/g)];
   if (tags.length !== 1) return;
-  const values = [...tags[0]![1]!.matchAll(/\bpos\s*=\s*(["'])(\d{1,15})\1/g)];
+  const values = [...tags[0]![1]!.matchAll(/(?:^|\s)pos\s*=\s*(["'])(\d{1,15})\1/g)];
   if (values.length !== 1) return;
   const position = Number(values[0]![2]);
   return Number.isSafeInteger(position) && position >= 0 ? position : undefined;
@@ -671,6 +679,7 @@ export async function inspectKindleLastRead(
   } catch {
     console.info("[Kindle last-read] unavailable");
   }
+  return undefined;
 }
 export async function deregister(state: Connected, fetcher: Fetcher = amazonFetch) {
   let access = state.accessToken;
