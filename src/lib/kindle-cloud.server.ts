@@ -517,6 +517,18 @@ export async function probeKindleBook(
     const records = data.payload.records.filter(
       (r: Record<string, unknown>) => r?.["type"] === "kindle.lpr",
     );
+    // Schema only: never log positions, dates, identifiers, annotation content or credentials.
+    console.info(
+      "[Kindle book] schema",
+      JSON.stringify({
+        records: data.payload.records.length,
+        lastRead: records.length,
+        fields: [...new Set(records.flatMap((r: Record<string, unknown>) => Object.keys(r)))].slice(
+          0,
+          40,
+        ),
+      }),
+    );
     if (!records.length)
       return {
         ...base,

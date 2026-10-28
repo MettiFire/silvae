@@ -1,4 +1,7 @@
 export const UI_EN: Record<string, string> = {
+  "Controllo Amazon": "Amazon check",
+  "Posizione di lettura Amazon": "Amazon reading position",
+  "Data della posizione Amazon": "Amazon position date",
   "Sincronizzazione automatica": "Automatic synchronization",
   "Silvae controlla Amazon sul server anche a sito chiuso, tre volte al giorno, circa ogni 8 ore. Il Kindle deve prima sincronizzarsi con Amazon. Le associazioni certe vengono aggiornate; quelle dubbie richiedono conferma. La percentuale viene salvata soltanto se verificabile, senza stimarla dalle pagine.":
     "Silvae checks Amazon on the server even while the site is closed, three times a day, approximately every 8 hours. Kindle must synchronize with Amazon first. Unambiguous book matches are updated; uncertain matches need confirmation. Percentages are saved only when verifiable, never estimated from page counts.",

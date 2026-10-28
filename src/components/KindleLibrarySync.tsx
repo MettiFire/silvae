@@ -1,9 +1,9 @@
 import { useId, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLibrary } from "@/lib/library";
-import { UiText } from "@/lib/ui-language-context";
+import { UiText, UiDate } from "@/lib/ui-language-context";
 import { kindleCloud } from "@/lib/kindle-cloud.functions";
-import type { KindleCatalogue, KindleCloudStatus } from "@/lib/kindle-cloud";
+import type { KindleBookReading, KindleCatalogue, KindleCloudStatus } from "@/lib/kindle-cloud";
 
 const control =
   "min-h-11 w-full rounded-lg border border-border bg-background py-2 pl-3 pr-9 text-sm";
@@ -31,6 +31,7 @@ export function KindleLibrarySync({
   const [libraryId, setLibraryId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [reading, setReading] = useState<KindleBookReading | null>(null);
   const [error, setError] = useState("");
   const book = catalogue?.items.find((item) => `${item.type}:${item.key}` === selected);
   const run = async (action: "catalogue" | "sync") => {
@@ -47,6 +48,7 @@ export function KindleLibrarySync({
       });
       onStatus(result);
       if (result.phase === "connected") {
+        if (action === "sync") setReading(result.bookReading ?? null);
         if (result.catalogue) setCatalogue(result.catalogue);
         if (result.libraryMessage) setMessage(result.libraryMessage);
         if (action === "sync") {
@@ -79,6 +81,7 @@ export function KindleLibrarySync({
               setCatalogue(null);
               setSelected("");
               setLibraryId("");
+              setReading(null);
             }
           }}
           className="mt-1"
@@ -150,6 +153,7 @@ export function KindleLibrarySync({
                       : [];
                     setLibraryId(matches?.length === 1 ? matches[0]!.id : "");
                     setMessage("");
+                    setReading(null);
                   }}
                   className={control}
                 >
@@ -206,6 +210,33 @@ export function KindleLibrarySync({
             </>
           )}
         </form>
+      )}
+      {reading && (
+        <div className="space-y-1 border-t border-border pt-3 text-sm" role="status">
+          <p>
+            <UiText text="Controllo Amazon" />:{" "}
+            <UiDate value={new Date(reading.checkedAt).toISOString()} withTime />
+          </p>
+          {reading.status === "available" && reading.position !== undefined ? (
+            <>
+              <p>
+                <UiText text="Posizione di lettura Amazon" />: {reading.position}
+              </p>
+              <p>
+                <UiText text="Data della posizione Amazon" />:{" "}
+                {reading.updatedAt ? (
+                  <UiDate value={new Date(reading.updatedAt).toISOString()} withTime />
+                ) : (
+                  <UiText text="Non disponibile" />
+                )}
+              </p>
+            </>
+          ) : (
+            <p>
+              <UiText text={reading.message} />
+            </p>
+          )}
+        </div>
       )}
       {message && (
         <p role="status" className="text-sm">
