@@ -212,6 +212,32 @@ test("per-book relay validates the content identifier and never permits extra UR
   }
   assert.equal(calls, 1);
 });
+test("reading record transport permits most_recent_read but rejects note and highlight filters", async () => {
+  const data = {
+    region: "it",
+    path: "/kindle/last-read",
+    book: { type: "PDOC", key: "A".repeat(32) },
+    guid: "CR!test-version",
+    filter: "most_recent_read",
+    body: "",
+    headers: {
+      "x-adp-token": "token",
+      "x-adp-alg": "SHA256withRSA:1.0",
+      "x-adp-signature": "signed",
+    },
+  };
+  assert.equal(
+    (
+      await handleAmazonRelay(request(data), verifyKey, async (url) => {
+        assert.equal(new URL(url).searchParams.get("filter"), "most_recent_read");
+        return new Response("<book/>");
+      })
+    ).status,
+    200,
+  );
+  for (const filter of ["all", "notes", "highlights"])
+    assert.equal((await handleAmazonRelay(request({ ...data, filter }), verifyKey)).status, 400);
+});
 
 test("modern sidecar uses a fixed KFX format parameter without allowing arbitrary query strings", async () => {
   const data = {

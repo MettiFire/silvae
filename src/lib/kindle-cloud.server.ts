@@ -54,7 +54,7 @@ export async function amazonFetch(
       url.href,
     ) && init?.method === "GET";
   const lastRead =
-    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/getAnnotations\?filter=last_read&type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}&guid=[A-Za-z0-9%._~!()*'-]{1,1536}$/.test(
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/getAnnotations\?filter=(?:last_read|most_recent_read)&type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}&guid=[A-Za-z0-9%._~!()*'-]{1,1536}$/.test(
       url.href,
     ) && init?.method === "GET";
   if (
@@ -91,6 +91,7 @@ export async function amazonFetch(
       ? { book: { key: url.searchParams.get("key"), type: url.searchParams.get("type") } }
       : {}),
     ...(lastRead ? { guid: url.searchParams.get("guid") } : {}),
+    ...(lastRead ? { filter: url.searchParams.get("filter") } : {}),
     ...(sidecar && url.searchParams.get("format") === "YJBINARY" ? { format: "YJBINARY" } : {}),
     ...(sidecar && url.searchParams.get("format") === "YJBINARY"
       ? { guid: url.searchParams.get("guid") }
@@ -759,6 +760,51 @@ export async function inspectKindleLastRead(
     console.info("[Kindle last-read] unavailable");
   }
   return undefined;
+}
+export async function inspectKindleRecentRead(
+  state: Connected,
+  book: KindleBook,
+  version: string,
+  fetcher: Fetcher = amazonFetch,
+) {
+  if (!validKindleBook(book) || !/^(?:_LATEST_|CR![A-Z0-9]{10,100})$/.test(version))
+    throw Error("Richiesta Kindle non valida.");
+  const path = `/FionaCDEServiceEngine/getAnnotations?filter=most_recent_read&type=${book.type}&key=${book.key}&guid=${version}`;
+  try {
+    const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, path),
+      signal: AbortSignal.timeout(20_000),
+    });
+    const text = await response.text();
+    if (Buffer.byteLength(text) > 1_000_000) return { status: 502 };
+    const fields = [
+      ...new Set([...text.matchAll(/<\/?([A-Za-z][\w:.-]*)\b/g)].map((m) => m[1]!)),
+    ].slice(0, 30);
+    const attrs = [
+      ...new Set([...text.matchAll(/\b([A-Za-z_:][\w:.-]*)\s*=/g)].map((m) => m[1]!)),
+    ].slice(0, 30);
+    const tags = [...text.matchAll(/<(?:most_recent_read|last_read)\b([^<>]*)\/?>/g)];
+    const observed: Record<string, string> = {};
+    if (tags.length === 1)
+      for (const field of [
+        "pos",
+        "timestamp",
+        "creationTime",
+        "lastModificationTime",
+        "modifiedTimestamp",
+        "method",
+      ]) {
+        const value = new RegExp(`(?:^|\\s)${field}\\s*=\\s*(["'])([^"']{1,512})\\1`).exec(
+          tags[0]![1]!,
+        );
+        if (value) observed[field] = value[2]!;
+      }
+    return { status: response.status, fields, attrs, observed };
+  } catch {
+    return { status: 502 };
+  }
 }
 export async function deregister(state: Connected, fetcher: Fetcher = amazonFetch) {
   let access = state.accessToken;
