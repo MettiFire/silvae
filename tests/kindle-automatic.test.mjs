@@ -7,7 +7,11 @@ import {
   matchKindleLibrary,
 } from "../src/lib/kindle-job.server.ts";
 import { kindlePercentage } from "../src/lib/kindle-progress.ts";
-import { metadataPositions, readWebProgress } from "../services/kindle/api/amazon.ts";
+import {
+  metadataPositions,
+  readWebProgress,
+  inspectWhispersync,
+} from "../services/kindle/api/amazon.ts";
 const key = "a".repeat(64),
   now = Date.now(),
   body = JSON.stringify({
@@ -15,6 +19,33 @@ const key = "a".repeat(64),
     owner: "11111111-1111-1111-1111-111111111111",
     time: now,
   });
+test("modern sync discovery uses only the authenticated identity and returns no tokens, profile values or reading records", async () => {
+  const result = await inspectWhispersync("private-refresh", async (url, init) => {
+    const path = String(url);
+    assert.equal(init.redirect, "manual");
+    if (path.endsWith("/auth/token")) return Response.json({ access_token: "private-access" });
+    assert.equal(init.headers.Authorization, "Bearer private-access");
+    if (path.endsWith("/user/profile"))
+      return Response.json({ user_id: "amzn1.account.owner", email: "private-email" });
+    assert.equal(
+      path,
+      "https://api.amazon.com/whispersync/v2/data/amzn1.account.owner/datasets?quiet=true",
+    );
+    return Response.json({
+      datasets: [{ name: "kindle.most_recent_read", records: [{ value: "private-reading" }] }],
+    });
+  });
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.names, ["kindle.most_recent_read"]);
+  assert.ok(!JSON.stringify(result).includes("private"));
+  let calls = 0;
+  const missing = await inspectWhispersync("refresh", async () => {
+    calls++;
+    return Response.json(calls === 1 ? { access_token: "access" } : {});
+  });
+  assert.equal(missing.stage, "profile");
+  assert.equal(calls, 2);
+});
 test("scheduled requests authenticate the complete payload and expire before any private data is accessed", async () => {
   const signature = jobSignature(body, key);
   assert.ok(authorizedKindleJob(body, signature, key, now));
@@ -62,11 +93,27 @@ test("percentage uses a verified same-edition total, never an annotation end or 
   });
   assert.equal(metadataPositions('arbitraryCode({"startPosition":10,"endPosition":110});'), null);
 });
-test("signed format diagnostics bind a bounded book and revision to the existing job capability",()=>{
- const data={action:"run",owner:"11111111-1111-1111-1111-111111111111",time:now,probe:{key:"A".repeat(32),type:"PDOC",version:"CR!"+"A".repeat(28)}};
- const payload=JSON.stringify(data);assert.ok(authorizedKindleJob(payload,jobSignature(payload,key),key,now));
- for(const probe of [{...data.probe,version:"CR!ABC&url=evil"},{...data.probe,key:"../private"},{...data.probe,type:"OTHER"}]){const invalid=JSON.stringify({...data,probe});assert.equal(authorizedKindleJob(invalid,jobSignature(invalid,key),key,now),null);}
- assert.equal(authorizedKindleJob(payload.replace("PDOC","EBOK"),jobSignature(payload,key),key,now),null);
+test("signed format diagnostics bind a bounded book and revision to the existing job capability", () => {
+  const data = {
+    action: "run",
+    owner: "11111111-1111-1111-1111-111111111111",
+    time: now,
+    probe: { key: "A".repeat(32), type: "PDOC", version: "CR!" + "A".repeat(28) },
+  };
+  const payload = JSON.stringify(data);
+  assert.ok(authorizedKindleJob(payload, jobSignature(payload, key), key, now));
+  for (const probe of [
+    { ...data.probe, version: "CR!ABC&url=evil" },
+    { ...data.probe, key: "../private" },
+    { ...data.probe, type: "OTHER" },
+  ]) {
+    const invalid = JSON.stringify({ ...data, probe });
+    assert.equal(authorizedKindleJob(invalid, jobSignature(invalid, key), key, now), null);
+  }
+  assert.equal(
+    authorizedKindleJob(payload.replace("PDOC", "EBOK"), jobSignature(payload, key), key, now),
+    null,
+  );
 });
 test("automatic association requires one exact title and an author match", () => {
   const book = { title: "Example Book", authors: ["Example Author"] };

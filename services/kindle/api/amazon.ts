@@ -11,6 +11,7 @@ const paths = new Set([
   "/kindle/last-read",
   "/kindle/catalogue",
   "/kindle/progress",
+  "/kindle/whispersync",
 ]);
 const allowedHeaders = new Set([
   "content-type",
@@ -81,7 +82,11 @@ export async function handleAmazonRelay(
     Array.isArray(data.headers)
   )
     return failure(400);
-  if (data.path === "/kindle/catalogue" || data.path === "/kindle/progress") {
+  if (
+    data.path === "/kindle/catalogue" ||
+    data.path === "/kindle/progress" ||
+    data.path === "/kindle/whispersync"
+  ) {
     try {
       const input = JSON.parse(data.body);
       if (
@@ -102,9 +107,11 @@ export async function handleAmazonRelay(
       )
         return failure(400);
       const result =
-        data.path === "/kindle/catalogue"
-          ? await readCatalogue(data.region, input.refreshToken, fetcher)
-          : await readWebProgress(data.region, input.refreshToken, input.books, fetcher);
+        data.path === "/kindle/whispersync"
+          ? await inspectWhispersync(input.refreshToken, fetcher)
+          : data.path === "/kindle/catalogue"
+            ? await readCatalogue(data.region, input.refreshToken, fetcher)
+            : await readWebProgress(data.region, input.refreshToken, input.books, fetcher);
       return new Response(JSON.stringify(result), { headers: responseHeaders });
     } catch {
       return failure(502);
@@ -324,6 +331,85 @@ export async function readWebProgress(
   return result;
 }
 export default { fetch: (request: Request) => handleAmazonRelay(request) };
+
+/** Account-bound metadata discovery. Never return tokens, profile data or dataset records. */
+export async function inspectWhispersync(refreshToken: string, fetcher: typeof fetch = fetch) {
+  const request = async (url: string, init: RequestInit) => {
+    const response = await fetcher(url, {
+      ...init,
+      redirect: "manual",
+      credentials: "omit",
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) return { status: response.status, data: null };
+    const text = await response.text();
+    if (Buffer.byteLength(text) > 1_000_000) throw Error();
+    return { status: response.status, data: JSON.parse(text) };
+  };
+  const token = await request("https://api.amazon.com/auth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      app_name: "Kindle for iOS",
+      app_version: "6.38.0.100",
+      source_token: refreshToken,
+      requested_token_type: "access_token",
+      source_token_type: "refresh_token",
+    }),
+  });
+  if (typeof token.data?.access_token !== "string") return { stage: "token", status: token.status };
+  const headers = {
+    Authorization: `Bearer ${token.data.access_token}`,
+    Accept: "application/json",
+  };
+  const profile = await request("https://api.amazon.com/user/profile", { method: "GET", headers });
+  const owner = profile.data?.user_id;
+  if (typeof owner !== "string" || !/^[A-Za-z0-9.:-]{1,160}$/.test(owner))
+    return { stage: "profile", status: profile.status };
+  const result = await request(
+    `https://api.amazon.com/whispersync/v2/data/${encodeURIComponent(owner)}/datasets?quiet=true`,
+    { method: "GET", headers },
+  );
+  const shape = (value: unknown, depth = 0): unknown =>
+    depth > 3
+      ? typeof value
+      : Array.isArray(value)
+        ? { array: value.length, items: value.length ? [shape(value[0], depth + 1)] : [] }
+        : value && typeof value === "object"
+          ? Object.fromEntries(
+              Object.entries(value)
+                .slice(0, 30)
+                .map(([k, v]) => [k, shape(v, depth + 1)]),
+            )
+          : typeof value;
+  const names: string[] = [];
+  let budget = 200;
+  const visit = (value: unknown, depth = 0) => {
+    if (depth > 5 || budget-- <= 0) return;
+    if (Array.isArray(value)) {
+      value.slice(0, 30).forEach((v) => visit(v, depth + 1));
+      return;
+    }
+    if (value && typeof value === "object")
+      for (const [k, v] of Object.entries(value).slice(0, 30)) {
+        if (
+          ["name", "datasetName", "dataset_name"].includes(k) &&
+          typeof v === "string" &&
+          v.length <= 512 &&
+          /kindle|read|position/i.test(v)
+        )
+          names.push(v);
+        else if (v && typeof v === "object") visit(v, depth + 1);
+      }
+  };
+  visit(result.data);
+  return {
+    stage: "datasets",
+    status: result.status,
+    shape: shape(result.data),
+    names: [...new Set(names)].slice(0, 30),
+  };
+}
 
 export function collectionCsrf(html: string) {
   const quoted = "[\"']((?:\\\\.|[^\"'\\\\]){5,4096})[\"']";

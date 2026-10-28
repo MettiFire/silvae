@@ -73,6 +73,7 @@ export async function amazonFetch(
         "/auth/deregister",
         "/kindle/catalogue",
         "/kindle/progress",
+        "/kindle/whispersync",
       ].includes(url.pathname) ||
       init?.method !== "POST")
   )
@@ -126,7 +127,9 @@ export async function amazonFetch(
     },
     body,
     signal: AbortSignal.timeout(
-      ["/kindle/catalogue", "/kindle/progress"].includes(url.pathname) ? 55_000 : 20_000,
+      ["/kindle/catalogue", "/kindle/progress", "/kindle/whispersync"].includes(url.pathname)
+        ? 55_000
+        : 20_000,
     ),
   }).catch(() => {
     throw Error("Amazon: servizio di collegamento non raggiungibile.");
@@ -167,6 +170,15 @@ export async function kindleCatalogue(state: Connected) {
       item.authors.every((a) => typeof a === "string"),
   );
   return { items, partial: data["partial"] as boolean };
+}
+export async function inspectKindleWhispersync(state: Connected) {
+  const response = await amazonFetch(`${regionHost(state.region)}/kindle/whispersync`, {
+    method: "POST",
+    headers: {},
+    body: JSON.stringify({ refreshToken: state.refreshToken }),
+  });
+  if (!response.ok) return { stage: "transport", status: response.status };
+  return response.json();
 }
 export async function enrichKindleProgress(state: Connected, readings: KindleBookReading[]) {
   const totals = state.totals ?? {};

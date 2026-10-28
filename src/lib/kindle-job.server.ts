@@ -7,6 +7,7 @@ import {
   probeKindleBook,
   enrichKindleProgress,
   inspectNativeKindleBook,
+  inspectKindleWhispersync,
 } from "./kindle-cloud.server.ts";
 import { kindleTitleKey, sameKindleAuthor } from "./kindle-progress.ts";
 import type { KindleBook, KindleBookReading, KindleCatalogue } from "./kindle-cloud.ts";
@@ -125,6 +126,7 @@ export async function handleKindleJob(
   if (!claim) return json({ skipped: true });
   const updates: Record<string, unknown>[] = [];
   let probe: KindleBookReading["nativeReading"];
+  let modern: unknown;
   let ciphertext = claim.ciphertext,
     unknown = 0,
     unmatched = 0,
@@ -134,6 +136,7 @@ export async function handleKindleJob(
     if (state.phase !== "connected") throw Error();
     if (input.probe)
       probe = await inspectNativeKindleBook(state, input.probe, undefined, input.probe.version);
+    if (input.probe) modern = await inspectKindleWhispersync(state);
     const catalogue = await kindleCatalogue(state);
     const mappings = state.mappings ?? {};
     const candidates = catalogue.items.filter((book) => {
@@ -262,7 +265,12 @@ export async function handleKindleJob(
       unmatched,
       error,
     });
-    return json({ ok: !!result, ...result, ...(probe ? { probe } : {}) });
+    return json({
+      ok: !!result,
+      ...result,
+      ...(probe ? { probe } : {}),
+      ...(modern ? { modern } : {}),
+    });
   } catch {
     return json({ error: "Unavailable" }, 503);
   }
