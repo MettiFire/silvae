@@ -123,6 +123,7 @@ export async function handleAmazonRelay(
   }
   const metadata = data.path === "/kindle/metadata";
   const sidecar = data.path === "/kindle/sidecar";
+  if (sidecar && data.format !== undefined && data.format !== "YJBINARY") return failure(400);
   const lastRead = data.path === "/kindle/last-read";
   if (lastRead && (typeof data.guid !== "string" || !/^[-A-Za-z0-9!:_./+]{1,512}$/.test(data.guid)))
     return failure(400);
@@ -155,7 +156,7 @@ export async function handleAmazonRelay(
     const target = metadata
       ? "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000"
       : sidecar
-        ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}`
+        ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}${data.format === "YJBINARY" ? "&format=YJBINARY" : ""}`
         : lastRead
           ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${data.book.type}&key=${data.book.key}&guid=${encodeURIComponent(data.guid)}`
           : `https://api.amazon.${data.region}${data.path}`;

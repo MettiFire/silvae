@@ -258,6 +258,21 @@ export function KindleLibrarySync({
           )}
         </div>
       )}
+      {reading?.nativeReading && (
+        <details>
+          <summary className="cursor-pointer">
+            <UiText text="Dati KFX" />
+          </summary>
+          <dl className="mt-2 break-all text-xs">
+            {Object.entries(reading.nativeReading).map(([field, value]) => (
+              <div key={field}>
+                <dt>{field}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
       {message && (
         <p role="status" className="text-sm">
           <UiText text={message} />

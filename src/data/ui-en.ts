@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Dati KFX": "KFX data",
   "Dati del collegamento": "Connection details",
   "Ultima posizione letta su Amazon": "Last-read position on Amazon",
   "Controllo Amazon": "Amazon check",

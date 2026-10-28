@@ -50,7 +50,7 @@ export async function amazonFetch(
     url.href === "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000" &&
     init?.method === "GET";
   const sidecar =
-    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}$/.test(
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}(?:&format=YJBINARY)?$/.test(
       url.href,
     ) && init?.method === "GET";
   const lastRead =
@@ -90,6 +90,7 @@ export async function amazonFetch(
       ? { book: { key: url.searchParams.get("key"), type: url.searchParams.get("type") } }
       : {}),
     ...(lastRead ? { guid: url.searchParams.get("guid") } : {}),
+    ...(sidecar && url.searchParams.get("format") === "YJBINARY" ? { format: "YJBINARY" } : {}),
     headers: Object.fromEntries(new Headers(init?.headers)),
     body: String(init?.body ?? ""),
   });
@@ -611,6 +612,42 @@ export function parseKindleLastRead(text: string): number | undefined {
   if (values.length !== 1) return;
   const position = Number(values[0]![2]);
   return Number.isSafeInteger(position) && position >= 0 ? position : undefined;
+}
+export async function inspectNativeKindleBook(
+  state: Connected,
+  book: KindleBook,
+  fetcher: Fetcher = amazonFetch,
+): Promise<NonNullable<KindleBookReading["nativeReading"]>> {
+  if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
+  const path = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}&format=YJBINARY`;
+  try {
+    const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, path),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!response.ok) return { status: response.status };
+    const text = await response.text();
+    if (Buffer.byteLength(text) > 1_000_000) return { status: 502 };
+    const data = JSON.parse(text)?.payload;
+    const record = Array.isArray(data?.records)
+      ? data.records.find((r: Record<string, unknown>) => r?.type === "kindle.lpr")
+      : undefined;
+    const clean = (x: unknown) =>
+      typeof x === "string" && /^[-A-Za-z0-9!:_./+ ]{1,512}$/.test(x) ? x : undefined;
+    return {
+      status: response.status,
+      position: clean(
+        typeof record?.location === "number" ? String(record.location) : record?.location,
+      ),
+      date: clean(record?.creationTime),
+      guid: clean(data?.guid),
+      acr: clean(data?.acr),
+    };
+  } catch {
+    return { status: 502 };
+  }
 }
 /** Read the exact version's last_read metadata; do not invent a reading timestamp. */
 export async function inspectKindleLastRead(

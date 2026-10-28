@@ -213,6 +213,36 @@ test("per-book relay validates the content identifier and never permits extra UR
   assert.equal(calls, 1);
 });
 
+test("modern sidecar uses a fixed KFX format parameter without allowing arbitrary query strings", async () => {
+  const data = {
+    region: "it",
+    path: "/kindle/sidecar",
+    book: { type: "PDOC", key: "A".repeat(32) },
+    format: "YJBINARY",
+    body: "",
+    headers: {
+      "x-adp-token": "token",
+      "x-adp-alg": "SHA256withRSA:1.0",
+      "x-adp-signature": "signed",
+    },
+  };
+  assert.equal(
+    (
+      await handleAmazonRelay(request(data), verifyKey, async (url) => {
+        assert.equal(
+          url,
+          `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=PDOC&key=${data.book.key}&format=YJBINARY`,
+        );
+        return Response.json({ payload: { records: [] } });
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await handleAmazonRelay(request({ ...data, format: "YJBINARY&key=other" }), verifyKey)).status,
+    400,
+  );
+});
 test("last-read relay fixes the annotation filter and rejects other annotation requests", async () => {
   const data = {
     region: "it",

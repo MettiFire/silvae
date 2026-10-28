@@ -164,6 +164,8 @@ export const kindleCloud = createServerFn({ method: "POST" })
             ? state.bookReading
             : await probeKindleBook(state, data.book!);
         const { inspectKindleLastRead } = await import("./kindle-cloud.server");
+        const { inspectNativeKindleBook } = await import("./kindle-cloud.server");
+        reading = { ...reading, nativeReading: await inspectNativeKindleBook(state, data.book!) };
         const lastReadPosition = await inspectKindleLastRead(state, data.book!);
         if (lastReadPosition !== undefined) reading = { ...reading, lastReadPosition };
         const enriched = await enrichKindleProgress(state, [reading]);
