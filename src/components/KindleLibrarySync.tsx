@@ -236,6 +236,11 @@ export function KindleLibrarySync({
               <UiText text={reading.message} />
             </p>
           )}
+          {reading.lastReadPosition !== undefined && (
+            <p>
+              <UiText text="Ultima posizione letta su Amazon" />: {reading.lastReadPosition}
+            </p>
+          )}
         </div>
       )}
       {message && (

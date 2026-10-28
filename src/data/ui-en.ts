@@ -1,4 +1,5 @@
 export const UI_EN: Record<string, string> = {
+  "Ultima posizione letta su Amazon": "Last-read position on Amazon",
   "Controllo Amazon": "Amazon check",
   "Posizione di lettura Amazon": "Amazon reading position",
   "Data della posizione Amazon": "Amazon position date",

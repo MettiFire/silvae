@@ -1,10 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
-import { probeKindleBook } from "../src/lib/kindle-cloud.server.ts";
+import { probeKindleBook, parseKindleLastRead } from "../src/lib/kindle-cloud.server.ts";
 const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const state = { phase: "connected", adpToken: "private-token", privateKey };
 const book = { key: "A".repeat(32), type: "PDOC" };
+test("last-read XML reads only the exact last_read position and never annotation or end positions", () => {
+  assert.equal(
+    parseKindleLastRead(
+      '<?xml version="1.0"?><book><last_read pos="43210" method="length"/></book>',
+    ),
+    43210,
+  );
+  for (const text of [
+    '<book><highlight pos="99999"/></book>',
+    '<book><last_read pos="-1"/></book>',
+    '<book><last_read pos="12.5"/></book>',
+    '<book><last_read pos="10"/><last_read pos="20"/></book>',
+    '<!DOCTYPE book><book><last_read pos="10"/></book>',
+  ])
+    assert.equal(parseKindleLastRead(text), undefined);
+});
 test("signed book lookup returns only verified last-read position and timestamp, never an estimated percent or annotations", async () => {
   const result = await probeKindleBook(state, book, async (url, init) => {
     assert.equal(

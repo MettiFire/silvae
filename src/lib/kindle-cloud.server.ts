@@ -595,7 +595,16 @@ export async function probeKindleBook(
     };
   }
 }
-/** Temporary schema probe for an explicitly selected book, restricted to last_read metadata. */
+export function parseKindleLastRead(text: string): number | undefined {
+  if (Buffer.byteLength(text) > 1_000_000 || /<!DOCTYPE|<!ENTITY/i.test(text)) return;
+  const tags = [...text.matchAll(/<last_read\b([^<>]*)\/?>/g)];
+  if (tags.length !== 1) return;
+  const values = [...tags[0]![1]!.matchAll(/\bpos\s*=\s*(["'])(\d{1,15})\1/g)];
+  if (values.length !== 1) return;
+  const position = Number(values[0]![2]);
+  return Number.isSafeInteger(position) && position >= 0 ? position : undefined;
+}
+/** Read the exact version's last_read metadata; do not invent a reading timestamp. */
 export async function inspectKindleLastRead(
   state: Connected,
   book: KindleBook,
@@ -658,6 +667,7 @@ export async function inspectKindleLastRead(
       );
     }
     console.info("[Kindle last-read] schema", JSON.stringify(fields));
+    if (response.ok) return parseKindleLastRead(text);
   } catch {
     console.info("[Kindle last-read] unavailable");
   }

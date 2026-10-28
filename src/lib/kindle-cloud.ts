@@ -7,6 +7,7 @@ export type KindleCatalogue = {
 export type KindleBookReading = KindleReadingCheck &
   KindleBook & {
     position?: number;
+    lastReadPosition?: number;
     updatedAt?: number;
     percentage?: number;
     percentageSource?: "amazon" | "positions";
