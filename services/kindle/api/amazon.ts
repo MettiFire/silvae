@@ -108,7 +108,7 @@ export async function handleAmazonRelay(
         return failure(400);
       const result =
         data.path === "/kindle/whispersync"
-          ? await inspectWhispersync(input.refreshToken, fetcher)
+          ? await inspectWhispersync(input.refreshToken, fetcher, input.book)
           : data.path === "/kindle/catalogue"
             ? await readCatalogue(data.region, input.refreshToken, fetcher)
             : await readWebProgress(data.region, input.refreshToken, input.books, fetcher);
@@ -333,7 +333,13 @@ export async function readWebProgress(
 export default { fetch: (request: Request) => handleAmazonRelay(request) };
 
 /** Account-bound metadata discovery. Never return tokens, profile data or dataset records. */
-export async function inspectWhispersync(refreshToken: string, fetcher: typeof fetch = fetch) {
+export async function inspectWhispersync(
+  refreshToken: string,
+  fetcher: typeof fetch = fetch,
+  book?: { key: string; type: string },
+) {
+  if (book && (!["PDOC", "EBOK"].includes(book.type) || !/^[A-Z0-9]{10,64}$/.test(book.key)))
+    throw Error("Invalid book");
   const request = async (url: string, init: RequestInit) => {
     const response = await fetcher(url, {
       ...init,
@@ -403,11 +409,50 @@ export async function inspectWhispersync(refreshToken: string, fetcher: typeof f
       }
   };
   visit(result.data);
+  let reading: unknown;
+  if (book && Array.isArray(result.data?.datasets)) {
+    const dataset = result.data.datasets.find(
+      (row: Record<string, unknown>) =>
+        row["namespace"] === "BookReadStates" && row["name"] === "CurrentStates",
+    );
+    const link = dataset?.links?.records;
+    if (typeof link === "string") {
+      const url = new URL(link, "https://api.amazon.com");
+      if (
+        url.protocol === "https:" &&
+        url.hostname === "api.amazon.com" &&
+        !url.username &&
+        !url.password &&
+        url.pathname.startsWith(`/whispersync/v2/data/${encodeURIComponent(owner)}/`)
+      ) {
+        const records = await request(url.href, { method: "GET", headers });
+        const rows = Array.isArray(records.data?.records) ? records.data.records : [];
+        const target = new RegExp(`(?:^|[^A-Za-z0-9])${book.key}(?:$|[^A-Za-z0-9])`, "i");
+        const matches = rows
+          .filter((row: unknown) => target.test(JSON.stringify(row)))
+          .slice(0, 5)
+          .map((row: Record<string, unknown>) =>
+            Object.fromEntries(
+              ["key", "value", "type", "version", "lastUpdatedTime"].flatMap((field) =>
+                Object.prototype.hasOwnProperty.call(row, field) ? [[field, row[field]]] : [],
+              ),
+            ),
+          );
+        reading = {
+          status: records.status,
+          count: rows.length,
+          shape: shape(records.data),
+          matches,
+        };
+      }
+    }
+  }
   return {
     stage: "datasets",
     status: result.status,
     shape: shape(result.data),
     names: [...new Set(names)].slice(0, 30),
+    ...(reading ? { reading } : {}),
     datasets: Array.isArray(result.data?.datasets)
       ? result.data.datasets
           .slice(0, 30)

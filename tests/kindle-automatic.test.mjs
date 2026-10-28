@@ -46,6 +46,51 @@ test("modern sync discovery uses only the authenticated identity and returns no 
   assert.equal(missing.stage, "profile");
   assert.equal(calls, 2);
 });
+test("Whispersync reads only current book states and filters records to the selected book", async () => {
+  const book = { key: "A".repeat(32), type: "PDOC" };
+  const calls = [];
+  const result = await inspectWhispersync(
+    "refresh",
+    async (url) => {
+      const path = String(url);
+      calls.push(path);
+      if (path.endsWith("/auth/token")) return Response.json({ access_token: "access" });
+      if (path.endsWith("/user/profile")) return Response.json({ user_id: "owner" });
+      if (path.includes("/datasets?"))
+        return Response.json({
+          datasets: [
+            {
+              name: "CurrentStates",
+              namespace: "BookReadStates",
+              links: {
+                records: "/whispersync/v2/data/owner/datasets/BookReadStates/CurrentStates/records",
+              },
+            },
+            {
+              name: "NotebookEntries",
+              namespace: "NoteEntriesProd",
+              links: { records: "https://evil.test/private" },
+            },
+          ],
+        });
+      return Response.json({
+        records: [
+          {
+            key: `PDOC:${book.key}`,
+            value: { state: "reading" },
+            lastUpdatedTime: "2026-10-28T07:55:17Z",
+          },
+          { key: "other", value: "other-book-private" },
+        ],
+      });
+    },
+    book,
+  );
+  assert.equal(result.reading.count, 2);
+  assert.equal(result.reading.matches.length, 1);
+  assert.ok(!JSON.stringify(result).includes("other-book-private"));
+  assert.ok(calls.every((x) => x.startsWith("https://api.amazon.com/")));
+});
 test("scheduled requests authenticate the complete payload and expire before any private data is accessed", async () => {
   const signature = jobSignature(body, key);
   assert.ok(authorizedKindleJob(body, signature, key, now));
@@ -65,6 +110,9 @@ test("scheduled requests authenticate the complete payload and expire before any
   );
   assert.equal(response.status, 401);
   assert.equal(called, false);
+});
+test("Whispersync never forwards account credentials to off-host or another-owner record links",async()=>{
+ for(const link of ["https://evil.test/records","https://api.amazon.com/whispersync/v2/data/someone-else/datasets/records"]){let calls=0;const result=await inspectWhispersync("refresh",async(url)=>{calls++;const path=String(url);if(path.endsWith("/auth/token"))return Response.json({access_token:"access"});if(path.endsWith("/user/profile"))return Response.json({user_id:"owner"});return Response.json({datasets:[{name:"CurrentStates",namespace:"BookReadStates",links:{records:link}}]});},{key:"A".repeat(32),type:"PDOC"});assert.equal(calls,3);assert.equal(result.reading,undefined);}
 });
 test("percentage uses a verified same-edition total, never an annotation end or assumed scale", () => {
   const reading = { key: "A".repeat(32), type: "PDOC", status: "available", position: 30 };
