@@ -8,6 +8,7 @@ const paths = new Set([
   "/auth/deregister",
   "/kindle/metadata",
   "/kindle/sidecar",
+  "/kindle/last-read",
   "/kindle/catalogue",
   "/kindle/progress",
 ]);
@@ -122,15 +123,16 @@ export async function handleAmazonRelay(
   }
   const metadata = data.path === "/kindle/metadata";
   const sidecar = data.path === "/kindle/sidecar";
+  const lastRead = data.path === "/kindle/last-read";
   if (
-    sidecar &&
+    (sidecar || lastRead) &&
     (!data.book ||
       !["PDOC", "EBOK"].includes(data.book.type) ||
       typeof data.book.key !== "string" ||
       !/^[A-Z0-9]{10,64}$/.test(data.book.key))
   )
     return failure(400);
-  const reading = metadata || sidecar;
+  const reading = metadata || sidecar || lastRead;
   if (
     reading &&
     (data.body !== "" ||
@@ -152,7 +154,9 @@ export async function handleAmazonRelay(
       ? "https://todo-ta-g7g.amazon.com/FionaTodoListProxy/syncMetaData?item_count=1000"
       : sidecar
         ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=${data.book.type}&key=${data.book.key}`
-        : `https://api.amazon.${data.region}${data.path}`;
+        : lastRead
+          ? `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${data.book.type}&key=${data.book.key}`
+          : `https://api.amazon.${data.region}${data.path}`;
     const response = await fetcher(target, {
       method: reading ? "GET" : "POST",
       headers,

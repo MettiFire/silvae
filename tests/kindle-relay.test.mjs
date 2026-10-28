@@ -212,3 +212,35 @@ test("per-book relay validates the content identifier and never permits extra UR
   }
   assert.equal(calls, 1);
 });
+
+test("last-read relay fixes the annotation filter and rejects other annotation requests", async () => {
+  const data = {
+    region: "it",
+    path: "/kindle/last-read",
+    book: { type: "PDOC", key: "A".repeat(32) },
+    body: "",
+    headers: {
+      "x-adp-token": "token",
+      "x-adp-alg": "SHA256withRSA:1.0",
+      "x-adp-signature": "signed",
+    },
+  };
+  let calls = 0;
+  const upstream = async (url, init) => {
+    calls++;
+    assert.equal(
+      url,
+      `https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=PDOC&key=${data.book.key}`,
+    );
+    assert.equal(init.method, "GET");
+    return new Response("<annotations/>");
+  };
+  assert.equal((await handleAmazonRelay(request(data), verifyKey, upstream)).status, 200);
+  for (const bad of [
+    { ...data, path: "/kindle/last-read?filter=all" },
+    { ...data, body: "{}" },
+    { ...data, book: { ...data.book, key: "bad&filter=all" } },
+  ])
+    assert.equal((await handleAmazonRelay(request(bad), verifyKey, upstream)).status, 400);
+  assert.equal(calls, 1);
+});

@@ -53,9 +53,14 @@ export async function amazonFetch(
     /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/sidecar\?type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}$/.test(
       url.href,
     ) && init?.method === "GET";
+  const lastRead =
+    /^https:\/\/cde-ta-g7g\.amazon\.com\/FionaCDEServiceEngine\/getAnnotations\?filter=last_read&type=(PDOC|EBOK)&key=[A-Z0-9]{10,64}$/.test(
+      url.href,
+    ) && init?.method === "GET";
   if (
     !metadata &&
     !sidecar &&
+    !lastRead &&
     (url.protocol !== "https:" ||
       !["api.amazon.it", "api.amazon.com"].includes(url.host) ||
       url.username ||
@@ -74,8 +79,14 @@ export async function amazonFetch(
     throw Error("Richiesta Amazon non valida.");
   const body = JSON.stringify({
     region: url.hostname.endsWith(".it") ? "it" : "com",
-    path: metadata ? "/kindle/metadata" : sidecar ? "/kindle/sidecar" : url.pathname,
-    ...(sidecar
+    path: metadata
+      ? "/kindle/metadata"
+      : sidecar
+        ? "/kindle/sidecar"
+        : lastRead
+          ? "/kindle/last-read"
+          : url.pathname,
+    ...(sidecar || lastRead
       ? { book: { key: url.searchParams.get("key"), type: url.searchParams.get("type") } }
       : {}),
     headers: Object.fromEntries(new Headers(init?.headers)),
@@ -579,6 +590,43 @@ export async function probeKindleBook(
       message:
         "La posizione di questo libro non è al momento leggibile. Il collegamento Amazon rimane attivo.",
     };
+  }
+}
+/** Temporary schema probe for an explicitly selected book, restricted to last_read metadata. */
+export async function inspectKindleLastRead(
+  state: Connected,
+  book: KindleBook,
+  fetcher: Fetcher = amazonFetch,
+) {
+  if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
+  const path = `/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${book.type}&key=${book.key}`;
+  try {
+    const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
+      method: "GET",
+      redirect: "manual",
+      headers: signedHeaders(state, path),
+      signal: AbortSignal.timeout(20_000),
+    });
+    console.info("[Kindle last-read] HTTP", response.status);
+    const text = await response.text();
+    if (Buffer.byteLength(text) > 1_000_000) return;
+    let fields: string[] = [];
+    try {
+      const data = JSON.parse(text);
+      fields = Object.keys(data);
+      for (const [name, value] of Object.entries(data)) {
+        if (Array.isArray(value) && value[0] && typeof value[0] === "object") fields.push(...Object.keys(value[0]).map(k=>`${name}[].${k}`));
+      }
+      if (data.payload && typeof data.payload === "object")
+        fields.push(...Object.keys(data.payload).map((k) => `payload.${k}`));
+    } catch {
+      fields = [
+        ...new Set([...text.matchAll(/<\/?([A-Za-z][\w:.-]*)\b/g)].map((m) => m[1]!)),
+      ].slice(0, 40);
+    }
+    console.info("[Kindle last-read] schema", JSON.stringify(fields));
+  } catch {
+    console.info("[Kindle last-read] unavailable");
   }
 }
 export async function deregister(state: Connected, fetcher: Fetcher = amazonFetch) {
