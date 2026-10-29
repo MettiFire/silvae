@@ -43,7 +43,6 @@ import {
   awardBounds,
   fullAwardEnrollment,
   createEnrollment,
-  challengeSlots,
   challengeProgress,
   eligibleReading,
   validateEnrollment,

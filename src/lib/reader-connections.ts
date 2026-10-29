@@ -30,23 +30,9 @@ export const READER_RESULTS: Record<string, string> = {
   missing_time: "Data di lettura non disponibile",
   missing_library: "Libro rimosso dalla libreria",
 };
-export function newReaderSecret() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
-    b.toString(16).padStart(2, "0"),
-  ).join("");
-}
 export function readerError(e: unknown) {
   const error = e as { code?: string; message?: string };
   if (["42P01", "42703", "PGRST202", "PGRST205"].includes(error?.code ?? ""))
     return "Dispositivi non ancora attivi: applica la migrazione del database indicata nelle istruzioni del progetto.";
   return error?.message ?? "Collegamento non riuscito. Riprova.";
-}
-export function readerConfiguration(
-  connection: string,
-  kind: ReaderKind,
-  token: string,
-  url: string,
-  key: string,
-) {
-  return { version: 1, connection, kind, token, url, key };
 }

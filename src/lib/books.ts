@@ -627,10 +627,6 @@ export async function searchByIsbn(isbn: string) {
   return searchBooks(clean, { max: 5 });
 }
 
-export async function booksByAuthor(author: string) {
-  return searchBooks(`inauthor:"${author}"`, { max: 24 });
-}
-
 export async function discoverBooks(opts: {
   genre?: string;
   year?: string;
@@ -675,46 +671,6 @@ export async function cacheBook(book: Book) {
     { onConflict: "id", ignoreDuplicates: true },
   );
   if (error) throw error;
-}
-
-export const GENRES = [
-  "Fiction",
-  "Nonfiction",
-  "Fantasy",
-  "Science Fiction",
-  "Mystery",
-  "Thriller",
-  "Romance",
-  "History",
-  "Biography",
-  "Philosophy",
-  "Poetry",
-  "Science",
-  "Business",
-];
-
-/** Se manca la copertina, prova Open Library (per ISBN, poi per titolo+autore). */
-export async function withCover(book: Book, isbn?: string): Promise<Book> {
-  if (book.cover_url) return book;
-  const code = (isbn ?? "").replace(/[^0-9Xx]/g, "");
-  if (code) {
-    const url = `https://covers.openlibrary.org/b/isbn/${code}-L.jpg?default=false`;
-    try {
-      const res = await fetch(url, { method: "HEAD" });
-      if (res.ok) return { ...book, cover_url: url };
-    } catch {
-      /* ignora */
-    }
-  }
-  try {
-    const q = [book.title, book.authors[0]].filter(Boolean).join(" ");
-    const hits = await olSearch(q, 3);
-    const found = hits.find((h) => h.cover_url);
-    if (found?.cover_url) return { ...book, cover_url: found.cover_url };
-  } catch {
-    /* ignora */
-  }
-  return book;
 }
 
 /** Proposte di copertina alternative (Google Libri + Open Library). */

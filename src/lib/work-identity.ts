@@ -112,12 +112,3 @@ export function canRecommendWork(
   }
   return true;
 }
-export function uniqueRecommendationWorks(
-  books: WorkBook[],
-  identities: WorkIdentities = {},
-): WorkBook[] {
-  const result: WorkBook[] = [];
-  for (const book of books)
-    if (!result.some((other) => sameReadingWork(book, other, identities))) result.push(book);
-  return result;
-}

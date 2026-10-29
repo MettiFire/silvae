@@ -178,15 +178,6 @@ export async function kindleCatalogue(state: Connected) {
   );
   return { items, partial: data["partial"] as boolean };
 }
-export async function inspectKindleWhispersync(state: Connected, book: KindleBook) {
-  const response = await amazonFetch(`${regionHost(state.region)}/kindle/whispersync`, {
-    method: "POST",
-    headers: {},
-    body: JSON.stringify({ refreshToken: state.refreshToken, book }),
-  });
-  if (!response.ok) return { stage: "transport", status: response.status };
-  return response.json();
-}
 export async function enrichKindleProgress(state: Connected, readings: KindleBookReading[]) {
   const totals = state.totals ?? {};
   // Web metadata describes a different rendition; its total cannot scale KFX positions.
@@ -499,14 +490,6 @@ export async function probeKindleMetadata(
           "Amazon ha restituito un formato di lettura non utilizzabile. La tua libreria non è stata modificata.",
       };
     const count = [...body.matchAll(/<meta_data(?:\s|>)/g)].length;
-    const tags = [
-      ...new Set(
-        [...body.matchAll(/<\/?([A-Za-z_][A-Za-z0-9_.:-]{0,64})(?:[\s/>])/g)].map(
-          (match) => match[1],
-        ),
-      ),
-    ].slice(0, 40);
-    console.info("[Kindle metadata] XML elements", tags.join(","));
     const emptyFeed =
       /^\s*<response\s*\/>\s*$/.test(body) ||
       (/<add_update_list(?:\s[^>]*)?\/>|<add_update_list(?:\s[^>]*)?>\s*<\/add_update_list>/.test(
@@ -569,20 +552,6 @@ export async function probeKindleBook(
     if (version && data.payload.guid !== version) throw Error();
     const records = data.payload.records.filter(
       (r: Record<string, unknown>) => r?.["type"] === "kindle.lpr",
-    );
-    // Schema only: never log positions, dates, identifiers, annotation content or credentials.
-    console.info(
-      "[Kindle book] schema",
-      JSON.stringify({
-        topFields: Object.keys(data).slice(0, 30),
-        payloadFields: Object.keys(data.payload).slice(0, 30),
-        records: data.payload.records.length,
-        lastRead: records.length,
-        fields: [...new Set(records.flatMap((r: Record<string, unknown>) => Object.keys(r)))].slice(
-          0,
-          40,
-        ),
-      }),
     );
     if (!records.length)
       return {
@@ -674,27 +643,6 @@ export async function inspectNativeKindleBook(
     const text = await response.text();
     if (Buffer.byteLength(text) > 1_000_000) return { status: 502 };
     const data = JSON.parse(text)?.payload;
-    console.info(
-      "[Kindle KFX] schema",
-      JSON.stringify({
-        types: Array.isArray(data?.records)
-          ? [
-              ...new Set(
-                data.records
-                  .map((r: Record<string, unknown>) => r["type"])
-                  .filter(
-                    (t: unknown) => typeof t === "string" && /^[A-Za-z0-9_.-]{1,80}$/.test(t),
-                  ),
-              ),
-            ]
-          : [],
-        fields: Array.isArray(data?.records)
-          ? [
-              ...new Set(data.records.flatMap((r: Record<string, unknown>) => Object.keys(r))),
-            ].slice(0, 40)
-          : [],
-      }),
-    );
     const record = Array.isArray(data?.records)
       ? data.records.find((r: Record<string, unknown>) => r?.["type"] === "kindle.lpr")
       : undefined;
@@ -715,75 +663,6 @@ export async function inspectNativeKindleBook(
   } catch {
     return { status: 502 };
   }
-}
-/** Read the exact version's last_read metadata; do not invent a reading timestamp. */
-export async function inspectKindleLastRead(
-  state: Connected,
-  book: KindleBook,
-  fetcher: Fetcher = amazonFetch,
-) {
-  if (!validKindleBook(book)) throw Error("Richiesta Kindle non valida.");
-  try {
-    const sidecarPath = `/FionaCDEServiceEngine/sidecar?type=${book.type}&key=${book.key}`;
-    const sidecar = await fetcher(`https://cde-ta-g7g.amazon.com${sidecarPath}`, {
-      method: "GET",
-      redirect: "manual",
-      headers: signedHeaders(state, sidecarPath),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!sidecar.ok) return;
-    const sidecarText = await sidecar.text();
-    if (Buffer.byteLength(sidecarText) > 1_000_000) return;
-    const guid = JSON.parse(sidecarText)?.payload?.guid;
-    if (typeof guid !== "string" || !/^[-A-Za-z0-9!:_./+]{1,512}$/.test(guid)) {
-      console.info("[Kindle last-read] version unavailable");
-      return;
-    }
-    const path = `/FionaCDEServiceEngine/getAnnotations?filter=last_read&type=${book.type}&key=${book.key}&guid=${encodeURIComponent(guid)}`;
-    const response = await fetcher(`https://cde-ta-g7g.amazon.com${path}`, {
-      method: "GET",
-      redirect: "manual",
-      headers: signedHeaders(state, path),
-      signal: AbortSignal.timeout(20_000),
-    });
-    console.info("[Kindle last-read] HTTP", response.status);
-    const text = await response.text();
-    if (Buffer.byteLength(text) > 1_000_000) return;
-    if (!response.ok)
-      console.info(
-        "[Kindle last-read] error fields",
-        JSON.stringify(
-          ["guid", "key", "filter", "type", "missing", "required", "invalid"].filter((word) =>
-            new RegExp(`\\b${word}\\b`, "i").test(text),
-          ),
-        ),
-      );
-    let fields: string[] = [];
-    try {
-      const data = JSON.parse(text);
-      fields = Object.keys(data);
-      for (const [name, value] of Object.entries(data)) {
-        if (Array.isArray(value) && value[0] && typeof value[0] === "object")
-          fields.push(...Object.keys(value[0]).map((k) => `${name}[].${k}`));
-      }
-      if (data.payload && typeof data.payload === "object")
-        fields.push(...Object.keys(data.payload).map((k) => `payload.${k}`));
-    } catch {
-      fields = [
-        ...new Set([...text.matchAll(/<\/?([A-Za-z][\w:.-]*)\b/g)].map((m) => m[1]!)),
-      ].slice(0, 40);
-      fields.push(
-        ...[
-          ...new Set([...text.matchAll(/\b([A-Za-z_:][\w:.-]*)\s*=/g)].map((m) => `@${m[1]}`)),
-        ].slice(0, 30),
-      );
-    }
-    console.info("[Kindle last-read] schema", JSON.stringify(fields));
-    if (response.ok) return parseKindleLastRead(text);
-  } catch {
-    console.info("[Kindle last-read] unavailable");
-  }
-  return undefined;
 }
 export async function inspectKindleRecentRead(
   state: Connected,

@@ -9,7 +9,6 @@ import {
   resolveUiLanguage,
   UI_LANGUAGE_KEY,
   type UiChoice,
-  type UiLanguage,
 } from "./ui-language.ts";
 export function UiLanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
