@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { parsePreferences, emptyPreferences } from "../src/lib/reading-preferences.ts";
 import { resolveFragmentLanguages } from "../src/lib/fragment-languages.ts";
 import { selectMultilingualFragment } from "../src/lib/fragment-archive.ts";
+import { fragmentSlotDay } from "../src/lib/daily-fragment.ts";
 import { unifiedSearchResults } from "../src/lib/unified-search.ts";
 import { aniListCatalogue, mangaAuthorMatches } from "../src/lib/anilist-catalogue.ts";
 
@@ -19,8 +20,27 @@ test("fragment languages survive preference parsing independently of UI and cata
   assert.equal(result.uiLanguage, "en");
   assert.equal(result.language, "fr");
   assert.deepEqual(result.ebookDevices, ["kobo"]);
-  assert.deepEqual(resolveFragmentLanguages(undefined, "it"), ["it"]);
+  assert.deepEqual(resolveFragmentLanguages(undefined, "it"), ["it", "en"]);
   assert.deepEqual(resolveFragmentLanguages([], "en"), ["en"]);
+});
+test("Italian UI alternates daily triplets while respecting explicit language preferences", () => {
+  const pool = ["it", "en"].flatMap(language =>
+    Array.from({ length: 12 }, (_, i) => ({
+      id: `${language}${i}`, title: `${language} book ${i}`, author: `Author ${i}`, language,
+    })),
+  );
+  for (const preference of [undefined, ["en", "it"]]) {
+    const languages = resolveFragmentLanguages(preference, "it");
+    const triplet = day => [0, 1, 2].map(slot =>
+      selectMultilingualFragment(fragmentSlotDay(day, slot), pool, languages),
+    );
+    assert.deepEqual(triplet("2026-11-01").map(f => f.language), ["it", "en", "it"]);
+    assert.deepEqual(triplet("2026-11-02").map(f => f.language), ["en", "it", "en"]);
+    assert.equal(new Set([...triplet("2026-11-01"), ...triplet("2026-11-02")].map(f => f.id)).size, 6);
+  }
+  assert.deepEqual(resolveFragmentLanguages(["it"], "it"), ["it"]);
+  assert.deepEqual(resolveFragmentLanguages(["en"], "it"), ["en"]);
+  assert.equal(selectMultilingualFragment("2026-11-01", pool.filter(f => f.language === "it"), ["it", "en"]).language, "it");
 });
 test("multilingual rotation balances languages and visits every work in even-sized pools", () => {
   const pool = [

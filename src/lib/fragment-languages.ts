@@ -9,5 +9,7 @@ export function parseFragmentLanguages(value: unknown): string[] {
 }
 export function resolveFragmentLanguages(value: unknown, uiLanguage: string) {
   const selected = parseFragmentLanguages(value);
-  return selected.length ? selected : [uiLanguage === "en" ? "en" : "it"];
+  const languages = selected.length ? selected : uiLanguage === "en" ? ["en"] : ["it", "en"];
+  // Italian comes first in the six-slot cycle: IT/EN/IT, then EN/IT/EN.
+  return uiLanguage === "it" && languages.length > 1 ? ["it", "en"] : languages;
 }

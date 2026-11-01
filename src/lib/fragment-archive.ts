@@ -154,9 +154,7 @@ export function selectMultilingualFragment(
   pool: readonly ArchivedFragment[],
   languages: readonly string[],
 ) {
-  const available = [...new Set(languages)]
-    .filter((l) => pool.some((e) => e.language === l))
-    .sort();
+  const available = [...new Set(languages)].filter((l) => pool.some((e) => e.language === l));
   if (!available.length) throw Error("Empty fragment archive");
   const epoch = Date.parse("2026-10-26T00:00:00Z");
   const date = Date.parse(`${day}T00:00:00Z`);
