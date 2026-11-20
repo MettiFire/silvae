@@ -10,6 +10,11 @@ complete. A source-code checkout is not a backup of users or uploaded files.
 - Use Node.js 24, matching the project's declared runtime and Vercel settings.
 - Run `NITRO_PRESET=vercel npm run build`. Nitro generates `.vercel/output`;
   deploy the server functions and static assets together, not just static files.
+- On Vercel, disable automatic exposure of system environment variables. If the
+  platform still injects `VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG`, use
+  `env -u VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG NITRO_PRESET=vercel npm run build`
+  as the build command. Silvae does not use this client instrumentation setting;
+  keep the public environment allowlist strict.
 - Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and
   `VITE_SUPABASE_PROJECT_ID` for the destination project before building.
 - Set server-side `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` for backend jobs.
