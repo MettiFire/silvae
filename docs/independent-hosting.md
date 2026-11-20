@@ -62,3 +62,35 @@ remain in server environment variables or a private password manager.
 Do not enable a Lovable trial merely to wait on local build work. The useful window
 starts when the destination can receive the export. Confirm that any trial grants
 Cloud access: editor access alone does not necessarily reactivate a paused backend.
+
+## Restore checks
+
+The Lovable export may be a ZIP containing a PostgreSQL custom archive compressed
+with zstd. Verify that the chosen `pg_restore` can actually decode its data;
+listing the archive alone does not prove compression support. PostgreSQL 17 client
+tools with zstd support can read this format. Keep the original and its checksum
+outside the repository.
+
+Restore application objects and account identities selectively into the empty
+destination in a transaction with error-stop enabled. Preserve user IDs and
+password hashes. Keep destination-managed schemas, internal migration history,
+role defaults and sessions under the destination's control. Lovable-only grants
+such as `sandbox_exec` do not belong in the new project. Include application
+triggers on `auth.users` and application policies on `storage.objects` explicitly;
+a restore restricted to the `public` schema misses them.
+
+Compare explicit grants after restoring: destination defaults can add permissions
+that the source never granted, even when the source's grant statements are replayed.
+Check function execution, table and column permissions, RLS, and cross-user writes.
+Retain the source's intentional social reads rather than assuming all library
+records are private to their owner.
+
+Copy file payloads through the Storage API, preserving bucket settings, paths and
+ownership. Compare downloaded hashes after uploading. Regenerate signed cover
+URLs with the destination and update public image URLs. Copying old signed URLs
+or inserting storage metadata alone does not transfer the files.
+
+Before cutover, compare table counts and account identities/password hashes, test
+access boundaries, and complete actual email/Google sign-in on the new host.
+An intact database restore does not configure an OAuth provider or recover
+server-side reader encryption keys.
