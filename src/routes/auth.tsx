@@ -7,6 +7,7 @@ import { toast } from "@/lib/localized-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { authDestination } from "@/lib/auth-destination";
+import { startGoogleSignIn } from "@/lib/google-sign-in";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
@@ -124,10 +125,12 @@ function AuthPage() {
     setError("");
     setNotice("");
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth?${new URLSearchParams({ returnTo: destination })}`,
-      });
-      if (result.error) throw result.error;
+      const result = await startGoogleSignIn(
+        import.meta.env["VITE_AUTH_MODE"],
+        `${window.location.origin}/auth?${new URLSearchParams({ returnTo: destination })}`,
+        supabase.auth,
+        lovable.auth.signInWithOAuth,
+      );
       if (result.redirected) return;
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;

@@ -3,6 +3,9 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "node scripts/audit-client-secrets.mjs --env && vite build && node scripts/audit-client-secrets.mjs --bundle",

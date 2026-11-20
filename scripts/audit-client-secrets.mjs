@@ -22,10 +22,13 @@ export function inspectPublicEnv(env) {
     "VITE_SUPABASE_URL",
     "VITE_SUPABASE_PUBLISHABLE_KEY",
     "VITE_SUPABASE_PROJECT_ID",
+    "VITE_AUTH_MODE",
   ]);
   const errors = Object.keys(env)
     .filter((key) => key.startsWith("VITE_") && !allowed.has(key))
     .map((key) => `${key}: public variable not approved`);
+  if (env.VITE_AUTH_MODE !== undefined && !["lovable", "supabase"].includes(env.VITE_AUTH_MODE))
+    errors.push("VITE_AUTH_MODE: expected lovable or supabase");
   if (env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     try {
       const key = env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -68,11 +71,11 @@ async function main() {
           typeof value === "string",
       )
       .map(([, value]) => value);
-    const outDir = await fs
-      .access(".output/public")
-      .then(() => ".output/public")
-      .catch(() => "dist/client");
-    for (const file of await files(outDir))
+    const outDirs = [];
+    for (const dir of [".vercel/output/static", ".output/public", "dist/client"])
+      if (await fs.access(dir).then(() => true, () => false)) outDirs.push(dir);
+    if (!outDirs.length) errors.push("No public build output found to audit");
+    for (const file of (await Promise.all(outDirs.map(files))).flat())
       if (/\.(?:js|html|map)$/.test(file)) {
         const text = await fs.readFile(file, "utf8");
         for (const finding of inspectClientText(text, secrets)) errors.push(`${file}: ${finding}`);
