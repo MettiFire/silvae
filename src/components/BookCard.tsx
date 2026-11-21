@@ -11,6 +11,7 @@ import { CoverReportButton } from "@/components/CoverReportButton";
 import { LeafRating } from "@/components/LeafRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export function BookCover({
   book,
@@ -45,7 +46,23 @@ export function BookCover({
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
-  const source = [...new Set([...initial, ...alternatives])].find((url) => !failed.has(url));
+  const candidate = [...new Set([...initial, ...alternatives])].find((url) => !failed.has(url));
+  const { data: verified, fetchStatus: verificationFetch } = useQuery({
+    queryKey: ["verified-book-cover", book.id],
+    enabled: visible && !candidate && !isPending && !isFetching,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("verified_book_covers")
+        .select("cover_url")
+        .eq("book_id", book.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.cover_url ?? null;
+    },
+    staleTime: 15 * 60 * 1000,
+    retry: false,
+  });
+  const source = candidate ?? (verified && !failed.has(verified) ? verified : undefined);
   useEffect(() => {
     if (priority) {
       setVisible(true);
@@ -106,9 +123,11 @@ export function BookCover({
           <span className="text-[10px] text-muted-foreground">
             <UiText text="Copertina non disponibile" />
           </span>
-          {reportMissing && visible && !isPending && !isFetching && (
-            <CoverReportButton book={book} />
-          )}
+          {reportMissing &&
+            visible &&
+            !isPending &&
+            !isFetching &&
+            verificationFetch === "idle" && <CoverReportButton book={book} />}
         </div>
       )}
     </div>

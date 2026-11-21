@@ -2,3 +2,7 @@ project_id = "eouwfswqnpjgorlkrnyt"
 # KOReader uses x-auth-user/x-auth-key; database RPCs verify the hashed credential.
 [functions.reader-sync]
 verify_jwt = false
+
+# The cover job uses a dedicated bearer secret verified by a service-only RPC.
+[functions.cover-repair]
+verify_jwt = false

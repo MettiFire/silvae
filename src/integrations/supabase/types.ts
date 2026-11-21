@@ -304,6 +304,7 @@ export type Database = {
           book_id: string
           book_title: string
           created_at: string
+          last_checked_at: string | null
           user_id: string
         }
         Insert: {
@@ -311,6 +312,7 @@ export type Database = {
           book_id: string
           book_title: string
           created_at?: string
+          last_checked_at?: string | null
           user_id: string
         }
         Update: {
@@ -318,6 +320,7 @@ export type Database = {
           book_id?: string
           book_title?: string
           created_at?: string
+          last_checked_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -849,6 +852,24 @@ export type Database = {
           },
         ]
       }
+      verified_book_covers: {
+        Row: {
+          book_id: string
+          cover_url: string
+          verified_at: string
+        }
+        Insert: {
+          book_id: string
+          cover_url: string
+          verified_at?: string
+        }
+        Update: {
+          book_id?: string
+          cover_url?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -936,6 +957,10 @@ export type Database = {
         Returns: undefined
       }
       start_reading_session: { Args: { p_book_id: string }; Returns: string }
+      run_cover_repair: {
+        Args: { p_secret: string; p_book_id?: string; p_cover_url?: string }
+        Returns: { book_id: string }[]
+      }
     }
     Enums: {
       [_ in never]: never

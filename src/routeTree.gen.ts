@@ -26,6 +26,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as ApiCoverRepairJobRouteImport } from './routes/api.cover-repair-job'
 import { Route as ApiKindleJobRouteImport } from './routes/api.kindle-job'
 import { Route as ApiKoboJobRouteImport } from './routes/api.kobo-job'
 import { Route as AuthorAuthorRouteImport } from './routes/author.$author'
@@ -117,6 +118,11 @@ const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiCoverRepairJobRoute = ApiCoverRepairJobRouteImport.update({
+  id: '/api/cover-repair-job',
+  path: '/api/cover-repair-job',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiKindleJobRoute = ApiKindleJobRouteImport.update({
   id: '/api/kindle-job',
   path: '/api/kindle-job',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/social': typeof AuthenticatedSocialRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
   '/author/$author': typeof AuthorAuthorRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/stats'
+    | '/api/cover-repair-job'
     | '/api/kindle-job'
     | '/api/kobo-job'
     | '/author/$author'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/stats'
+    | '/api/cover-repair-job'
     | '/api/kindle-job'
     | '/api/kobo-job'
     | '/author/$author'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/social'
     | '/_authenticated/stats'
+    | '/api/cover-repair-job'
     | '/api/kindle-job'
     | '/api/kobo-job'
     | '/author/$author'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  ApiCoverRepairJobRoute: typeof ApiCoverRepairJobRoute
   ApiKindleJobRoute: typeof ApiKindleJobRoute
   ApiKoboJobRoute: typeof ApiKoboJobRoute
   AuthorAuthorRoute: typeof AuthorAuthorRoute
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/cover-repair-job': {
+      id: '/api/cover-repair-job'
+      path: '/api/cover-repair-job'
+      fullPath: '/api/cover-repair-job'
+      preLoaderRoute: typeof ApiCoverRepairJobRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/kindle-job': {
       id: '/api/kindle-job'
       path: '/api/kindle-job'
@@ -517,6 +537,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  ApiCoverRepairJobRoute: ApiCoverRepairJobRoute,
   ApiKindleJobRoute: ApiKindleJobRoute,
   ApiKoboJobRoute: ApiKoboJobRoute,
   AuthorAuthorRoute: AuthorAuthorRoute,

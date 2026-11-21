@@ -94,3 +94,14 @@ Before cutover, compare table counts and account identities/password hashes, tes
 access boundaries, and complete actual email/Google sign-in on the new host.
 An intact database restore does not configure an OAuth provider or recover
 server-side reader encryption keys.
+
+## Reported book covers
+
+Deploy the cover-repair migration and the `cover-repair` Supabase Edge Function
+before deploying the web app. Use a 32-byte random hex token for Vercel's server-only
+`CRON_SECRET` and store the SHA-256 digest of that same token in
+`cover_repair_private.settings.secret_hash`. The Edge Function uses Supabase's
+built-in service credential. Vercel only needs the dedicated token.
+
+The Vercel production job runs daily. Review `cover_reports.last_checked_at` for
+the latest attempt and `verified_book_covers` for successful repairs.

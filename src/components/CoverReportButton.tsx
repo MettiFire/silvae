@@ -57,7 +57,7 @@ export function CoverReportButton({ book }: { book: Book }) {
     return (
       <span role="status" className="inline-flex items-center gap-1.5 text-xs text-primary">
         <Check size={12} aria-hidden="true" />
-        <UiText text="Copertina segnalata" />
+        <UiText text="Copertina segnalata · verifica automatica" />
       </span>
     );
   }

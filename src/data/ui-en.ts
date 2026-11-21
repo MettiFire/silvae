@@ -282,7 +282,7 @@ export const UI_EN: Record<string, string> = {
   "Copertina non disponibile": "Cover unavailable",
   "Segnala copertina mancante": "Report missing cover",
   "Accedi per segnalare": "Sign in to report",
-  "Copertina segnalata": "Cover reported",
+  "Copertina segnalata · verifica automatica": "Cover reported · automatic check",
   "Invio in corso…": "Sending…",
   "Segnalazione non salvata. Riprova.": "Could not save the report. Try again.",
   "Serie manga": "Manga series",

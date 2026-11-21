@@ -11,6 +11,7 @@ test("Cover reports are private, unique per reader and book, and deleted with th
   await db.exec(`
     CREATE ROLE anon;
     CREATE ROLE authenticated;
+    CREATE ROLE service_role BYPASSRLS;
     CREATE SCHEMA auth;
     CREATE TABLE auth.users (id uuid PRIMARY KEY);
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
@@ -53,4 +54,40 @@ test("Cover reports are private, unique per reader and book, and deleted with th
   await db.exec("RESET ROLE");
   await db.query("DELETE FROM auth.users WHERE id = $1", [reader]);
   assert.deepEqual((await select()).rows, [{ user_id: another }]);
+
+  await db.exec(
+    await readFile(
+      new URL(
+        "../supabase/migrations/20261121150241_verify_reported_book_covers.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const secret = "ab".repeat(32);
+  await db.query(
+    "INSERT INTO cover_repair_private.settings (secret_hash) VALUES (sha256(convert_to($1, 'UTF8')))",
+    [secret],
+  );
+  await db.exec("SET ROLE anon");
+  const claim = (key) => db.query("SELECT * FROM public.run_cover_repair($1)", [key]);
+  const finish = (url) =>
+    db.query("SELECT * FROM public.run_cover_repair($1, 'ol:OL1W', $2)", [secret, url]);
+  const image = "https://covers.openlibrary.org/b/id/1-M.jpg?default=false";
+  await assert.rejects(claim(secret), { code: "42501" });
+  await db.exec("RESET ROLE; SET ROLE service_role");
+  await assert.rejects(claim("0".repeat(64)), { code: "42501" });
+  await assert.rejects(finish(image), { code: "22023" });
+  assert.deepEqual((await claim(secret)).rows, [{ book_id: "ol:OL1W" }]);
+  assert.deepEqual((await claim(secret)).rows, []);
+  await assert.rejects(finish("https://example.test/image.jpg"), { code: "22023" });
+  await finish(image);
+  await db.exec("RESET ROLE; SET ROLE anon");
+  assert.deepEqual((await db.query("SELECT cover_url FROM public.verified_book_covers")).rows, [
+    { cover_url: image },
+  ]);
+  await db.exec(
+    "RESET ROLE; UPDATE public.cover_reports SET last_checked_at = now() - interval '2 days'; SET ROLE service_role",
+  );
+  assert.deepEqual((await claim(secret)).rows, []);
 });
