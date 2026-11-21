@@ -9,13 +9,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark, BookmarkCheck, Globe, Lock, Trash2 } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import type { Book } from "@/lib/books";
 
-export const Route = createFileRoute("/list/$listId")({
+export const Route = createFileRoute("/_app/list/$listId")({
   head: ({ params }) =>
     pageSeo(
       "Lista di lettura — Silvae",
@@ -40,7 +40,7 @@ function ListPage() {
   const { listId } = Route.useParams();
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
 
   const {
@@ -49,7 +49,8 @@ function ListPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["list", listId],
+    queryKey: ["list", listId, user?.id],
+    enabled: !authLoading,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("book_lists")
@@ -64,8 +65,9 @@ function ListPage() {
   });
 
   const listBooks = useInfiniteQuery({
-    queryKey: ["list-books", listId],
-    enabled: !!list,
+    queryKey: ["list-books", listId, user?.id],
+    // The database policy applies the same owner/public check as the list query.
+    enabled: !authLoading,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       const { data, error, count } = await supabase
@@ -150,38 +152,38 @@ function ListPage() {
 
   if (isError)
     return (
-      <AppShell>
+      <>
         <p role="alert" className="editorial-empty">
           <UiText text="La lista non si è caricata." />{" "}
           <button className="underline" onClick={() => void refetch()}>
             <UiText text="Riprova" />
           </button>
         </p>
-      </AppShell>
+      </>
     );
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <AppShell>
+      <>
         <p className="text-sm text-muted-foreground">
           <UiText text="Caricamento…" />
         </p>
-      </AppShell>
+      </>
     );
   }
 
   if (!list) {
     return (
-      <AppShell>
+      <>
         <PageHeader title="Lista non trovata" subtitle="La lista non esiste o non è pubblica." />
         <Link to="/discover" className="text-sm text-primary underline">
           <UiText text="Scopri nuovi libri" />
         </Link>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={<span translate="no">{list.name}</span>}
         subtitle={
@@ -296,6 +298,6 @@ function ListPage() {
           close={() => setAdding(false)}
         />
       )}
-    </AppShell>
+    </>
   );
 }

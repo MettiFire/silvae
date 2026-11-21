@@ -7,7 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { List } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
 import { LeafRating } from "@/components/LeafRating";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -16,7 +16,7 @@ import { STATUS_LABEL, useLibrary, useUpdateItem, type ReadingStatus } from "@/l
 import { sortLibrary, type LibraryOrder } from "@/lib/library-order";
 import { Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_authenticated/library")({
+export const Route = createFileRoute("/_app/_authenticated/library")({
   head: () =>
     pageSeo(
       "La mia libreria — Silvae",
@@ -84,7 +84,7 @@ function LibraryPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="La mia libreria"
         subtitle={`${items.length} libri raccolti, una storia alla volta`}
@@ -349,6 +349,6 @@ function LibraryPage() {
           <UiText text="Mostra altri libri" />
         </button>
       )}
-    </AppShell>
+    </>
   );
 }

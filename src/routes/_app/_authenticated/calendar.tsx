@@ -1,12 +1,12 @@
 import { UiText } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { BookCover } from "@/components/BookCard";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 
-export const Route = createFileRoute("/_authenticated/calendar")({
+export const Route = createFileRoute("/_app/_authenticated/calendar")({
   head: () =>
     pageSeo(
       "Calendario delle letture — Silvae",
@@ -41,7 +41,7 @@ function CalendarPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={`Calendario ${year}`}
         subtitle={`${finished.length} libri completati quest'anno`}
@@ -87,6 +87,6 @@ function CalendarPage() {
           );
         })}
       </div>
-    </AppShell>
+    </>
   );
 }

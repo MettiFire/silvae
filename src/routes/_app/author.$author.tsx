@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Bookmark, Check } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { groupAuthors, authorMatchesQuery } from "@/lib/author-search";
 import { useBookLanguage } from "@/lib/use-book-language";
@@ -23,7 +23,7 @@ import { mangaCatalogue } from "@/lib/manga-client";
 import { mangaAuthorMatches } from "@/lib/manga-search-names";
 import { sameAuthorName, sameReadingWork } from "@/lib/work-identity";
 
-export const Route = createFileRoute("/author/$author")({
+export const Route = createFileRoute("/_app/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
     typeof s["olid"] === "string" && validAuthorId(s["olid"]) ? { olid: s["olid"] } : {},
   head: ({ params }) =>
@@ -143,7 +143,7 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
   );
   const books = page === 0 ? [...extra, ...remote] : remote;
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={<span translate="no">{data?.name ?? name}</span>}
         subtitle="La storia, i libri e le opere più recenti"
@@ -400,6 +400,6 @@ function AuthorContent({ name, selectedId }: { name: string; selectedId: string 
           </div>
         </section>
       )}
-    </AppShell>
+    </>
   );
 }

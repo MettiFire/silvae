@@ -1,7 +1,7 @@
 import { useRememberedState } from "@/lib/use-remembered-state";
 import { UiDate } from "@/lib/ui-language-context";
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, Pencil, Trash2, Quote, RotateCcw } from "lucide-react";
@@ -20,9 +20,18 @@ import {
 import { FragmentVisibility } from "./FragmentVisibility";
 import { FragmentText } from "./FragmentText";
 import { FragmentImage } from "./FragmentImage";
-import { FragmentEditor } from "./FragmentEditor";
-import { FragmentImport } from "./FragmentImport";
 import { BookCover } from "./BookCard";
+const loadEditor = () => import("./FragmentEditor");
+const FragmentEditor = lazy(() =>
+  loadEditor().then(({ FragmentEditor }) => ({ default: FragmentEditor })),
+);
+const FragmentImport = lazy(() =>
+  import("./FragmentImport").then(({ FragmentImport }) => ({ default: FragmentImport })),
+);
+
+function preloadEditor() {
+  void loadEditor().catch(() => undefined);
+}
 export type WithBook = Fragment & { books: Book | null };
 export function FragmentCard({
   fragment: f,
@@ -277,6 +286,8 @@ export function Fragments({ book }: { book?: Book | undefined }) {
         <div className="flex flex-wrap gap-2">
           {!book && <FragmentVisibility key={user.id} />}
           <button
+            onMouseEnter={preloadEditor}
+            onFocus={preloadEditor}
             onClick={() => setEditor(null)}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground"
           >
@@ -297,7 +308,17 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           )}
         </div>
       </div>
-      {importing && <FragmentImport close={() => setImporting(false)} />}
+      {importing && (
+        <Suspense
+          fallback={
+            <p role="status" className="mb-5 min-h-24 text-sm">
+              <UiText text="Caricamento…" />
+            </p>
+          }
+        >
+          <FragmentImport close={() => setImporting(false)} />
+        </Suspense>
+      )}
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <UiElement
           as="input"
@@ -380,7 +401,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           </option>
         </UiElement>
       </div>
-      {list.isFetching && (
+      {list.isPending && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">
           <UiText text="Caricamento dei frammenti…" />
         </p>
@@ -393,7 +414,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
           </button>
         </p>
       )}
-      {!list.isFetching && !list.isError && !list.data?.rows.length && (
+      {list.isSuccess && !list.data.rows.length && (
         <div className="rounded-2xl border border-dashed p-8 text-center">
           <Quote className="mx-auto mb-3 h-7 w-7 text-primary" />
           <p className="font-display text-lg">
@@ -427,7 +448,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
       {!!list.data?.count && (
         <div className="mt-6 flex items-center gap-3">
           <button
-            disabled={!page || list.isFetching}
+            disabled={!page || list.isPending}
             onClick={() => setPage((p) => p - 1)}
             className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
           >
@@ -441,7 +462,7 @@ export function Fragments({ book }: { book?: Book | undefined }) {
             <UiText text=" frammenti" />
           </span>
           <button
-            disabled={list.isFetching || (page + 1) * 24 >= list.data.count}
+            disabled={list.isPending || (page + 1) * 24 >= list.data.count}
             onClick={() => setPage((p) => p + 1)}
             className="rounded-lg border px-3 py-1 text-sm disabled:opacity-40"
           >
@@ -450,11 +471,13 @@ export function Fragments({ book }: { book?: Book | undefined }) {
         </div>
       )}
       {editor !== false && (
-        <FragmentEditor
-          book={editor ? (rows?.find((f) => f.id === editor.id)?.books ?? book) : book}
-          original={editor ?? undefined}
-          close={() => setEditor(false)}
-        />
+        <Suspense fallback={null}>
+          <FragmentEditor
+            book={editor ? (rows?.find((f) => f.id === editor.id)?.books ?? book) : book}
+            original={editor ?? undefined}
+            close={() => setEditor(false)}
+          />
+        </Suspense>
       )}
     </section>
   );

@@ -15,7 +15,6 @@ import { requireFragmentUser } from "@/lib/fragments";
 import { getProfileMap } from "@/lib/profile-data";
 import { Heart, RotateCcw } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
-import { AppShell } from "@/components/AppShell";
 import { canUpdateReading } from "@/lib/reading-dates";
 import { ReadingDates } from "@/components/ReadingDates";
 import { ReadingProgress } from "@/components/ReadingProgress";
@@ -41,7 +40,7 @@ import {
   type ReadingStatus,
 } from "@/lib/library";
 
-export const Route = createFileRoute("/book/$bookId")({
+export const Route = createFileRoute("/_app/book/$bookId")({
   head: ({ params }) =>
     pageSeo(
       "Scheda libro — Silvae",
@@ -152,22 +151,22 @@ function BookPage() {
 
   if (isError && !book)
     return (
-      <AppShell>
+      <>
         <p role="alert">
           <UiText text="Impossibile caricare il libro." />{" "}
           <button onClick={() => void refetch()} className="text-primary">
             <UiText text="Riprova" />
           </button>
         </p>
-      </AppShell>
+      </>
     );
   if (isLoading || !book) {
     return (
-      <AppShell>
+      <>
         <p className="text-sm text-muted-foreground">
           <UiText text="Caricamento…" />
         </p>
-      </AppShell>
+      </>
     );
   }
 
@@ -241,7 +240,7 @@ function BookPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {item?.needs_review && (
         <div className="mb-5 rounded-xl border border-border bg-accent p-4 text-sm">
           <UiText text="Questo libro è stato conservato dai dati del CSV perché non c’era una corrispondenza certa nel catalogo. Controlla titolo e autore; puoi scegliere una copertina qui sotto." />
@@ -648,7 +647,7 @@ function BookPage() {
         </div>
       </div>
       {!manga && <RelatedBooks key={book.id} book={book} />}
-    </AppShell>
+    </>
   );
 }
 

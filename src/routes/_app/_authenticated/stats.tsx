@@ -1,29 +1,16 @@
 import { useRememberedState } from "@/lib/use-remembered-state";
-import { useTranslate } from "@/lib/use-ui-language";
 import { UiText } from "@/lib/ui-language-context";
 import { decodeMangaProgress } from "@/lib/manga-account";
 import { MANGA_FIELD, isMangaId, readVolumes } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { PageHeader } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
 import { readingStatistics } from "@/lib/reading-statistics";
 import { useLibrary } from "@/lib/library";
 
-export const Route = createFileRoute("/_authenticated/stats")({
+export const Route = createFileRoute("/_app/_authenticated/stats")({
   head: () =>
     pageSeo(
       "Statistiche di lettura — Silvae",
@@ -35,7 +22,6 @@ export const Route = createFileRoute("/_authenticated/stats")({
 });
 
 function Stats() {
-  const t = useTranslate();
   const { user } = useAuth();
   const { data: items = [], isLoading, isError } = useLibrary(user?.id);
 
@@ -50,7 +36,7 @@ function Stats() {
 
   if (isLoading || isError)
     return (
-      <AppShell>
+      <>
         <PageHeader title="Statistiche" subtitle="Il tuo ritmo di lettura" />
         <p role={isError ? "alert" : "status"} className="editorial-empty">
           <UiText
@@ -61,20 +47,11 @@ function Stats() {
             }
           />
         </p>
-      </AppShell>
+      </>
     );
 
-  const colors = [
-    "var(--chart-1)",
-    "var(--chart-2)",
-    "var(--chart-3)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-    "var(--muted-foreground)",
-  ];
-
   return (
-    <AppShell>
+    <>
       <PageHeader title="Statistiche" subtitle="I numeri delle tue letture" />
 
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -177,74 +154,8 @@ function Stats() {
             ))}
         </select>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title={`Libri letti per mese · ${year}`}>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={stats.byMonth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                tickFormatter={(value: string) => t(value)}
-                dataKey="month"
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-              />
-              <YAxis allowDecimals={false} stroke="var(--muted-foreground)" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
-              />
-              <Bar dataKey="libri" fill="var(--primary)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Panel>
-
-        <Panel title="Distribuzione per genere">
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={stats.byGenre}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={50}
-                outerRadius={90}
-              >
-                {stats.byGenre.map((_, i) => (
-                  <Cell key={i} fill={colors[i % colors.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </Panel>
-
-        <Panel title="Giorni più attivi">
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={stats.byDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis allowDecimals={false} stroke="var(--muted-foreground)" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
-              />
-              <Bar dataKey="libri" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Panel>
-      </div>
-    </AppShell>
+      <DeferredStatsCharts stats={stats} year={year} />
+    </>
   );
 }
 
@@ -266,13 +177,59 @@ function Card({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+const StatsCharts = lazy(() =>
+  import("@/components/StatsCharts").then(({ StatsCharts }) => ({ default: StatsCharts })),
+);
+
+function ChartPlaceholder() {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <h2 className="mb-3 font-display font-semibold">
-        <UiText text={title} />
-      </h2>
-      {children}
+    <div role="status" className="grid gap-6 lg:grid-cols-2">
+      <span className="sr-only">
+        <UiText text="Caricamento…" />
+      </span>
+      {[0, 1, 2].map((index) => (
+        <div key={index} aria-hidden="true" className="rounded-xl border border-border bg-card p-4">
+          <div className="mb-3 h-6 w-36 rounded bg-muted" />
+          <div className="h-[240px] rounded bg-muted/40" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeferredStatsCharts({
+  stats,
+  year,
+}: {
+  stats: ReturnType<typeof readingStatistics>;
+  year: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!ref.current || visible) return;
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setVisible(true);
+      },
+      { rootMargin: "320px" },
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [visible]);
+  return (
+    <div ref={ref}>
+      {visible ? (
+        <Suspense fallback={<ChartPlaceholder />}>
+          <StatsCharts stats={stats} year={year} />
+        </Suspense>
+      ) : (
+        <ChartPlaceholder />
+      )}
     </div>
   );
 }

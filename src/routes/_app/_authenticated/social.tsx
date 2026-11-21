@@ -5,13 +5,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "@/lib/localized-toast";
-import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
+import { PageHeader, SectionHeading } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { profileLabel } from "@/lib/profile-model";
 import { getProfileMap } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
-export const Route = createFileRoute("/_authenticated/social")({
+export const Route = createFileRoute("/_app/_authenticated/social")({
   head: () =>
     pageSeo(
       "Lettori e community — Silvae",
@@ -103,7 +103,7 @@ function Social() {
     }
   }
   return (
-    <AppShell>
+    <>
       <Link to="/clubs" className="button-outline mb-5">
         <UiText text="Leggiamo insieme · Scopri i book club →" />
       </Link>
@@ -236,6 +236,6 @@ function Social() {
           ))}
         </aside>
       </div>
-    </AppShell>
+    </>
   );
 }

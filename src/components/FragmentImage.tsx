@@ -64,6 +64,7 @@ export function FragmentImage({ path, alt }: { path: string; alt: string }) {
         <img
           src={photo.url}
           alt={alt}
+          loading="lazy"
           decoding="async"
           className="max-h-[36rem] w-full rounded-lg object-contain"
         />

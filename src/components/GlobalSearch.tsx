@@ -4,8 +4,8 @@ import { unifiedSearchResults, preferOwnedManga } from "@/lib/unified-search";
 import { isMangaId } from "@/lib/manga-model";
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { mangaCatalogue } from "@/lib/manga-client";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ScanBarcode, UserRound } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
@@ -33,15 +33,24 @@ export function GlobalSearch() {
   const resultsRef = useRef<HTMLDivElement>(null);
   const [resultHeight, setResultHeight] = useState(320);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { user } = useAuth();
-  const { data: library = [] } = useLibrary(user?.id);
+  const { data: library } = useLibrary(user?.id);
   const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
   const query = normalizeSearchQuery(debounced);
   const providers = searchProviders(mode, query, languageReady && open && normalizeSearchQuery(term) === query);
-  const owned = library.flatMap((item) => item.books ? [item.books] : []);
+  const owned = useMemo(() => library?.flatMap((item) => item.books ? [item.books] : []) ?? [], [library]);
   const localBooks = ownedBookSuggestions(owned, query, false);
   const localManga = ownedBookSuggestions(owned, query, true);
+
+  useEffect(() => {
+    setOpen(false);
+    setTerm("");
+    setDebounced("");
+    setMode("all");
+    setScanning(false);
+  }, [pathname]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(normalizeSearchQuery(term)), 300);

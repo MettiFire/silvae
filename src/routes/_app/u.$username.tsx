@@ -1,7 +1,7 @@
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReaderProfile } from "@/components/ReaderProfile";
-export const Route = createFileRoute("/u/$username")({
+export const Route = createFileRoute("/_app/u/$username")({
   head: ({ params }) =>
     pageSeo(
       `@${params.username} — Profilo su Silvae`,

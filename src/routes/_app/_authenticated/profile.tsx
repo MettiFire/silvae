@@ -3,8 +3,7 @@ import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { ReaderProfile, ProfileLoading } from "@/components/ReaderProfile";
-import { AppShell } from "@/components/AppShell";
-export const Route = createFileRoute("/_authenticated/profile")({
+export const Route = createFileRoute("/_app/_authenticated/profile")({
   head: () =>
     pageSeo(
       "Il mio profilo — Silvae",
@@ -19,7 +18,7 @@ function ProfilePage() {
   return profile ? (
     <ReaderProfile username={profile.username} />
   ) : (
-    <AppShell>
+    <>
       {loading || profileLoading ? (
         <ProfileLoading />
       ) : (
@@ -33,6 +32,6 @@ function ProfilePage() {
           </Link>
         </p>
       )}
-    </AppShell>
+    </>
   );
 }

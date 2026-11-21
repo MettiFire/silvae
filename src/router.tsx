@@ -1,5 +1,6 @@
-import { QueryClient } from "@tanstack/react-query";
+import { isServer, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { RoutePending } from "./components/RoutePending";
 import { routeTree } from "./routeTree.gen";
 
 // After a new publish, old tabs may request page files that no longer exist.
@@ -25,12 +26,20 @@ if (typeof window !== "undefined") {
 }
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { staleTime: 30_000, gcTime: isServer ? Infinity : 15 * 60_000 },
+    },
+  });
 
   const router = createRouter({
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    defaultPendingComponent: RoutePending,
+    defaultPendingMs: 200,
+    defaultPendingMinMs: 0,
+    defaultPreloadDelay: 80,
     defaultPreloadStaleTime: 0,
   });
 

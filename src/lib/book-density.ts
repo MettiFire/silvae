@@ -3,7 +3,8 @@ export type BookDensity = "large" | "standard" | "compact";
 const KEY = "silvae:book-density";
 /** Saved under the previous site name; carried over so readers keep their choice. */
 const LEGACY_KEY = "paginae:book-density";
-let fallback: BookDensity = "standard";
+let density: BookDensity = "standard";
+let initialized = false;
 const listeners = new Set<() => void>();
 let migrated = false;
 function migrate() {
@@ -18,25 +19,44 @@ function migrate() {
     /* Storage unavailable: the control still works for this tab. */
   }
 }
-function snapshot(): BookDensity {
+function readStorage(): BookDensity {
   migrate();
   try {
     const value = window.localStorage.getItem(KEY);
-    return value === "large" || value === "compact" || value === "standard" ? value : fallback;
+    return value === "large" || value === "compact" || value === "standard" ? value : "standard";
   } catch {
-    return fallback;
+    return density;
   }
 }
+function snapshot(): BookDensity {
+  if (!initialized) {
+    density = readStorage();
+    initialized = true;
+  }
+  return density;
+}
+function onStorage(event: StorageEvent) {
+  if (event.key !== null && event.key !== KEY) return;
+  const next = readStorage();
+  if (next === density) return;
+  density = next;
+  listeners.forEach((listener) => listener());
+}
 function subscribe(listener: () => void) {
+  if (listeners.size === 0) {
+    density = readStorage();
+    initialized = true;
+    window.addEventListener("storage", onStorage);
+  }
   listeners.add(listener);
-  window.addEventListener("storage", listener);
   return () => {
     listeners.delete(listener);
-    window.removeEventListener("storage", listener);
+    if (!listeners.size) window.removeEventListener("storage", onStorage);
   };
 }
 export function setBookDensity(value: BookDensity) {
-  fallback = value;
+  density = value;
+  initialized = true;
   try {
     window.localStorage.setItem(KEY, value);
   } catch {

@@ -6,7 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { RefreshCw, X } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { BookCard } from "@/components/BookCard";
 import { discoverBooks } from "@/lib/books";
@@ -15,7 +15,7 @@ import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/discover")({
+export const Route = createFileRoute("/_app/discover")({
   head: () =>
     pageSeo(
       "Esplora libri e nuove letture — Silvae",
@@ -94,7 +94,7 @@ function Discover() {
     : [];
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Esplora"
         subtitle="Segui una curiosità. Trova una storia."
@@ -260,7 +260,7 @@ function Discover() {
             <UiText text="Nessun libro con questi filtri. Prova un altro genere o riduci il voto minimo." />
           </p>
         )}
-      {cataloguePending || isFetching ? (
+      {cataloguePending || (isFetching && !results.length) ? (
         <p className="text-sm text-muted-foreground">
           <UiText text="Caricamento…" />
         </p>
@@ -271,7 +271,7 @@ function Discover() {
           ))}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }
 

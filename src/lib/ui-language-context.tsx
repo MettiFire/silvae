@@ -1,20 +1,20 @@
 import { translateUiTitle } from "./ui-translation";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { createElement, useEffect, useState, type ReactNode, type JSX } from "react";
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+  type JSX,
+} from "react";
 import { useAuth } from "@/lib/auth";
 import { parsePreferences, PREFERENCES_FIELD } from "@/lib/reading-preferences";
 import { UiContext, useUiLanguage, useTranslate } from "./use-ui-language";
-import {
-  uiChoice,
-  resolveUiLanguage,
-  UI_LANGUAGE_KEY,
-  type UiChoice,
-} from "./ui-language.ts";
+import { uiChoice, resolveUiLanguage, UI_LANGUAGE_KEY, type UiChoice } from "./ui-language.ts";
 export function UiLanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const pathname = useRouterState({
-    select: (state) => `${state.location.pathname}:${state.status}`,
-  });
   const prefs = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
   const [local, setLocal] = useState<UiChoice>("auto");
   const [locale, setLocale] = useState("it-IT");
@@ -39,26 +39,37 @@ export function UiLanguageProvider({ children }: { children: ReactNode }) {
   }, []);
   const choice = prefs?.uiLanguage ?? local;
   const language = ready ? resolveUiLanguage(choice, locale) : "it";
-  useEffect(() => {
-    document.documentElement.lang = language;
-    const frame = requestAnimationFrame(() => {
-      document.title = translateUiTitle(document.title, language);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [language, pathname]);
-  const setChoice = (value: UiChoice) => {
+  const setChoice = useCallback((value: UiChoice) => {
     setLocal(value);
     try {
       localStorage.setItem(UI_LANGUAGE_KEY, value);
     } catch {
       /* optional */
     }
-  };
+  }, []);
+  const value = useMemo(
+    () => ({ language, choice, ready, locale, setChoice }),
+    [language, choice, ready, locale, setChoice],
+  );
   return (
-    <UiContext.Provider value={{ language, choice, ready, locale, setChoice }}>
+    <UiContext.Provider value={value}>
+      <UiDocumentLanguage language={language} />
       {children}
     </UiContext.Provider>
   );
+}
+function UiDocumentLanguage({ language }: { language: "it" | "en" }) {
+  const location = useRouterState({
+    select: (state) => `${state.location.pathname}:${state.status}`,
+  });
+  useEffect(() => {
+    document.documentElement.lang = language;
+    const frame = requestAnimationFrame(() => {
+      document.title = translateUiTitle(document.title, language);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [language, location]);
+  return null;
 }
 export function UiElement<K extends keyof JSX.IntrinsicElements>({
   as,

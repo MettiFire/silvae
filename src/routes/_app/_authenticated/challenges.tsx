@@ -1,14 +1,14 @@
 import { UiText } from "@/lib/ui-language-context";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { AnnualReadingGoal } from "@/components/AnnualReadingGoal";
 import { ChallengeExplorer } from "@/components/ChallengeExplorer";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { useReadingChallenges } from "@/lib/use-reading-challenges";
 
-export const Route = createFileRoute("/_authenticated/challenges")({
+export const Route = createFileRoute("/_app/_authenticated/challenges")({
   head: () =>
     pageSeo(
       "Sfide di lettura — Silvae",
@@ -23,7 +23,7 @@ function Challenges() {
   const library = useLibrary(user?.id);
   const challenges = useReadingChallenges(user?.id);
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Una nuova avventura tra le pagine"
         subtitle="Segui il tuo ritmo, scopri nuove voci e scegli il prossimo traguardo."
@@ -69,6 +69,6 @@ function Challenges() {
         onSave={challenges.save}
         onLeave={challenges.leave}
       />
-    </AppShell>
+    </>
   );
 }

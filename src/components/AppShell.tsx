@@ -19,7 +19,7 @@ import {
   MoreHorizontal,
   ArrowUpRight,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { useBookDensity } from "@/lib/book-density";
 import { BackButton } from "@/components/BackButton";
@@ -41,15 +41,24 @@ const NAV = [
   { to: "/calendar", label: "Calendario", icon: CalendarDays },
   { to: "/stats", label: "Statistiche", icon: BarChart3 },
 ] as const;
+const MOBILE_NAV = [
+  NAV[0],
+  NAV[1],
+  NAV[2],
+  { to: "/profile", label: "Profilo", icon: User },
+] as const;
+
+function navPreload(to: string, signedIn: boolean) {
+  return signedIn || to === "/" || to === "/discover" ? "intent" : false;
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslate();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
   const { user, profile, loading } = useAuth();
   const accountName = profile ? profileLabel(profile) : "Il mio profilo";
   const navigate = useNavigate();
-  const [more, setMore] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   async function signOut() {
     setLoggingOut(true);
@@ -101,12 +110,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <>
                 <Link
                   to="/settings"
+                  preload="intent"
                   aria-label={t("Impostazioni del profilo")}
                   className="icon-button"
                 >
                   <Settings size={17} />
                 </Link>
-                <Link to="/profile" className="account-link" aria-label={t("Il mio profilo")}>
+                <Link
+                  to="/profile"
+                  preload="intent"
+                  className="account-link"
+                  aria-label={t("Il mio profilo")}
+                >
                   {profile?.avatar_url ? (
                     <UiElement
                       as="img"
@@ -140,6 +155,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={to}
                 to={to}
+                preload={navPreload(to, !!user)}
                 activeOptions={{ exact: to === "/" }}
                 className="nav-link"
                 activeProps={{ className: "nav-link is-active" }}
@@ -153,14 +169,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </div>
       </header>
-      <main
-        id="contenuto"
-        tabIndex={-1}
-        className={`app-page site-width${pathname !== "/" ? " has-back" : ""}`}
-      >
-        {pathname !== "/" && <BackButton className="mb-5" />}
-        {children}
-      </main>
+      <AppMain>{children}</AppMain>
       <footer className="site-footer site-width">
         <UiLanguageSwitch />
         <Link
@@ -201,26 +210,51 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
       </footer>
+      <MobileNavigation signedIn={!!user} />
+    </div>
+  );
+}
+
+function AppMain({ children }: { children: ReactNode }) {
+  const hasBack = useRouterState({ select: (state) => state.location.pathname !== "/" });
+  return (
+    <main
+      id="contenuto"
+      tabIndex={-1}
+      className={`app-page site-width${hasBack ? " has-back" : ""}`}
+    >
+      {hasBack && <BackButton className="mb-5" />}
+      {children}
+    </main>
+  );
+}
+
+function MobileNavigation({ signedIn }: { signedIn: boolean }) {
+  const href = useRouterState({ select: (state) => state.location.href });
+  const [more, setMore] = useState(false);
+  useEffect(() => setMore(false), [href]);
+  return (
+    <>
       <UiElement as="nav" aria-label="Navigazione mobile" className="mobile-nav">
-        {[NAV[0], NAV[1], NAV[2], { to: "/profile", label: "Profilo", icon: User } as const].map(
-          ({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              activeOptions={{ exact: to === "/" }}
-              activeProps={{ className: "is-active" }}
-            >
-              <Icon size={19} />
-              <span>
-                <UiText text={label} />
-              </span>
-            </Link>
-          ),
-        )}
+        {MOBILE_NAV.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            preload={navPreload(to, signedIn)}
+            onClick={() => setMore(false)}
+            activeOptions={{ exact: to === "/" }}
+            activeProps={{ className: "is-active" }}
+          >
+            <Icon size={19} />
+            <span>
+              <UiText text={label} />
+            </span>
+          </Link>
+        ))}
         <button
           aria-expanded={more}
           aria-controls="mobile-other-nav"
-          onClick={() => setMore(!more)}
+          onClick={() => setMore((open) => !open)}
         >
           <MoreHorizontal size={20} />
           <span>
@@ -239,18 +273,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
           {NAV.slice(3).map(({ to, label, icon: Icon }) => (
-            <Link key={to} to={to} onClick={() => setMore(false)}>
+            <Link
+              key={to}
+              to={to}
+              preload={navPreload(to, signedIn)}
+              onClick={() => setMore(false)}
+            >
               <Icon size={17} />
               <UiText text={label} />
             </Link>
           ))}
-          <Link to="/settings" onClick={() => setMore(false)}>
+          <Link
+            to="/settings"
+            preload={navPreload("/settings", signedIn)}
+            onClick={() => setMore(false)}
+          >
             <Settings size={17} />
             <UiText text="Impostazioni" />
           </Link>
         </div>
       )}
-    </div>
+    </>
   );
 }
 export function PageHeader({

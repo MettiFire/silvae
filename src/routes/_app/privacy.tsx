@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalContact, LegalLayout } from "@/components/LegalLayout";
 import { pageSeo } from "@/lib/site-seo";
-export const Route = createFileRoute("/privacy")({
+export const Route = createFileRoute("/_app/privacy")({
   head: () =>
     pageSeo(
       "Privacy policy — Silvae",

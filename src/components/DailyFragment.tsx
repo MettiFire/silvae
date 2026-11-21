@@ -128,7 +128,6 @@ export function DailyFragment() {
           previous.bookId === book.id && previous.url === url ? previous : { bookId: book.id, url },
         )
       }
-      priority
       className="!bg-transparent !shadow-none after:!hidden"
     />
   ) : (
@@ -181,6 +180,7 @@ export function DailyFragment() {
             as="img"
             src={coverUrl}
             alt=""
+            loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"
             width={300}

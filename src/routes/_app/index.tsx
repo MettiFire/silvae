@@ -4,14 +4,14 @@ import { isMangaId } from "@/lib/manga-model";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw } from "lucide-react";
-import { AppShell, PageHeader, SectionHeading } from "@/components/AppShell";
+import { PageHeader, SectionHeading } from "@/components/AppShell";
 import { BookCard, BookCover } from "@/components/BookCard";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { DailyFragment } from "@/components/DailyFragment";
 import { ProgressBar } from "@/components/ProgressBar";
 import { useAuth } from "@/lib/auth";
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_app/")({
   head: () =>
     pageSeo(
       "Silvae — Una vita tra le pagine",
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { loading } = useAuth();
   return (
-    <AppShell>
+    <>
       {loading ? (
         <div role="status" className="min-h-[50vh] pt-8">
           <div aria-hidden="true" className="h-10 w-3/4 max-w-md rounded bg-muted" />
@@ -36,7 +36,7 @@ function Home() {
       ) : (
         <HomeContent />
       )}
-    </AppShell>
+    </>
   );
 }
 

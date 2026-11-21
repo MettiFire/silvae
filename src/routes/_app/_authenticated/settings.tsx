@@ -1,13 +1,11 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { SiteLanguageSettings } from "@/components/SiteLanguageSettings";
-import { EbookDevices } from "@/components/EbookDevices";
 import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { DeleteAccount } from "@/components/DeleteAccount";
-import { ReaderConnections } from "@/components/ReaderConnections";
 import { ReadingPreferences } from "@/components/ReadingPreferences";
 import { ProfileImageUpload } from "@/components/ProfileImageUpload";
 import { BookGridSizeControl } from "@/components/BookGridSizeControl";
@@ -26,7 +24,8 @@ const SECTIONS = {
   data: "Dati e account",
 } as const;
 type Section = keyof typeof SECTIONS;
-export const Route = createFileRoute("/_authenticated/settings")({
+const SettingsDevices = lazy(() => import("@/components/SettingsDevices"));
+export const Route = createFileRoute("/_app/_authenticated/settings")({
   validateSearch: (search: Record<string, unknown>): { section?: Section } => ({
     section:
       search["section"] === "language"
@@ -49,7 +48,7 @@ function SettingsPage() {
   const { user, profile, profileLoading, refreshProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Impostazioni"
         subtitle="Il tuo spazio personale. Questi controlli sono visibili solo a te."
@@ -139,9 +138,15 @@ function SettingsPage() {
               <h2 className="mb-4 font-display text-2xl">
                 <UiText text="I tuoi dispositivi" />
               </h2>
-              <EbookDevices key={user?.id}>
-                <ReaderConnections />
-              </EbookDevices>
+              <Suspense
+                fallback={
+                  <div role="status" className="settings-form min-h-40">
+                    <UiText text="Caricamento…" />
+                  </div>
+                }
+              >
+                <SettingsDevices key={user?.id} />
+              </Suspense>
             </>
           )}
           {section === "data" && (
@@ -169,7 +174,7 @@ function SettingsPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
 export function EditPublicProfile({ profile }: { profile: Profile }) {

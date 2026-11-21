@@ -1,5 +1,5 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-export function BookCover({
+export const BookCover = memo(function BookCover({
   book,
   className,
   priority = false,
@@ -64,7 +64,7 @@ export function BookCover({
   });
   const source = candidate ?? (verified && !failed.has(verified) ? verified : undefined);
   useEffect(() => {
-    if (priority) {
+    if (priority || !("IntersectionObserver" in window)) {
       setVisible(true);
       return;
     }
@@ -132,9 +132,9 @@ export function BookCover({
       )}
     </div>
   );
-}
+});
 
-export function BookCard({
+export const BookCard = memo(function BookCard({
   book,
   rating,
   favorite,
@@ -192,4 +192,4 @@ export function BookCard({
       {footer}
     </div>
   );
-}
+});

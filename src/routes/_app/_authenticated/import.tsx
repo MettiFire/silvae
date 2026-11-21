@@ -5,7 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Upload, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/lib/localized-toast";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { PageHeader } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cacheBook, searchBooks, type Book } from "@/lib/books";
@@ -31,7 +31,7 @@ import {
   type ImportField,
 } from "@/lib/csv-import";
 
-export const Route = createFileRoute("/_authenticated/import")({
+export const Route = createFileRoute("/_app/_authenticated/import")({
   head: () =>
     pageSeo(
       "Importa la tua libreria — Silvae",
@@ -310,7 +310,7 @@ function ImportPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Importa libri da CSV"
         subtitle="Bookshelf (CSV o ZIP), Goodreads, StoryGraph o un tuo foglio: scegli le colonne, controlla l’anteprima e importa."
@@ -607,6 +607,6 @@ function ImportPage() {
           </Link>
         </section>
       )}
-    </AppShell>
+    </>
   );
 }

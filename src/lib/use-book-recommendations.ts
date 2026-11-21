@@ -1,8 +1,8 @@
 import { useBookGridCapacity } from "./use-book-grid-capacity";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery, useQueries, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { useLibrary } from "@/lib/library";
+import { useLibrary, type LibraryItem } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecommendationWorkFilter } from "./use-recommendation-work-filter";
 import { sameAuthorName } from "./work-identity";
@@ -16,32 +16,31 @@ import {
 } from "@/lib/reading-preferences";
 import { useBookLanguage } from "@/lib/use-book-language";
 import { nextRecommendationRotation } from "@/lib/recommendation-rotation";
+import { useRememberedState } from "@/lib/use-remembered-state";
 const combineSources = (results: UseQueryResult<RecommendationCandidate[]>[]) => ({
   recs: results.flatMap((source) => source.data ?? []),
   fetching: results.some((source) => source.isFetching),
   failed: results.length > 0 && results.every((source) => source.isError),
 });
+const EMPTY_LIBRARY: LibraryItem[] = [];
+const EMPTY_DISMISSED: string[] = [];
 export function useBookRecommendations() {
   const qc = useQueryClient();
   const recommendationCount = useBookGridCapacity();
   const pageSize = Math.max(12, recommendationCount);
   const { user, loading: authLoading } = useAuth();
   const {
-    data: library = [],
+    data: library = EMPTY_LIBRARY,
     isLoading: libraryLoading,
     isError: libraryError,
     refetch: retryLibrary,
   } = useLibrary(user?.id);
-  const [seed, setSeed] = useState<number | null>(null);
-  const initialized = useRef(false);
+  const [seed, setSeed] = useRememberedState<number | null>("recommendation.seed", null);
   useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
-      setSeed(nextRecommendationRotation());
-    }
-  }, []);
+    if (!authLoading && seed === null) setSeed(nextRecommendationRotation());
+  }, [authLoading, seed, setSeed]);
 
-  const { data: dismissed = [] } = useQuery({
+  const { data: dismissed = EMPTY_DISMISSED } = useQuery({
     queryKey: ["dismissed", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -53,9 +52,10 @@ export function useBookRecommendations() {
     },
   });
 
-  const preferences = parsePreferences(user?.user_metadata[PREFERENCES_FIELD]);
+  const savedPreferences = user?.user_metadata[PREFERENCES_FIELD];
+  const preferences = useMemo(() => parsePreferences(savedPreferences), [savedPreferences]);
   const { language, ready: languageReady } = useBookLanguage(preferences?.language);
-  const plan = recommendationSources(preferences, library);
+  const plan = useMemo(() => recommendationSources(preferences, library), [preferences, library]);
   const sourceQueries = useQueries({
     queries: plan.map((source, index) => {
       const offset = (((seed ?? 0) + index) % 5) * 12;
@@ -112,17 +112,21 @@ export function useBookRecommendations() {
     excluded,
   );
   const libraryReady = !authLoading && (!user || (!libraryLoading && !libraryError));
-  const recommended = libraryReady
-    ? rankRecommendations(
-        recs,
-        preferences,
-        library,
-        dismissed,
-        recommendationCount,
-        seed ?? 0,
-        identities,
-      )
-    : [];
+  const recommended = useMemo(
+    () =>
+      libraryReady
+        ? rankRecommendations(
+            recs,
+            preferences,
+            library,
+            dismissed,
+            recommendationCount,
+            seed ?? 0,
+            identities,
+          )
+        : [],
+    [libraryReady, recs, preferences, library, dismissed, recommendationCount, seed, identities],
+  );
   return {
     user,
     library,
