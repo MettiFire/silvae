@@ -1,11 +1,34 @@
 import { UiText } from "@/lib/ui-language-context";
-import { createFileRoute, Outlet, Navigate, useLocation } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Navigate,
+  redirect,
+  useLocation,
+} from "@tanstack/react-router";
 import { authDestination } from "@/lib/auth-destination";
 import { useAuth } from "@/lib/auth";
+import { resolvedSignIn } from "@/lib/auth-session";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_layout/_authenticated")({
   ssr: false,
   head: () => ({ meta: [{ name: "robots", content: "noindex, follow" }] }),
+  beforeLoad: ({ context, location }) => {
+    const signedIn = resolvedSignIn.get(context.queryClient);
+    const requireLogin = () => {
+      throw redirect({
+        to: "/auth",
+        search: { returnTo: authDestination(location.href) },
+      });
+    };
+    if (signedIn === true) return;
+    if (signedIn === false) return requireLogin();
+    // Deep links can be matched before the session provider has initialized.
+    return supabase.auth.getSession().then(({ data, error }) => {
+      if (error || !data.session?.user) requireLogin();
+    });
+  },
   component: AuthenticatedLayout,
 });
 

@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeAuthSession } from "./auth-session";
+import { normalizeAuthSession, resolvedSignIn } from "./auth-session";
 import { createLibraryCache } from "./library-cache";
 import { libraryCacheStorage } from "./library-cache-storage";
 
@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (next: Session | null) => {
       if (profileTimer.current) clearTimeout(profileTimer.current);
       const id = next?.user.id ?? null;
+      resolvedSignIn.set(qc, id !== null);
       if (previousUser.current !== id) {
         request.current++;
         setProfile(null);
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     return () => {
       disposed = true;
+      resolvedSignIn.delete(qc);
       cache.dispose();
       libraryCache.current = null;
       if (profileTimer.current) clearTimeout(profileTimer.current);
