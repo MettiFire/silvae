@@ -16,7 +16,7 @@ import { STATUS_LABEL, useLibrary, useUpdateItem, type ReadingStatus } from "@/l
 import { sortLibrary, type LibraryOrder } from "@/lib/library-order";
 import { Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_app/_authenticated/library")({
+export const Route = createFileRoute("/_layout/_authenticated/library")({
   head: () =>
     pageSeo(
       "La mia libreria — Silvae",

@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 import { useReadingChallenges } from "@/lib/use-reading-challenges";
 
-export const Route = createFileRoute("/_app/_authenticated/challenges")({
+export const Route = createFileRoute("/_layout/_authenticated/challenges")({
   head: () =>
     pageSeo(
       "Sfide di lettura — Silvae",

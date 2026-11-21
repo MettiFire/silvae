@@ -9,13 +9,13 @@ is `src/routes/__root.tsx`.
 
 | File | URL |
 | --- | --- |
-| `index.tsx` | `/` |
+| `_layout/index.tsx` | `/` |
 | `about.tsx` | `/about` |
 | `users/index.tsx` | `/users` |
 | `users/$id.tsx` | `/users/:id` (dynamic — bare `$`, no curly braces) |
 | `posts/{-$category}.tsx` | `/posts/:category?` (optional segment) |
 | `files/$.tsx` | `/files/*` (splat — read via `_splat` param, never `*`) |
-| `_layout.tsx` | layout route (renders children via `<Outlet />`) |
-| `__root.tsx` | app shell — wraps every page; preserve `<Outlet />` |
+| `_layout/route.tsx` | pathless layout that keeps the site shell mounted around its `<Outlet />` |
+| `__root.tsx` | document and providers for every route; preserve `<Outlet />` |
 
 `routeTree.gen.ts` is auto-generated. Don't edit it by hand.

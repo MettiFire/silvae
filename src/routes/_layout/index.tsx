@@ -11,7 +11,7 @@ import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { DailyFragment } from "@/components/DailyFragment";
 import { ProgressBar } from "@/components/ProgressBar";
 import { useAuth } from "@/lib/auth";
-export const Route = createFileRoute("/_app/")({
+export const Route = createFileRoute("/_layout/")({
   head: () =>
     pageSeo(
       "Silvae — Una vita tra le pagine",

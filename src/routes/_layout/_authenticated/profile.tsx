@@ -3,7 +3,7 @@ import { pageSeo } from "@/lib/site-seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { ReaderProfile, ProfileLoading } from "@/components/ReaderProfile";
-export const Route = createFileRoute("/_app/_authenticated/profile")({
+export const Route = createFileRoute("/_layout/_authenticated/profile")({
   head: () =>
     pageSeo(
       "Il mio profilo — Silvae",

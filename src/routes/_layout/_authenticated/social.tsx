@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { profileLabel } from "@/lib/profile-model";
 import { getProfileMap } from "@/lib/profile-data";
 import { requireFragmentUser } from "@/lib/fragments";
-export const Route = createFileRoute("/_app/_authenticated/social")({
+export const Route = createFileRoute("/_layout/_authenticated/social")({
   head: () =>
     pageSeo(
       "Lettori e community — Silvae",

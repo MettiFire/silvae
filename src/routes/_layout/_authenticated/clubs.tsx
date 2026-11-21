@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/AppShell";
 import { BookClubs } from "@/components/BookClubs";
 import { pageSeo } from "@/lib/site-seo";
-export const Route = createFileRoute("/_app/_authenticated/clubs")({
+export const Route = createFileRoute("/_layout/_authenticated/clubs")({
   validateSearch: (
     s: Record<string, unknown>,
   ): { club?: string | undefined; topic?: string | undefined } => ({

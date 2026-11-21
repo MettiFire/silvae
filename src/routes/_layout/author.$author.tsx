@@ -23,7 +23,7 @@ import { mangaCatalogue } from "@/lib/manga-client";
 import { mangaAuthorMatches } from "@/lib/manga-search-names";
 import { sameAuthorName, sameReadingWork } from "@/lib/work-identity";
 
-export const Route = createFileRoute("/_app/author/$author")({
+export const Route = createFileRoute("/_layout/author/$author")({
   validateSearch: (s: Record<string, unknown>): { olid?: string } =>
     typeof s["olid"] === "string" && validAuthorId(s["olid"]) ? { olid: s["olid"] } : {},
   head: ({ params }) =>

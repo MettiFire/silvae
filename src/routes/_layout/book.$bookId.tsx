@@ -40,7 +40,7 @@ import {
   type ReadingStatus,
 } from "@/lib/library";
 
-export const Route = createFileRoute("/_app/book/$bookId")({
+export const Route = createFileRoute("/_layout/book/$bookId")({
   head: ({ params }) =>
     pageSeo(
       "Scheda libro — Silvae",

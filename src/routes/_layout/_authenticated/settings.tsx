@@ -25,7 +25,7 @@ const SECTIONS = {
 } as const;
 type Section = keyof typeof SECTIONS;
 const SettingsDevices = lazy(() => import("@/components/SettingsDevices"));
-export const Route = createFileRoute("/_app/_authenticated/settings")({
+export const Route = createFileRoute("/_layout/_authenticated/settings")({
   validateSearch: (search: Record<string, unknown>): { section?: Section } => ({
     section:
       search["section"] === "language"

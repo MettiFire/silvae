@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { readingStatistics } from "@/lib/reading-statistics";
 import { useLibrary } from "@/lib/library";
 
-export const Route = createFileRoute("/_app/_authenticated/stats")({
+export const Route = createFileRoute("/_layout/_authenticated/stats")({
   head: () =>
     pageSeo(
       "Statistiche di lettura — Silvae",

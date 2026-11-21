@@ -9,34 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as LayoutRouteRouteImport } from './routes/_layout/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppAuthenticatedRouteRouteImport } from './routes/_app/_authenticated/route'
-import { Route as AppDiscoverRouteImport } from './routes/_app/discover'
-import { Route as AppPrivacyRouteImport } from './routes/_app/privacy'
-import { Route as AppTermsRouteImport } from './routes/_app/terms'
+import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutAuthenticatedRouteRouteImport } from './routes/_layout/_authenticated/route'
+import { Route as LayoutDiscoverRouteImport } from './routes/_layout/discover'
+import { Route as LayoutPrivacyRouteImport } from './routes/_layout/privacy'
+import { Route as LayoutTermsRouteImport } from './routes/_layout/terms'
 import { Route as ApiCoverRepairJobRouteImport } from './routes/api.cover-repair-job'
 import { Route as ApiKindleJobRouteImport } from './routes/api.kindle-job'
 import { Route as ApiKoboJobRouteImport } from './routes/api.kobo-job'
-import { Route as AppAuthenticatedCalendarRouteImport } from './routes/_app/_authenticated/calendar'
-import { Route as AppAuthenticatedChallengesRouteImport } from './routes/_app/_authenticated/challenges'
-import { Route as AppAuthenticatedClubsRouteImport } from './routes/_app/_authenticated/clubs'
-import { Route as AppAuthenticatedDevicesRouteImport } from './routes/_app/_authenticated/devices'
-import { Route as AppAuthenticatedFragmentsRouteImport } from './routes/_app/_authenticated/fragments'
-import { Route as AppAuthenticatedImportRouteImport } from './routes/_app/_authenticated/import'
-import { Route as AppAuthenticatedLibraryRouteImport } from './routes/_app/_authenticated/library'
-import { Route as AppAuthenticatedProfileRouteImport } from './routes/_app/_authenticated/profile'
-import { Route as AppAuthenticatedSettingsRouteImport } from './routes/_app/_authenticated/settings'
-import { Route as AppAuthenticatedSocialRouteImport } from './routes/_app/_authenticated/social'
-import { Route as AppAuthenticatedStatsRouteImport } from './routes/_app/_authenticated/stats'
-import { Route as AppAuthorAuthorRouteImport } from './routes/_app/author.$author'
-import { Route as AppBookBookIdRouteImport } from './routes/_app/book.$bookId'
-import { Route as AppListListIdRouteImport } from './routes/_app/list.$listId'
-import { Route as AppUUsernameRouteImport } from './routes/_app/u.$username'
+import { Route as LayoutAuthenticatedCalendarRouteImport } from './routes/_layout/_authenticated/calendar'
+import { Route as LayoutAuthenticatedChallengesRouteImport } from './routes/_layout/_authenticated/challenges'
+import { Route as LayoutAuthenticatedClubsRouteImport } from './routes/_layout/_authenticated/clubs'
+import { Route as LayoutAuthenticatedDevicesRouteImport } from './routes/_layout/_authenticated/devices'
+import { Route as LayoutAuthenticatedFragmentsRouteImport } from './routes/_layout/_authenticated/fragments'
+import { Route as LayoutAuthenticatedImportRouteImport } from './routes/_layout/_authenticated/import'
+import { Route as LayoutAuthenticatedLibraryRouteImport } from './routes/_layout/_authenticated/library'
+import { Route as LayoutAuthenticatedProfileRouteImport } from './routes/_layout/_authenticated/profile'
+import { Route as LayoutAuthenticatedSettingsRouteImport } from './routes/_layout/_authenticated/settings'
+import { Route as LayoutAuthenticatedSocialRouteImport } from './routes/_layout/_authenticated/social'
+import { Route as LayoutAuthenticatedStatsRouteImport } from './routes/_layout/_authenticated/stats'
+import { Route as LayoutAuthorAuthorRouteImport } from './routes/_layout/author.$author'
+import { Route as LayoutBookBookIdRouteImport } from './routes/_layout/book.$bookId'
+import { Route as LayoutListListIdRouteImport } from './routes/_layout/list.$listId'
+import { Route as LayoutUUsernameRouteImport } from './routes/_layout/u.$username'
 
-const AppRouteRoute = AppRouteRouteImport.update({
-  id: '/_app',
+const LayoutRouteRoute = LayoutRouteRouteImport.update({
+  id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -44,29 +44,30 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppAuthenticatedRouteRoute = AppAuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppDiscoverRoute = AppDiscoverRouteImport.update({
+const LayoutAuthenticatedRouteRoute =
+  LayoutAuthenticatedRouteRouteImport.update({
+    id: '/_authenticated',
+    getParentRoute: () => LayoutRouteRoute,
+  } as any)
+const LayoutDiscoverRoute = LayoutDiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppPrivacyRoute = AppPrivacyRouteImport.update({
+const LayoutPrivacyRoute = LayoutPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppTermsRoute = AppTermsRouteImport.update({
+const LayoutTermsRoute = LayoutTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
 const ApiCoverRepairJobRoute = ApiCoverRepairJobRouteImport.update({
   id: '/api/cover-repair-job',
@@ -83,163 +84,170 @@ const ApiKoboJobRoute = ApiKoboJobRouteImport.update({
   path: '/api/kobo-job',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppAuthenticatedCalendarRoute =
-  AppAuthenticatedCalendarRouteImport.update({
+const LayoutAuthenticatedCalendarRoute =
+  LayoutAuthenticatedCalendarRouteImport.update({
     id: '/calendar',
     path: '/calendar',
-    getParentRoute: () => AppAuthenticatedRouteRoute,
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
   } as any)
-const AppAuthenticatedChallengesRoute =
-  AppAuthenticatedChallengesRouteImport.update({
+const LayoutAuthenticatedChallengesRoute =
+  LayoutAuthenticatedChallengesRouteImport.update({
     id: '/challenges',
     path: '/challenges',
-    getParentRoute: () => AppAuthenticatedRouteRoute,
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
   } as any)
-const AppAuthenticatedClubsRoute = AppAuthenticatedClubsRouteImport.update({
-  id: '/clubs',
-  path: '/clubs',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedDevicesRoute = AppAuthenticatedDevicesRouteImport.update({
-  id: '/devices',
-  path: '/devices',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedFragmentsRoute =
-  AppAuthenticatedFragmentsRouteImport.update({
+const LayoutAuthenticatedClubsRoute =
+  LayoutAuthenticatedClubsRouteImport.update({
+    id: '/clubs',
+    path: '/clubs',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedDevicesRoute =
+  LayoutAuthenticatedDevicesRouteImport.update({
+    id: '/devices',
+    path: '/devices',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedFragmentsRoute =
+  LayoutAuthenticatedFragmentsRouteImport.update({
     id: '/fragments',
     path: '/fragments',
-    getParentRoute: () => AppAuthenticatedRouteRoute,
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
   } as any)
-const AppAuthenticatedImportRoute = AppAuthenticatedImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedLibraryRoute = AppAuthenticatedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedProfileRoute = AppAuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedSettingsRoute =
-  AppAuthenticatedSettingsRouteImport.update({
+const LayoutAuthenticatedImportRoute =
+  LayoutAuthenticatedImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedLibraryRoute =
+  LayoutAuthenticatedLibraryRouteImport.update({
+    id: '/library',
+    path: '/library',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedProfileRoute =
+  LayoutAuthenticatedProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedSettingsRoute =
+  LayoutAuthenticatedSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => AppAuthenticatedRouteRoute,
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
   } as any)
-const AppAuthenticatedSocialRoute = AppAuthenticatedSocialRouteImport.update({
-  id: '/social',
-  path: '/social',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthenticatedStatsRoute = AppAuthenticatedStatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => AppAuthenticatedRouteRoute,
-} as any)
-const AppAuthorAuthorRoute = AppAuthorAuthorRouteImport.update({
+const LayoutAuthenticatedSocialRoute =
+  LayoutAuthenticatedSocialRouteImport.update({
+    id: '/social',
+    path: '/social',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthenticatedStatsRoute =
+  LayoutAuthenticatedStatsRouteImport.update({
+    id: '/stats',
+    path: '/stats',
+    getParentRoute: () => LayoutAuthenticatedRouteRoute,
+  } as any)
+const LayoutAuthorAuthorRoute = LayoutAuthorAuthorRouteImport.update({
   id: '/author/$author',
   path: '/author/$author',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppBookBookIdRoute = AppBookBookIdRouteImport.update({
+const LayoutBookBookIdRoute = LayoutBookBookIdRouteImport.update({
   id: '/book/$bookId',
   path: '/book/$bookId',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppListListIdRoute = AppListListIdRouteImport.update({
+const LayoutListListIdRoute = LayoutListListIdRouteImport.update({
   id: '/list/$listId',
   path: '/list/$listId',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
-const AppUUsernameRoute = AppUUsernameRouteImport.update({
+const LayoutUUsernameRoute = LayoutUUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
-  getParentRoute: () => AppRouteRoute,
+  getParentRoute: () => LayoutRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
+  '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
-  '/discover': typeof AppDiscoverRoute
-  '/privacy': typeof AppPrivacyRoute
-  '/terms': typeof AppTermsRoute
+  '/discover': typeof LayoutDiscoverRoute
+  '/privacy': typeof LayoutPrivacyRoute
+  '/terms': typeof LayoutTermsRoute
   '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
-  '/calendar': typeof AppAuthenticatedCalendarRoute
-  '/challenges': typeof AppAuthenticatedChallengesRoute
-  '/clubs': typeof AppAuthenticatedClubsRoute
-  '/devices': typeof AppAuthenticatedDevicesRoute
-  '/fragments': typeof AppAuthenticatedFragmentsRoute
-  '/import': typeof AppAuthenticatedImportRoute
-  '/library': typeof AppAuthenticatedLibraryRoute
-  '/profile': typeof AppAuthenticatedProfileRoute
-  '/settings': typeof AppAuthenticatedSettingsRoute
-  '/social': typeof AppAuthenticatedSocialRoute
-  '/stats': typeof AppAuthenticatedStatsRoute
-  '/author/$author': typeof AppAuthorAuthorRoute
-  '/book/$bookId': typeof AppBookBookIdRoute
-  '/list/$listId': typeof AppListListIdRoute
-  '/u/$username': typeof AppUUsernameRoute
+  '/calendar': typeof LayoutAuthenticatedCalendarRoute
+  '/challenges': typeof LayoutAuthenticatedChallengesRoute
+  '/clubs': typeof LayoutAuthenticatedClubsRoute
+  '/devices': typeof LayoutAuthenticatedDevicesRoute
+  '/fragments': typeof LayoutAuthenticatedFragmentsRoute
+  '/import': typeof LayoutAuthenticatedImportRoute
+  '/library': typeof LayoutAuthenticatedLibraryRoute
+  '/profile': typeof LayoutAuthenticatedProfileRoute
+  '/settings': typeof LayoutAuthenticatedSettingsRoute
+  '/social': typeof LayoutAuthenticatedSocialRoute
+  '/stats': typeof LayoutAuthenticatedStatsRoute
+  '/author/$author': typeof LayoutAuthorAuthorRoute
+  '/book/$bookId': typeof LayoutBookBookIdRoute
+  '/list/$listId': typeof LayoutListListIdRoute
+  '/u/$username': typeof LayoutUUsernameRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
-  '/': typeof AppIndexRoute
-  '/discover': typeof AppDiscoverRoute
-  '/privacy': typeof AppPrivacyRoute
-  '/terms': typeof AppTermsRoute
+  '/': typeof LayoutIndexRoute
+  '/discover': typeof LayoutDiscoverRoute
+  '/privacy': typeof LayoutPrivacyRoute
+  '/terms': typeof LayoutTermsRoute
   '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
-  '/calendar': typeof AppAuthenticatedCalendarRoute
-  '/challenges': typeof AppAuthenticatedChallengesRoute
-  '/clubs': typeof AppAuthenticatedClubsRoute
-  '/devices': typeof AppAuthenticatedDevicesRoute
-  '/fragments': typeof AppAuthenticatedFragmentsRoute
-  '/import': typeof AppAuthenticatedImportRoute
-  '/library': typeof AppAuthenticatedLibraryRoute
-  '/profile': typeof AppAuthenticatedProfileRoute
-  '/settings': typeof AppAuthenticatedSettingsRoute
-  '/social': typeof AppAuthenticatedSocialRoute
-  '/stats': typeof AppAuthenticatedStatsRoute
-  '/author/$author': typeof AppAuthorAuthorRoute
-  '/book/$bookId': typeof AppBookBookIdRoute
-  '/list/$listId': typeof AppListListIdRoute
-  '/u/$username': typeof AppUUsernameRoute
+  '/calendar': typeof LayoutAuthenticatedCalendarRoute
+  '/challenges': typeof LayoutAuthenticatedChallengesRoute
+  '/clubs': typeof LayoutAuthenticatedClubsRoute
+  '/devices': typeof LayoutAuthenticatedDevicesRoute
+  '/fragments': typeof LayoutAuthenticatedFragmentsRoute
+  '/import': typeof LayoutAuthenticatedImportRoute
+  '/library': typeof LayoutAuthenticatedLibraryRoute
+  '/profile': typeof LayoutAuthenticatedProfileRoute
+  '/settings': typeof LayoutAuthenticatedSettingsRoute
+  '/social': typeof LayoutAuthenticatedSocialRoute
+  '/stats': typeof LayoutAuthenticatedStatsRoute
+  '/author/$author': typeof LayoutAuthorAuthorRoute
+  '/book/$bookId': typeof LayoutBookBookIdRoute
+  '/list/$listId': typeof LayoutListListIdRoute
+  '/u/$username': typeof LayoutUUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRouteRouteWithChildren
+  '/_layout': typeof LayoutRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_app/_authenticated': typeof AppAuthenticatedRouteRouteWithChildren
-  '/_app/discover': typeof AppDiscoverRoute
-  '/_app/privacy': typeof AppPrivacyRoute
-  '/_app/terms': typeof AppTermsRoute
+  '/_layout/_authenticated': typeof LayoutAuthenticatedRouteRouteWithChildren
+  '/_layout/discover': typeof LayoutDiscoverRoute
+  '/_layout/privacy': typeof LayoutPrivacyRoute
+  '/_layout/terms': typeof LayoutTermsRoute
   '/api/cover-repair-job': typeof ApiCoverRepairJobRoute
   '/api/kindle-job': typeof ApiKindleJobRoute
   '/api/kobo-job': typeof ApiKoboJobRoute
-  '/_app/': typeof AppIndexRoute
-  '/_app/_authenticated/calendar': typeof AppAuthenticatedCalendarRoute
-  '/_app/_authenticated/challenges': typeof AppAuthenticatedChallengesRoute
-  '/_app/_authenticated/clubs': typeof AppAuthenticatedClubsRoute
-  '/_app/_authenticated/devices': typeof AppAuthenticatedDevicesRoute
-  '/_app/_authenticated/fragments': typeof AppAuthenticatedFragmentsRoute
-  '/_app/_authenticated/import': typeof AppAuthenticatedImportRoute
-  '/_app/_authenticated/library': typeof AppAuthenticatedLibraryRoute
-  '/_app/_authenticated/profile': typeof AppAuthenticatedProfileRoute
-  '/_app/_authenticated/settings': typeof AppAuthenticatedSettingsRoute
-  '/_app/_authenticated/social': typeof AppAuthenticatedSocialRoute
-  '/_app/_authenticated/stats': typeof AppAuthenticatedStatsRoute
-  '/_app/author/$author': typeof AppAuthorAuthorRoute
-  '/_app/book/$bookId': typeof AppBookBookIdRoute
-  '/_app/list/$listId': typeof AppListListIdRoute
-  '/_app/u/$username': typeof AppUUsernameRoute
+  '/_layout/': typeof LayoutIndexRoute
+  '/_layout/_authenticated/calendar': typeof LayoutAuthenticatedCalendarRoute
+  '/_layout/_authenticated/challenges': typeof LayoutAuthenticatedChallengesRoute
+  '/_layout/_authenticated/clubs': typeof LayoutAuthenticatedClubsRoute
+  '/_layout/_authenticated/devices': typeof LayoutAuthenticatedDevicesRoute
+  '/_layout/_authenticated/fragments': typeof LayoutAuthenticatedFragmentsRoute
+  '/_layout/_authenticated/import': typeof LayoutAuthenticatedImportRoute
+  '/_layout/_authenticated/library': typeof LayoutAuthenticatedLibraryRoute
+  '/_layout/_authenticated/profile': typeof LayoutAuthenticatedProfileRoute
+  '/_layout/_authenticated/settings': typeof LayoutAuthenticatedSettingsRoute
+  '/_layout/_authenticated/social': typeof LayoutAuthenticatedSocialRoute
+  '/_layout/_authenticated/stats': typeof LayoutAuthenticatedStatsRoute
+  '/_layout/author/$author': typeof LayoutAuthorAuthorRoute
+  '/_layout/book/$bookId': typeof LayoutBookBookIdRoute
+  '/_layout/list/$listId': typeof LayoutListListIdRoute
+  '/_layout/u/$username': typeof LayoutUUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -294,35 +302,35 @@ export interface FileRouteTypes {
     | '/u/$username'
   id:
     | '__root__'
-    | '/_app'
+    | '/_layout'
     | '/auth'
-    | '/_app/_authenticated'
-    | '/_app/discover'
-    | '/_app/privacy'
-    | '/_app/terms'
+    | '/_layout/_authenticated'
+    | '/_layout/discover'
+    | '/_layout/privacy'
+    | '/_layout/terms'
     | '/api/cover-repair-job'
     | '/api/kindle-job'
     | '/api/kobo-job'
-    | '/_app/'
-    | '/_app/_authenticated/calendar'
-    | '/_app/_authenticated/challenges'
-    | '/_app/_authenticated/clubs'
-    | '/_app/_authenticated/devices'
-    | '/_app/_authenticated/fragments'
-    | '/_app/_authenticated/import'
-    | '/_app/_authenticated/library'
-    | '/_app/_authenticated/profile'
-    | '/_app/_authenticated/settings'
-    | '/_app/_authenticated/social'
-    | '/_app/_authenticated/stats'
-    | '/_app/author/$author'
-    | '/_app/book/$bookId'
-    | '/_app/list/$listId'
-    | '/_app/u/$username'
+    | '/_layout/'
+    | '/_layout/_authenticated/calendar'
+    | '/_layout/_authenticated/challenges'
+    | '/_layout/_authenticated/clubs'
+    | '/_layout/_authenticated/devices'
+    | '/_layout/_authenticated/fragments'
+    | '/_layout/_authenticated/import'
+    | '/_layout/_authenticated/library'
+    | '/_layout/_authenticated/profile'
+    | '/_layout/_authenticated/settings'
+    | '/_layout/_authenticated/social'
+    | '/_layout/_authenticated/stats'
+    | '/_layout/author/$author'
+    | '/_layout/book/$bookId'
+    | '/_layout/list/$listId'
+    | '/_layout/u/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRouteRoute: typeof AppRouteRouteWithChildren
+  LayoutRouteRoute: typeof LayoutRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiCoverRepairJobRoute: typeof ApiCoverRepairJobRoute
   ApiKindleJobRoute: typeof ApiKindleJobRoute
@@ -331,11 +339,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
+    '/_layout': {
+      id: '/_layout'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AppRouteRouteImport
+      preLoaderRoute: typeof LayoutRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -345,40 +353,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
+    '/_layout/': {
+      id: '/_layout/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/_authenticated': {
-      id: '/_app/_authenticated'
+    '/_layout/_authenticated': {
+      id: '/_layout/_authenticated'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AppAuthenticatedRouteRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedRouteRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/discover': {
-      id: '/_app/discover'
+    '/_layout/discover': {
+      id: '/_layout/discover'
       path: '/discover'
       fullPath: '/discover'
-      preLoaderRoute: typeof AppDiscoverRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutDiscoverRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/privacy': {
-      id: '/_app/privacy'
+    '/_layout/privacy': {
+      id: '/_layout/privacy'
       path: '/privacy'
       fullPath: '/privacy'
-      preLoaderRoute: typeof AppPrivacyRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutPrivacyRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/terms': {
-      id: '/_app/terms'
+    '/_layout/terms': {
+      id: '/_layout/terms'
       path: '/terms'
       fullPath: '/terms'
-      preLoaderRoute: typeof AppTermsRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutTermsRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
     '/api/cover-repair-job': {
       id: '/api/cover-repair-job'
@@ -401,177 +409,178 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiKoboJobRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/_authenticated/calendar': {
-      id: '/_app/_authenticated/calendar'
+    '/_layout/_authenticated/calendar': {
+      id: '/_layout/_authenticated/calendar'
       path: '/calendar'
       fullPath: '/calendar'
-      preLoaderRoute: typeof AppAuthenticatedCalendarRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedCalendarRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/challenges': {
-      id: '/_app/_authenticated/challenges'
+    '/_layout/_authenticated/challenges': {
+      id: '/_layout/_authenticated/challenges'
       path: '/challenges'
       fullPath: '/challenges'
-      preLoaderRoute: typeof AppAuthenticatedChallengesRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedChallengesRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/clubs': {
-      id: '/_app/_authenticated/clubs'
+    '/_layout/_authenticated/clubs': {
+      id: '/_layout/_authenticated/clubs'
       path: '/clubs'
       fullPath: '/clubs'
-      preLoaderRoute: typeof AppAuthenticatedClubsRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedClubsRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/devices': {
-      id: '/_app/_authenticated/devices'
+    '/_layout/_authenticated/devices': {
+      id: '/_layout/_authenticated/devices'
       path: '/devices'
       fullPath: '/devices'
-      preLoaderRoute: typeof AppAuthenticatedDevicesRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedDevicesRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/fragments': {
-      id: '/_app/_authenticated/fragments'
+    '/_layout/_authenticated/fragments': {
+      id: '/_layout/_authenticated/fragments'
       path: '/fragments'
       fullPath: '/fragments'
-      preLoaderRoute: typeof AppAuthenticatedFragmentsRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedFragmentsRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/import': {
-      id: '/_app/_authenticated/import'
+    '/_layout/_authenticated/import': {
+      id: '/_layout/_authenticated/import'
       path: '/import'
       fullPath: '/import'
-      preLoaderRoute: typeof AppAuthenticatedImportRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedImportRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/library': {
-      id: '/_app/_authenticated/library'
+    '/_layout/_authenticated/library': {
+      id: '/_layout/_authenticated/library'
       path: '/library'
       fullPath: '/library'
-      preLoaderRoute: typeof AppAuthenticatedLibraryRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedLibraryRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/profile': {
-      id: '/_app/_authenticated/profile'
+    '/_layout/_authenticated/profile': {
+      id: '/_layout/_authenticated/profile'
       path: '/profile'
       fullPath: '/profile'
-      preLoaderRoute: typeof AppAuthenticatedProfileRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedProfileRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/settings': {
-      id: '/_app/_authenticated/settings'
+    '/_layout/_authenticated/settings': {
+      id: '/_layout/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof AppAuthenticatedSettingsRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedSettingsRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/social': {
-      id: '/_app/_authenticated/social'
+    '/_layout/_authenticated/social': {
+      id: '/_layout/_authenticated/social'
       path: '/social'
       fullPath: '/social'
-      preLoaderRoute: typeof AppAuthenticatedSocialRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedSocialRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/_authenticated/stats': {
-      id: '/_app/_authenticated/stats'
+    '/_layout/_authenticated/stats': {
+      id: '/_layout/_authenticated/stats'
       path: '/stats'
       fullPath: '/stats'
-      preLoaderRoute: typeof AppAuthenticatedStatsRouteImport
-      parentRoute: typeof AppAuthenticatedRouteRoute
+      preLoaderRoute: typeof LayoutAuthenticatedStatsRouteImport
+      parentRoute: typeof LayoutAuthenticatedRouteRoute
     }
-    '/_app/author/$author': {
-      id: '/_app/author/$author'
+    '/_layout/author/$author': {
+      id: '/_layout/author/$author'
       path: '/author/$author'
       fullPath: '/author/$author'
-      preLoaderRoute: typeof AppAuthorAuthorRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutAuthorAuthorRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/book/$bookId': {
-      id: '/_app/book/$bookId'
+    '/_layout/book/$bookId': {
+      id: '/_layout/book/$bookId'
       path: '/book/$bookId'
       fullPath: '/book/$bookId'
-      preLoaderRoute: typeof AppBookBookIdRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutBookBookIdRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/list/$listId': {
-      id: '/_app/list/$listId'
+    '/_layout/list/$listId': {
+      id: '/_layout/list/$listId'
       path: '/list/$listId'
       fullPath: '/list/$listId'
-      preLoaderRoute: typeof AppListListIdRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutListListIdRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
-    '/_app/u/$username': {
-      id: '/_app/u/$username'
+    '/_layout/u/$username': {
+      id: '/_layout/u/$username'
       path: '/u/$username'
       fullPath: '/u/$username'
-      preLoaderRoute: typeof AppUUsernameRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof LayoutUUsernameRouteImport
+      parentRoute: typeof LayoutRouteRoute
     }
   }
 }
 
-interface AppAuthenticatedRouteRouteChildren {
-  AppAuthenticatedCalendarRoute: typeof AppAuthenticatedCalendarRoute
-  AppAuthenticatedChallengesRoute: typeof AppAuthenticatedChallengesRoute
-  AppAuthenticatedClubsRoute: typeof AppAuthenticatedClubsRoute
-  AppAuthenticatedDevicesRoute: typeof AppAuthenticatedDevicesRoute
-  AppAuthenticatedFragmentsRoute: typeof AppAuthenticatedFragmentsRoute
-  AppAuthenticatedImportRoute: typeof AppAuthenticatedImportRoute
-  AppAuthenticatedLibraryRoute: typeof AppAuthenticatedLibraryRoute
-  AppAuthenticatedProfileRoute: typeof AppAuthenticatedProfileRoute
-  AppAuthenticatedSettingsRoute: typeof AppAuthenticatedSettingsRoute
-  AppAuthenticatedSocialRoute: typeof AppAuthenticatedSocialRoute
-  AppAuthenticatedStatsRoute: typeof AppAuthenticatedStatsRoute
+interface LayoutAuthenticatedRouteRouteChildren {
+  LayoutAuthenticatedCalendarRoute: typeof LayoutAuthenticatedCalendarRoute
+  LayoutAuthenticatedChallengesRoute: typeof LayoutAuthenticatedChallengesRoute
+  LayoutAuthenticatedClubsRoute: typeof LayoutAuthenticatedClubsRoute
+  LayoutAuthenticatedDevicesRoute: typeof LayoutAuthenticatedDevicesRoute
+  LayoutAuthenticatedFragmentsRoute: typeof LayoutAuthenticatedFragmentsRoute
+  LayoutAuthenticatedImportRoute: typeof LayoutAuthenticatedImportRoute
+  LayoutAuthenticatedLibraryRoute: typeof LayoutAuthenticatedLibraryRoute
+  LayoutAuthenticatedProfileRoute: typeof LayoutAuthenticatedProfileRoute
+  LayoutAuthenticatedSettingsRoute: typeof LayoutAuthenticatedSettingsRoute
+  LayoutAuthenticatedSocialRoute: typeof LayoutAuthenticatedSocialRoute
+  LayoutAuthenticatedStatsRoute: typeof LayoutAuthenticatedStatsRoute
 }
 
-const AppAuthenticatedRouteRouteChildren: AppAuthenticatedRouteRouteChildren = {
-  AppAuthenticatedCalendarRoute: AppAuthenticatedCalendarRoute,
-  AppAuthenticatedChallengesRoute: AppAuthenticatedChallengesRoute,
-  AppAuthenticatedClubsRoute: AppAuthenticatedClubsRoute,
-  AppAuthenticatedDevicesRoute: AppAuthenticatedDevicesRoute,
-  AppAuthenticatedFragmentsRoute: AppAuthenticatedFragmentsRoute,
-  AppAuthenticatedImportRoute: AppAuthenticatedImportRoute,
-  AppAuthenticatedLibraryRoute: AppAuthenticatedLibraryRoute,
-  AppAuthenticatedProfileRoute: AppAuthenticatedProfileRoute,
-  AppAuthenticatedSettingsRoute: AppAuthenticatedSettingsRoute,
-  AppAuthenticatedSocialRoute: AppAuthenticatedSocialRoute,
-  AppAuthenticatedStatsRoute: AppAuthenticatedStatsRoute,
-}
+const LayoutAuthenticatedRouteRouteChildren: LayoutAuthenticatedRouteRouteChildren =
+  {
+    LayoutAuthenticatedCalendarRoute: LayoutAuthenticatedCalendarRoute,
+    LayoutAuthenticatedChallengesRoute: LayoutAuthenticatedChallengesRoute,
+    LayoutAuthenticatedClubsRoute: LayoutAuthenticatedClubsRoute,
+    LayoutAuthenticatedDevicesRoute: LayoutAuthenticatedDevicesRoute,
+    LayoutAuthenticatedFragmentsRoute: LayoutAuthenticatedFragmentsRoute,
+    LayoutAuthenticatedImportRoute: LayoutAuthenticatedImportRoute,
+    LayoutAuthenticatedLibraryRoute: LayoutAuthenticatedLibraryRoute,
+    LayoutAuthenticatedProfileRoute: LayoutAuthenticatedProfileRoute,
+    LayoutAuthenticatedSettingsRoute: LayoutAuthenticatedSettingsRoute,
+    LayoutAuthenticatedSocialRoute: LayoutAuthenticatedSocialRoute,
+    LayoutAuthenticatedStatsRoute: LayoutAuthenticatedStatsRoute,
+  }
 
-const AppAuthenticatedRouteRouteWithChildren =
-  AppAuthenticatedRouteRoute._addFileChildren(
-    AppAuthenticatedRouteRouteChildren,
+const LayoutAuthenticatedRouteRouteWithChildren =
+  LayoutAuthenticatedRouteRoute._addFileChildren(
+    LayoutAuthenticatedRouteRouteChildren,
   )
 
-interface AppRouteRouteChildren {
-  AppAuthenticatedRouteRoute: typeof AppAuthenticatedRouteRouteWithChildren
-  AppDiscoverRoute: typeof AppDiscoverRoute
-  AppPrivacyRoute: typeof AppPrivacyRoute
-  AppTermsRoute: typeof AppTermsRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppAuthorAuthorRoute: typeof AppAuthorAuthorRoute
-  AppBookBookIdRoute: typeof AppBookBookIdRoute
-  AppListListIdRoute: typeof AppListListIdRoute
-  AppUUsernameRoute: typeof AppUUsernameRoute
+interface LayoutRouteRouteChildren {
+  LayoutAuthenticatedRouteRoute: typeof LayoutAuthenticatedRouteRouteWithChildren
+  LayoutDiscoverRoute: typeof LayoutDiscoverRoute
+  LayoutPrivacyRoute: typeof LayoutPrivacyRoute
+  LayoutTermsRoute: typeof LayoutTermsRoute
+  LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutAuthorAuthorRoute: typeof LayoutAuthorAuthorRoute
+  LayoutBookBookIdRoute: typeof LayoutBookBookIdRoute
+  LayoutListListIdRoute: typeof LayoutListListIdRoute
+  LayoutUUsernameRoute: typeof LayoutUUsernameRoute
 }
 
-const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppAuthenticatedRouteRoute: AppAuthenticatedRouteRouteWithChildren,
-  AppDiscoverRoute: AppDiscoverRoute,
-  AppPrivacyRoute: AppPrivacyRoute,
-  AppTermsRoute: AppTermsRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppAuthorAuthorRoute: AppAuthorAuthorRoute,
-  AppBookBookIdRoute: AppBookBookIdRoute,
-  AppListListIdRoute: AppListListIdRoute,
-  AppUUsernameRoute: AppUUsernameRoute,
+const LayoutRouteRouteChildren: LayoutRouteRouteChildren = {
+  LayoutAuthenticatedRouteRoute: LayoutAuthenticatedRouteRouteWithChildren,
+  LayoutDiscoverRoute: LayoutDiscoverRoute,
+  LayoutPrivacyRoute: LayoutPrivacyRoute,
+  LayoutTermsRoute: LayoutTermsRoute,
+  LayoutIndexRoute: LayoutIndexRoute,
+  LayoutAuthorAuthorRoute: LayoutAuthorAuthorRoute,
+  LayoutBookBookIdRoute: LayoutBookBookIdRoute,
+  LayoutListListIdRoute: LayoutListListIdRoute,
+  LayoutUUsernameRoute: LayoutUUsernameRoute,
 }
 
-const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
-  AppRouteRouteChildren,
+const LayoutRouteRouteWithChildren = LayoutRouteRoute._addFileChildren(
+  LayoutRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  AppRouteRoute: AppRouteRouteWithChildren,
+  LayoutRouteRoute: LayoutRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiCoverRepairJobRoute: ApiCoverRepairJobRoute,
   ApiKindleJobRoute: ApiKindleJobRoute,

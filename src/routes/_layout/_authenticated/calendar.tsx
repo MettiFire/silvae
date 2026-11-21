@@ -6,7 +6,7 @@ import { BookCover } from "@/components/BookCard";
 import { useAuth } from "@/lib/auth";
 import { useLibrary } from "@/lib/library";
 
-export const Route = createFileRoute("/_app/_authenticated/calendar")({
+export const Route = createFileRoute("/_layout/_authenticated/calendar")({
   head: () =>
     pageSeo(
       "Calendario delle letture — Silvae",

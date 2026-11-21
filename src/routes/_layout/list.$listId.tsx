@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import type { Book } from "@/lib/books";
 
-export const Route = createFileRoute("/_app/list/$listId")({
+export const Route = createFileRoute("/_layout/list/$listId")({
   head: ({ params }) =>
     pageSeo(
       "Lista di lettura — Silvae",

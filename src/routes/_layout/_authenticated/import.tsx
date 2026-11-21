@@ -31,7 +31,7 @@ import {
   type ImportField,
 } from "@/lib/csv-import";
 
-export const Route = createFileRoute("/_app/_authenticated/import")({
+export const Route = createFileRoute("/_layout/_authenticated/import")({
   head: () =>
     pageSeo(
       "Importa la tua libreria — Silvae",

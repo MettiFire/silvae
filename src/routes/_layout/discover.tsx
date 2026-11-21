@@ -15,7 +15,7 @@ import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { useRecommendationWorkFilter } from "@/lib/use-recommendation-work-filter";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_app/discover")({
+export const Route = createFileRoute("/_layout/discover")({
   head: () =>
     pageSeo(
       "Esplora libri e nuove letture — Silvae",
