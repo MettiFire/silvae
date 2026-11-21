@@ -6,10 +6,12 @@ import { LEGAL } from "@/lib/legal";
 export function LegalLayout({
   title,
   intro,
+  updated = LEGAL.updated,
   children,
 }: {
   title: string;
   intro: string;
+  updated?: string;
   children: ReactNode;
 }) {
   return (
@@ -22,7 +24,7 @@ export function LegalLayout({
         <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{intro}</p>
         <p className="mt-4 text-xs text-muted-foreground">
           <UiText text="Ultimo aggiornamento: " />
-          {LEGAL.updated}
+          {updated}
         </p>
         {(!LEGAL.operatorName || !LEGAL.contactEmail) && (
           <p className="legal-draft" role="note">

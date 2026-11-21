@@ -15,6 +15,7 @@ function Privacy() {
     <LegalLayout
       title="Privacy policy"
       intro="Quali dati usiamo, perché li usiamo e quali scelte hai a disposizione."
+      updated="21 novembre 2026"
     >
       <h2>1. Chi gestisce i dati</h2>
       <LegalContact />
@@ -108,8 +109,8 @@ function Privacy() {
         ricerca.
       </p>
       <p>
-        Il servizio usa Lovable per pubblicazione e infrastruttura, Supabase per autenticazione e
-        database e Google Books e Open Library per dati bibliografici e copertine. L’accesso con
+        Silvae è ospitato su Vercel e usa Supabase per autenticazione, database e archiviazione dei
+        file. Google Books e Open Library forniscono dati bibliografici e copertine. L’accesso con
         Google è facoltativo. Immagini esterne, comprese quelle inserite nel profilo, vengono
         richieste al rispettivo fornitore, che riceve i dati tecnici della connessione.
       </p>
@@ -123,8 +124,8 @@ function Privacy() {
         Se colleghi Amazon, le richieste di autorizzazione e lettura Kindle passano dal backend
         Silvae attraverso un servizio dedicato ospitato su Vercel. Questo servizio inoltra i codici
         e le credenziali necessari ad Amazon, senza salvarli o registrarli nei log applicativi. Le
-        credenziali conservate da Silvae restano cifrate nel database; la chiave di cifratura rimane
-        sul server Lovable.
+        credenziali conservate da Silvae restano cifrate nel database. La chiave di cifratura
+        rimane nell’ambiente server che gestisce il collegamento.
       </p>
       <p>
         La ricerca nella raccolta Kindle richiede un consenso aggiuntivo nel pannello Dispositivi.
@@ -141,13 +142,13 @@ function Privacy() {
       </p>
       <p>
         I fornitori possono trattare dati anche fuori dallo Spazio economico europeo. Supabase e
-        Lovable descrivono nei propri accordi sul trattamento le garanzie applicabili, incluse le
+        Vercel descrivono nei propri accordi sul trattamento le garanzie applicabili, incluse le
         clausole contrattuali standard ove necessarie. Puoi chiedere al titolare informazioni sulla
         regione del progetto e sulle garanzie pertinenti. Consulta anche le{" "}
         <a href="https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq">
           informazioni Supabase sui trasferimenti
         </a>{" "}
-        e la <a href="https://lovable.dev/privacy/">privacy policy di Lovable</a>.
+        e l’<a href="https://vercel.com/legal/privacy-notice">informativa sulla privacy di Vercel</a>.
       </p>
       <h2>6. Memorizzazione sul dispositivo</h2>
       <p>
