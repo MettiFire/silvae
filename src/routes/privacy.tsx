@@ -74,6 +74,10 @@ function Privacy() {
         attraverso le autorizzazioni del servizio. L’email di accesso non viene mostrata nel profilo
         pubblico.
       </p>
+      <p>
+        Le segnalazioni di copertine mancanti contengono l’identificativo dell’account, i dati del
+        libro e la data di invio. Sono visibili a chi le invia e al gestore di Silvae.
+      </p>
       <h2>4. Finalità e basi del trattamento</h2>
       <ul>
         <li>

@@ -1,18 +1,16 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Flag, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
 import { useResolvedBookCover } from "@/lib/book-cover-state";
 import { displayCoverUrls } from "@/lib/book-metadata";
 import { QuickAddBook } from "@/components/QuickAddBook";
+import { CoverReportButton } from "@/components/CoverReportButton";
 import { LeafRating } from "@/components/LeafRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/lib/use-ui-language";
-import { LEGAL } from "@/lib/legal";
-import { SITE_URL } from "@/lib/site-seo";
 
 export function BookCover({
   book,
@@ -29,7 +27,6 @@ export function BookCover({
   reportMissing?: boolean;
   onCoverLoad?: (url: string) => void;
 }) {
-  const t = useTranslate();
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(priority);
   const [loadedUrl, setLoadedUrl] = useState("");
@@ -110,17 +107,7 @@ export function BookCover({
             <UiText text="Copertina non disponibile" />
           </span>
           {reportMissing && visible && !isPending && !isFetching && (
-            <a
-              href={`mailto:${LEGAL.contactEmail}?subject=${encodeURIComponent(
-                t("Copertina mancante su Silvae"),
-              )}&body=${encodeURIComponent(
-                `${book.title}\n${book.authors.join(", ")}\n${SITE_URL}/book/${encodeURIComponent(book.id)}`,
-              )}`}
-              className="button-outline inline-flex items-center gap-1.5 text-xs"
-            >
-              <Flag size={12} aria-hidden="true" />
-              <UiText text="Segnala via email" />
-            </a>
+            <CoverReportButton book={book} />
           )}
         </div>
       )}

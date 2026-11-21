@@ -298,6 +298,30 @@ export type Database = {
           },
         ]
       }
+      cover_reports: {
+        Row: {
+          book_authors: string
+          book_id: string
+          book_title: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          book_authors: string
+          book_id: string
+          book_title: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          book_authors?: string
+          book_id?: string
+          book_title?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dismissed_books: {
         Row: {
           book_id: string
