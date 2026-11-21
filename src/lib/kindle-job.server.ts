@@ -101,20 +101,19 @@ export async function handleKindleJob(
   const input = authorizedKindleJob(body, signature, key);
   if (!input) return json({ error: "Unauthorized" }, 401);
   const cloudKey = env["KINDLE_CLOUD_KEY"] ?? "";
+  const supabaseUrl = env["SUPABASE_URL"] ?? import.meta.env?.["VITE_SUPABASE_URL"];
   const apiKey =
     env["SUPABASE_PUBLISHABLE_KEY"] ?? import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"];
-  if (!apiKey || !/^[a-f0-9]{64}$/.test(cloudKey)) return json({ error: "Unavailable" }, 503);
+  if (!supabaseUrl || !apiKey || !/^[a-f0-9]{64}$/.test(cloudKey))
+    return json({ error: "Unavailable" }, 503);
   const rpc = async (data: Record<string, unknown>) => {
     const payload = JSON.stringify({ ...data, owner: input.owner, time: Date.now() });
-    const response = await fetcher(
-      "https://eouwfswqnpjgorlkrnyt.supabase.co/rest/v1/rpc/kindle_cloud_job",
-      {
-        method: "POST",
-        headers: { apikey: apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ p_payload: payload, p_signature: jobSignature(payload, key) }),
-        signal: AbortSignal.timeout(15_000),
-      },
-    );
+    const response = await fetcher(new URL("/rest/v1/rpc/kindle_cloud_job", supabaseUrl), {
+      method: "POST",
+      headers: { apikey: apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_payload: payload, p_signature: jobSignature(payload, key) }),
+      signal: AbortSignal.timeout(15_000),
+    });
     if (!response.ok) throw Error("Job unavailable");
     return response.json();
   };
@@ -235,7 +234,7 @@ export async function handleKindleJob(
         });
       } else if (!map && observed >= Date.parse(claim.since)) {
         // Only public, already-catalogued metadata can be added automatically.
-        const url = new URL("https://eouwfswqnpjgorlkrnyt.supabase.co/rest/v1/books");
+        const url = new URL("/rest/v1/books", supabaseUrl);
         url.searchParams.set("select", "id,title,authors");
         url.searchParams.set("title", `eq.${book.title}`);
         url.searchParams.set("limit", "3");

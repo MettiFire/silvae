@@ -64,9 +64,10 @@ export async function handleKoboJob(
   body += decoder.decode();
   const input = authorizeKoboJob(body, signed, key);
   if (!input) return json({ error: "Unauthorized" }, 401);
+  const supabaseUrl = env["SUPABASE_URL"] ?? import.meta.env?.["VITE_SUPABASE_URL"];
   const apiKey =
     env["SUPABASE_PUBLISHABLE_KEY"] ?? import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"];
-  if (!apiKey) return json({ error: "Unavailable" }, 503);
+  if (!supabaseUrl || !apiKey) return json({ error: "Unavailable" }, 503);
   const rpc = async (data: Record<string, unknown>) => {
     const payload = JSON.stringify({
       ...data,
@@ -74,15 +75,12 @@ export async function handleKoboJob(
       owner: input.owner,
       time: Date.now(),
     });
-    const response = await fetcher(
-      "https://eouwfswqnpjgorlkrnyt.supabase.co/rest/v1/rpc/kobo_cloud_job",
-      {
-        method: "POST",
-        headers: { apikey: apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ p_payload: payload, p_signature: signature(payload, key) }),
-        signal: AbortSignal.timeout(15000),
-      },
-    );
+    const response = await fetcher(new URL("/rest/v1/rpc/kobo_cloud_job", supabaseUrl), {
+      method: "POST",
+      headers: { apikey: apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_payload: payload, p_signature: signature(payload, key) }),
+      signal: AbortSignal.timeout(15000),
+    });
     if (!response.ok) throw Error();
     return response.json();
   };

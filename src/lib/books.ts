@@ -412,7 +412,10 @@ export async function searchBookSuggestions(
         // Never replace a readable work title with an edition in an unexpected script.
         if (
           edition?.title &&
-          !(needsLocalizedTitle(edition.title, language ?? "it") && !needsLocalizedTitle(doc.title ?? "", language ?? "it"))
+          !(
+            needsLocalizedTitle(edition.title, language ?? "it") &&
+            !needsLocalizedTitle(doc.title ?? "", language ?? "it")
+          )
         )
           localized.title = edition.title;
         if (edition?.cover_i) localized.cover_i = edition.cover_i;
@@ -709,17 +712,33 @@ export async function coverCandidates(
   if (!workId && o.status === "fulfilled") {
     workId = o.value.find((candidate) => sameBook(book, candidate))?.id.match(/^ol:(OL\d+W)$/)?.[1];
   }
-  if (includeEditions && workId) {
+  const editionId = book.id.match(/^ol:(OL\d+M)$/)?.[1];
+  // The stored Open Library ID still identifies the edition when an imported
+  // title is truncated or its author is missing.
+  if (editionId)
+    urls.push(`https://covers.openlibrary.org/b/olid/${editionId}-M.jpg?default=false`);
+  if (workId) {
     try {
-      const response = await fetch(`${OL_API}/works/${workId}/editions.json?limit=50`, {
+      const limit = includeEditions ? 50 : 12;
+      const response = await fetch(`${OL_API}/works/${workId}/editions.json?limit=${limit}`, {
         signal: AbortSignal.timeout(8000),
       });
       if (response.ok) {
-        const data = (await response.json()) as { entries?: { covers?: number[] }[] };
-        for (const edition of data.entries ?? [])
+        const data = (await response.json()) as {
+          entries?: { covers?: number[]; languages?: { key: string }[] }[];
+        };
+        const preferred = BOOK_LANGUAGES.find((option) => option.code === language)?.ol;
+        const matchesLanguage = (entry: NonNullable<typeof data.entries>[number]) =>
+          !!preferred && !!entry.languages?.some(({ key }) => key === `/languages/${preferred}`);
+        const entries = (data.entries ?? []).sort(
+          (a, b) => Number(matchesLanguage(b)) - Number(matchesLanguage(a)),
+        );
+        const editionCovers = new Set<string>();
+        for (const edition of entries)
           for (const cover of edition.covers ?? [])
             if (Number.isSafeInteger(cover) && cover > 0)
-              urls.push(`https://covers.openlibrary.org/b/id/${cover}-L.jpg`);
+              editionCovers.add(`https://covers.openlibrary.org/b/id/${cover}-M.jpg?default=false`);
+        urls.push(...[...editionCovers].slice(0, includeEditions ? 50 : 4));
       }
     } catch {
       /* Existing candidates remain selectable if editions are unavailable. */

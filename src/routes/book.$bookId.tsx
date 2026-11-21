@@ -109,7 +109,8 @@ function BookPage() {
     isLoading: ratingLoading,
     isError: ratingError,
   } = useQuery({
-    queryKey: ["community-rating", bookId],
+    queryKey: ["community-rating", bookId, user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const aggregated = await supabase.rpc("book_community_rating", { p_book_id: bookId });
       if (!aggregated.error) {
@@ -412,13 +413,15 @@ function BookPage() {
                 <span className="text-sm">
                   <UiText
                     text={
-                      communityRating
-                        ? `${communityRating.average.toFixed(1)} / 5`
-                        : ratingError
-                          ? "Valutazioni non disponibili"
-                          : ratingLoading
-                            ? "Caricamento voti…"
-                            : "Ancora nessun voto"
+                      !user
+                        ? "Accedi per vedere i voti"
+                        : communityRating
+                          ? `${communityRating.average.toFixed(1)} / 5`
+                          : ratingError
+                            ? "Valutazioni non disponibili"
+                            : ratingLoading
+                              ? "Caricamento voti…"
+                              : "Ancora nessun voto"
                     }
                   />
                 </span>
