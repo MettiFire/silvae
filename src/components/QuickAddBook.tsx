@@ -36,7 +36,7 @@ export function QuickAddBook({ book, className }: { book: Book; className?: stri
           aria-busy={save.isPending}
           title={unavailable ? t("Libreria non disponibile") : label}
           className={cn(
-            "quick-add-book inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-50",
+            "quick-add-book inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground motion-press hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-50",
             className,
           )}
         >

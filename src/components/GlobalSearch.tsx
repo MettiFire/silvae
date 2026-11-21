@@ -256,7 +256,7 @@ export function GlobalSearch() {
           }
         }}
 
-        className="h-10 w-full rounded-xl border border-border bg-card pl-24 pr-11 text-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+        className="h-10 w-full rounded-xl border border-border bg-card pl-24 pr-11 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
       />
       {mode !== "manga" && (
         <UiElement
@@ -265,7 +265,7 @@ export function GlobalSearch() {
           onClick={() => setScanning(true)}
           aria-label="Scansiona codice a barre"
           title="Scansiona codice a barre"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-primary"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
         >
           <ScanBarcode className="h-4 w-4" />
         </UiElement>
@@ -283,7 +283,7 @@ export function GlobalSearch() {
           id="global-search-results"
           aria-label="Risultati libri e autori"
           style={{ maxHeight: resultHeight, WebkitOverflowScrolling: "touch" }}
-          className="absolute z-50 mt-2 w-full touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover shadow-paper"
+          className="motion-search absolute z-50 mt-2 w-full touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover shadow-paper"
         >
           {searchError && (
             <div role="alert" className="px-3 py-3 text-sm text-destructive">
@@ -333,7 +333,7 @@ export function GlobalSearch() {
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => choose(index)}
-                  className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition hover:bg-accent"
+                  className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors hover:bg-accent"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <UserRound aria-hidden="true" className="h-4 w-4" />
@@ -374,7 +374,7 @@ export function GlobalSearch() {
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => choose(index + authorResults.length)}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-accent"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-accent"
                 >
                   <div className="w-8 shrink-0">
                     <BookCover book={b} />

@@ -198,7 +198,7 @@ export function DailyFragment() {
                 to="/book/$bookId"
                 params={{ bookId: book.id }}
                 aria-label={`Scopri ${book.title}`}
-                className="block transition-transform hover:-translate-y-1"
+                className="block motion-cover-link"
               >
                 {cover}
               </Link>

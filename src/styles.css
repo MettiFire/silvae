@@ -485,13 +485,13 @@ button:disabled {
 }
 .book-card .cover-wrap {
   border-radius: 2px;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: translate var(--motion-in) var(--motion-settle);
 }
-.book-card:hover .cover-wrap {
-  transform: translateY(-4px);
-  box-shadow: 0 9px 16px #17231918;
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .book-card:hover .cover-wrap,
+  .motion-cover-link:hover {
+    translate: 0 -2px;
+  }
 }
 .book-card h3 {
   font-family: var(--font-sans);
@@ -979,6 +979,96 @@ button:disabled {
     background: transparent;
   }
 }
+:root {
+  --motion-in: 200ms;
+  --motion-out: 160ms;
+  --motion-settle: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-travel: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@keyframes silvae-surface-in {
+  from {
+    opacity: 0;
+    scale: var(--motion-start-scale, 0.95);
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes silvae-surface-out {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: var(--motion-start-scale, 0.95);
+  }
+}
+@keyframes silvae-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes silvae-scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Distinct enter/exit animations let Radix retain the element until exit ends. */
+.motion-popover[data-state="open"],
+.motion-modal[data-state="open"],
+.motion-search {
+  animation: silvae-surface-in var(--motion-in) var(--motion-settle) both;
+}
+.motion-popover[data-state="closed"],
+.motion-modal[data-state="closed"] {
+  pointer-events: none;
+  animation: silvae-surface-out var(--motion-out) ease-in both;
+}
+.motion-modal {
+  --motion-in: 250ms;
+  --motion-out: 200ms;
+  --motion-start-scale: 0.97;
+}
+.motion-search {
+  transform-origin: top left;
+}
+.motion-scrim[data-state="open"] {
+  animation: silvae-scrim-in var(--motion-in) var(--motion-settle) both;
+}
+.motion-scrim[data-state="closed"] {
+  animation: silvae-scrim-out var(--motion-out) ease-in both;
+}
+.motion-press {
+  transition:
+    scale 150ms var(--motion-settle),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .motion-press:active:not(:disabled):not([aria-disabled="true"]):not([data-state="open"]) {
+    scale: 0.97;
+    transition-property: background-color, border-color, color;
+  }
+}
+.motion-progress {
+  transform-origin: left center;
+  transition: scale 250ms var(--motion-travel);
+}
+.motion-cover-link {
+  transition: translate var(--motion-in) var(--motion-settle);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,

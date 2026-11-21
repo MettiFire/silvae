@@ -1,4 +1,4 @@
-# 🌿 Silvae 
+# 🌿 Silvae
 
 **Keep track of every story.**
 
@@ -9,7 +9,7 @@ with light and dark themes.
 
 Live: https://silvae-library.vercel.app
 
-Hosted on Lovable because it's free and easy to use.
+The production app runs on Vercel with Supabase for authentication, data, and file storage.
 
 [Open Silvae](https://silvae-library.vercel.app) · [Report an issue](https://github.com/MettiFire/silvae/issues)
 
@@ -125,7 +125,7 @@ automatically change reading status or dates.
 
 Connections are managed in **Settings → Devices**. The repository includes a local
 USB bridge, an experimental KOReader integration, and export tools.
-**Kindle cloud synchronization is experimental and opt-in; native Kobo cloud sync is unavailable.**
+**Kindle and Kobo cloud synchronization are experimental. Scheduled sync is currently paused on the independent deployment.**
 Authorize Amazon in Settings → Devices, then separately enable background checks.
 The backend scheduler checks eligible accounts three times daily, approximately every eight hours,
 with bounded scans, confirmed or unambiguous book matches, and protection for newer
@@ -140,10 +140,11 @@ Requirements, limitations, and instructions are documented in
 
 ## Deployment and private data
 
-The project is connected to Lovable: commits pushed to `main` synchronize with the
-editor. Updating the public site requires **Publish → Publish changes**.
-Pushing code does not automatically apply database migrations or confirm Edge
-Function deployment.
+The production site runs on Vercel and uses an independent Supabase project. See
+[Independent hosting and migration](docs/independent-hosting.md) for deployment,
+authentication and restore instructions. Deploy database migrations and Edge
+Functions separately from the web app. The legacy Lovable editor remains linked
+to GitHub.
 
 - Store server secrets in your hosting environment configuration.
 - Never commit Amazon sessions, cookies, personal reader configurations,
@@ -154,7 +155,6 @@ Function deployment.
 - Privacy and Terms pages are linked in the footer. For your own deployment,
   update the contact in `src/lib/legal.ts` and the domain in `src/lib/site-seo.ts`,
   `public/sitemap.xml`, and `public/robots.txt`.
-- Do not rewrite published Git history: the Lovable integration relies on it.
 
 ## 📄 Documentation
 
