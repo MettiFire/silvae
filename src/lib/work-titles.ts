@@ -32,7 +32,7 @@ export async function localizedWorkTitles(
         headers: {
           Accept: "application/sparql-results+json",
           ...(typeof window === "undefined"
-            ? { "User-Agent": "Silvae/1.0 (https://silvae.lovable.app)" }
+            ? { "User-Agent": "Silvae/1.0 (https://silvae-library.vercel.app)" }
             : {}),
         },
       },

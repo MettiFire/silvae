@@ -49,7 +49,7 @@ async function page(language, title) {
   });
   const res = await fetch(`https://${language}.wikiquote.org/w/api.php?${params}`, {
     headers: {
-      "User-Agent": "SilvaeFragmentImporter/1.0 (https://silvae.lovable.app; mettignis@gmail.com)",
+      "User-Agent": "SilvaeFragmentImporter/1.0 (https://silvae-library.vercel.app; mettignis@gmail.com)",
     },
     signal: AbortSignal.timeout(20000),
   });

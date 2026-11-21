@@ -85,7 +85,7 @@ export async function GET(request: Request) {
             const response = await fetch(url, {
               headers: {
                 Accept: "application/json",
-                "User-Agent": "Silvae/1.0 (+https://silvae.lovable.app)",
+                "User-Agent": "Silvae/1.0 (+https://silvae-library.vercel.app)",
               },
               redirect: "error",
               signal: AbortSignal.timeout(8000),
