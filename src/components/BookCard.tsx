@@ -1,7 +1,7 @@
 import { UiText, UiElement } from "@/lib/ui-language-context";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Heart } from "lucide-react";
+import { Flag, Heart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { coverCandidates, type Book } from "@/lib/books";
 import { useResolvedBookCover } from "@/lib/book-cover-state";
@@ -10,20 +10,26 @@ import { QuickAddBook } from "@/components/QuickAddBook";
 import { LeafRating } from "@/components/LeafRating";
 import { useBookDensity } from "@/lib/book-density";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/lib/use-ui-language";
+import { LEGAL } from "@/lib/legal";
+import { SITE_URL } from "@/lib/site-seo";
 
 export function BookCover({
   book,
   className,
   priority = false,
   fit = "cover",
+  reportMissing = false,
   onCoverLoad,
 }: {
   book: Book;
   className?: string;
   priority?: boolean;
   fit?: "cover" | "contain";
+  reportMissing?: boolean;
   onCoverLoad?: (url: string) => void;
 }) {
+  const t = useTranslate();
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [visible, setVisible] = useState(priority);
   const [loadedUrl, setLoadedUrl] = useState("");
@@ -31,7 +37,11 @@ export function BookCover({
   const { cover: resolvedCover, remember, language } = useResolvedBookCover(book.id);
   const initial = displayCoverUrls(book, resolvedCover);
   const exhausted = !initial.some((url) => !failed.has(url));
-  const { data: alternatives = [] } = useQuery({
+  const {
+    data: alternatives = [],
+    isPending,
+    isFetching,
+  } = useQuery({
     queryKey: ["cover-fallbacks", book.id, book.cover_url, language ?? "any"],
     queryFn: () => coverCandidates(book, false, language),
     enabled: visible && exhausted,
@@ -99,6 +109,19 @@ export function BookCover({
           <span className="text-[10px] text-muted-foreground">
             <UiText text="Copertina non disponibile" />
           </span>
+          {reportMissing && visible && !isPending && !isFetching && (
+            <a
+              href={`mailto:${LEGAL.contactEmail}?subject=${encodeURIComponent(
+                t("Copertina mancante su Silvae"),
+              )}&body=${encodeURIComponent(
+                `${book.title}\n${book.authors.join(", ")}\n${SITE_URL}/book/${encodeURIComponent(book.id)}`,
+              )}`}
+              className="button-outline inline-flex items-center gap-1.5 text-xs"
+            >
+              <Flag size={12} aria-hidden="true" />
+              <UiText text="Segnala via email" />
+            </a>
+          )}
         </div>
       )}
     </div>

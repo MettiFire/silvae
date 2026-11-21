@@ -10,6 +10,7 @@ import { BookGridSizeControl } from "@/components/BookGridSizeControl";
 import { useBookRecommendations } from "@/lib/use-book-recommendations";
 import { DailyFragment } from "@/components/DailyFragment";
 import { ProgressBar } from "@/components/ProgressBar";
+import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/")({
   head: () =>
     pageSeo(
@@ -21,6 +22,25 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 function Home() {
+  const { loading } = useAuth();
+  return (
+    <AppShell>
+      {loading ? (
+        <div role="status" className="min-h-[50vh] pt-8">
+          <div aria-hidden="true" className="h-10 w-3/4 max-w-md rounded bg-muted" />
+          <div aria-hidden="true" className="mt-4 h-4 w-2/3 max-w-xs rounded bg-muted" />
+          <span className="sr-only">
+            <UiText text="Verifica dell’accesso…" />
+          </span>
+        </div>
+      ) : (
+        <HomeContent />
+      )}
+    </AppShell>
+  );
+}
+
+function HomeContent() {
   const {
     user,
     library,
@@ -34,7 +54,7 @@ function Home() {
   const reading = library.filter((i) => i.status === "reading");
   const finished = library.filter((i) => i.status === "read");
   return (
-    <AppShell>
+    <>
       {!user ? (
         <section className="home-hero">
           <div className="home-hero-copy">
@@ -229,7 +249,7 @@ function Home() {
           </Link>
         </div>
       </section>
-    </AppShell>
+    </>
   );
 }
 function Stat({ label, value }: { label: string; value: number }) {

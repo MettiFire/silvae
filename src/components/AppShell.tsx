@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const density = useBookDensity();
   const { resolved, toggle } = useTheme();
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const accountName = profile ? profileLabel(profile) : "Il mio profilo";
   const navigate = useNavigate();
   const [more, setMore] = useState(false);
@@ -95,7 +95,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               {resolved === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </UiElement>
-            {user ? (
+            {loading ? (
+              <span aria-hidden="true" className="h-8 w-20 shrink-0 rounded bg-muted" />
+            ) : user ? (
               <>
                 <Link
                   to="/settings"

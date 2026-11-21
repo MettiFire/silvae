@@ -280,6 +280,8 @@ export const UI_EN: Record<string, string> = {
   Indietro: "Back",
   "Scansiona il codice a barre": "Scan the barcode",
   "Copertina non disponibile": "Cover unavailable",
+  "Copertina mancante su Silvae": "Missing cover on Silvae",
+  "Segnala via email": "Report by email",
   "Serie manga": "Manga series",
   Cerca: "Search",
   "Crea un club": "Create a club",

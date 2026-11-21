@@ -267,6 +267,7 @@ function BookPage() {
                 : book
             }
             priority
+            reportMissing
           />
           {item && (
             <CoverPicker
