@@ -178,11 +178,10 @@ function Privacy() {
         </Link>
         . L’operazione elimina l’account e i dati personali collegati dal database attivo. Se non
         riesci a completare l’operazione puoi usare il contatto indicato in questa pagina. Il
-        catalogo bibliografico condiviso resta disponibile. Log tecnici e copie di backup seguono i
-        tempi di rotazione e conservazione previsti dal piano dei fornitori, che possono differire
-        dalla cancellazione nel database attivo. La durata effettiva dipende dal servizio e dal
-        piano utilizzato: puoi richiederne i dettagli al titolare. Non viene promessa una
-        cancellazione istantanea da copie di backup non più utilizzate dal servizio attivo.
+        catalogo bibliografico condiviso resta disponibile. Il gestore conserva fino a otto copie
+        di sicurezza settimanali cifrate. I dati eliminati dal database attivo possono rimanere in
+        una copia fino alla sua uscita dalla rotazione. I log tecnici seguono i tempi di
+        conservazione dei fornitori, che puoi chiedere al titolare.
       </p>
       <h2>8. I tuoi diritti</h2>
       <p>
